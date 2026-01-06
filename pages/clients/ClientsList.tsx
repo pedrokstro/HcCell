@@ -91,7 +91,7 @@ export const ClientsList: React.FC = () => {
 
         {/* Table */}
         {/* Desktop Table View */}
-        <div className="hidden md:block bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 shadow-sm overflow-hidden animate-fade-in-up">
+        <div className="hidden md:block bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 shadow-sm animate-fade-in-up">
           <div className="overflow-visible">
             <table className="w-full text-left border-collapse">
               <thead>
