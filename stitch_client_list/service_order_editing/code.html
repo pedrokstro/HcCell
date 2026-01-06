@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>HCCELL - Editar Ordem de Serviço</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#049eaf",
+                        "primary-dark": "#037f8c",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#0f2123",
+                        "card-light": "#ffffff",
+                        "card-dark": "#162a2c",
+                        "text-main": "#0d1b1c",
+                        "text-secondary": "#47969e",
+                        "border-light": "#cee6e9",
+                        "border-dark": "#2a4042"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-text-main dark:text-white transition-colors duration-200">
+    <div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+        <!-- Top Navigation -->
+        <header
+            class="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#e6f3f4] dark:border-b-border-dark bg-white/90 dark:bg-card-dark/90 backdrop-blur-md px-4 md:px-10 py-3">
+            <div class="flex items-center gap-4 text-[#0d1b1c] dark:text-white">
+                <div class="size-8 flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined text-3xl">phonelink_setup</span>
+                </div>
+                <h2 class="text-[#0d1b1c] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">HCCELL
+                </h2>
+            </div>
+            <div class="hidden md:flex flex-1 justify-center gap-8 px-8">
+                <a class="text-[#0d1b1c] dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors text-sm font-medium leading-normal"
+                    href="#">Dashboard</a>
+                <a class="text-[#0d1b1c] dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors text-sm font-medium leading-normal"
+                    href="#">Clientes</a>
+                <a class="text-[#0d1b1c] dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors text-sm font-medium leading-normal"
+                    href="#">Estoque</a>
+                <a class="text-primary text-sm font-bold leading-normal border-b-2 border-primary pb-0.5"
+                    href="#">OS</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <button
+                    class="flex items-center justify-center size-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500">
+                    <span class="material-symbols-outlined">notifications</span>
+                </button>
+                <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ring-2 ring-white dark:ring-gray-700 shadow-sm cursor-pointer"
+                    data-alt="User profile avatar showing a smiling person"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDBFSygzy_pQ6CsH4bzmGrgV2FqKAc-wt_cw8BGE_YIxvRNB5XMOsX_v_-nNhvrTccOZM7M9Ww5wWHKkVpj3KctyFhBmRHN4vRikJm_rzSLZXttY_wlCySA4Kpt_sk7pUaFdrmEhkgxTxxZjctvRUhlDaN7d_A-Wzqb1DH-t5L40qlHuZ7bFHarz4ICyXS6JmwlmwfsCjvL4EcsArSR4doRFCmYUw0Ici921dTRgD6ms9y0eUMRRJF6KHUYqokYAVovdHLiHlbLMzA");'>
+                </div>
+            </div>
+        </header>
+        <!-- Main Content Wrapper -->
+        <main class="flex flex-col items-center py-6 px-4 md:px-10 grow">
+            <div class="w-full max-w-[1024px] flex flex-col gap-6">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-wrap items-center gap-2 text-sm">
+                    <a class="text-text-secondary hover:text-primary transition-colors font-medium" href="#">Home</a>
+                    <span class="text-text-secondary font-medium">/</span>
+                    <a class="text-text-secondary hover:text-primary transition-colors font-medium" href="#">Ordens de
+                        Serviço</a>
+                    <span class="text-text-secondary font-medium">/</span>
+                    <span class="text-text-main dark:text-white font-medium">Editar OS #4092</span>
+                </div>
+                <!-- Page Header -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center gap-3">
+                            <h1
+                                class="text-text-main dark:text-white text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">
+                                Ordem de Serviço #4092</h1>
+                            <span
+                                class="px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-bold uppercase tracking-wider border border-yellow-200">Pendente</span>
+                        </div>
+                        <p class="text-text-secondary text-base font-normal">Edite os detalhes do dispositivo, atualize
+                            o status e gerencie os valores do serviço.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button
+                            class="hidden md:flex items-center gap-2 text-text-secondary hover:text-primary font-medium text-sm transition-colors">
+                            <span class="material-symbols-outlined text-lg">print</span>
+                            Imprimir OS
+                        </button>
+                        <button
+                            class="hidden md:flex items-center gap-2 text-text-secondary hover:text-primary font-medium text-sm transition-colors">
+                            <span class="material-symbols-outlined text-lg">history</span>
+                            Histórico
+                        </button>
+                    </div>
+                </div>
+                <!-- Form Card -->
+                <div
+                    class="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden">
+                    <!-- Progress / Status Indicator (Visual Touch) -->
+                    <div class="w-full h-1 bg-gray-100 dark:bg-gray-800 flex">
+                        <div class="h-full bg-primary w-1/3"></div>
+                    </div>
+                    <form class="p-6 md:p-8 flex flex-col gap-8">
+                        <!-- Section 1: Device Info -->
+                        <div class="flex flex-col gap-6">
+                            <div
+                                class="flex items-center gap-2 border-b border-border-light dark:border-border-dark pb-2">
+                                <span class="material-symbols-outlined text-primary">smartphone</span>
+                                <h3 class="text-lg font-bold text-text-main dark:text-white">Detalhes do Dispositivo
+                                </h3>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <label class="flex flex-col gap-2">
+                                    <span class="text-text-main dark:text-gray-300 text-sm font-semibold">Cliente</span>
+                                    <div class="relative">
+                                        <input
+                                            class="w-full rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-60"
+                                            disabled="" value="Maria Silva" />
+                                        <span
+                                            class="material-symbols-outlined absolute right-4 top-3 text-gray-400">person</span>
+                                    </div>
+                                </label>
+                                <label class="flex flex-col gap-2">
+                                    <span class="text-text-main dark:text-gray-300 text-sm font-semibold">Modelo do
+                                        Dispositivo</span>
+                                    <input
+                                        class="w-full rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-card-dark h-12 px-4 text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-text-secondary"
+                                        placeholder="Ex: iPhone 13" value="iPhone 13 Pro - 128GB" />
+                                </label>
+                            </div>
+                            <label class="flex flex-col gap-2">
+                                <span class="text-text-main dark:text-gray-300 text-sm font-semibold">Descrição do
+                                    Problema / Serviço</span>
+                                <textarea
+                                    class="w-full rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-card-dark p-4 min-h-[120px] text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-text-secondary resize-y"
+                                    placeholder="Descreva o problema relatado pelo cliente ou o serviço a ser realizado...">Tela trincada após queda. Touch funcionando parcialmente. Necessário troca do display frontal.</textarea>
+                            </label>
+                        </div>
+                        <!-- Section 2: Status & Dates -->
+                        <div class="flex flex-col gap-6">
+                            <div
+                                class="flex items-center gap-2 border-b border-border-light dark:border-border-dark pb-2">
+                                <span class="material-symbols-outlined text-primary">manage_history</span>
+                                <h3 class="text-lg font-bold text-text-main dark:text-white">Status e Prazos</h3>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <label class="flex flex-col gap-2">
+                                    <span class="text-text-main dark:text-gray-300 text-sm font-semibold">Status
+                                        Atual</span>
+                                    <div class="relative">
+                                        <select
+                                            class="w-full appearance-none rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-card-dark h-12 px-4 text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary cursor-pointer">
+                                            <option selected="" value="pendente">Pendente</option>
+                                            <option value="analise">Em Análise</option>
+                                            <option value="aguardando_peca">Aguardando Peça</option>
+                                            <option value="concluido">Concluído</option>
+                                            <option value="entregue">Entregue</option>
+                                        </select>
+                                        <span
+                                            class="material-symbols-outlined absolute right-4 top-3 text-primary pointer-events-none">expand_more</span>
+                                    </div>
+                                </label>
+                                <label class="flex flex-col gap-2">
+                                    <span class="text-text-main dark:text-gray-300 text-sm font-semibold">Data de
+                                        Execução</span>
+                                    <div class="relative">
+                                        <input
+                                            class="w-full rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-card-dark h-12 px-4 text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary [color-scheme:light] dark:[color-scheme:dark]"
+                                            type="date" value="2023-10-25" />
+                                    </div>
+                                </label>
+                                <label class="flex flex-col gap-2">
+                                    <span class="text-text-main dark:text-gray-300 text-sm font-semibold">Fim da
+                                        Garantia</span>
+                                    <div class="relative">
+                                        <input
+                                            class="w-full rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-card-dark h-12 px-4 text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary [color-scheme:light] dark:[color-scheme:dark]"
+                                            type="date" value="2024-01-25" />
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- Section 3: Financials -->
+                        <div class="flex flex-col gap-6">
+                            <div
+                                class="flex items-center gap-2 border-b border-border-light dark:border-border-dark pb-2">
+                                <span class="material-symbols-outlined text-primary">attach_money</span>
+                                <h3 class="text-lg font-bold text-text-main dark:text-white">Valores</h3>
+                            </div>
+                            <div class="flex flex-wrap items-end gap-6">
+                                <label class="flex flex-col gap-2 flex-1 min-w-[200px]">
+                                    <span class="text-text-main dark:text-gray-300 text-sm font-semibold">Valor do
+                                        Serviço (R$)</span>
+                                    <div class="relative">
+                                        <span class="absolute left-4 top-3 text-text-secondary font-medium">R$</span>
+                                        <input
+                                            class="w-full rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-card-dark h-12 pl-12 pr-4 text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary font-medium text-lg"
+                                            step="0.01" type="number" value="1250.00" />
+                                    </div>
+                                </label>
+                                <div
+                                    class="flex-1 min-w-[200px] p-4 bg-background-light dark:bg-background-dark rounded-lg border border-dashed border-border-light dark:border-border-dark flex items-center justify-between">
+                                    <span class="text-sm text-text-secondary">Subtotal Peças:</span>
+                                    <span class="font-bold text-text-main dark:text-white">R$ 800,00</span>
+                                </div>
+                                <div
+                                    class="flex-1 min-w-[200px] p-4 bg-primary/10 rounded-lg border border-primary/20 flex items-center justify-between">
+                                    <span class="text-sm text-primary font-medium">Total Estimado:</span>
+                                    <span class="font-bold text-primary text-xl">R$ 2.050,00</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Action Buttons -->
+                        <div
+                            class="flex flex-col-reverse sm:flex-row items-center justify-end gap-4 pt-4 border-t border-border-light dark:border-border-dark mt-4">
+                            <button
+                                class="w-full sm:w-auto px-6 h-12 rounded-lg border border-gray-300 dark:border-gray-600 text-text-main dark:text-white font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:ring-2 focus:ring-gray-200"
+                                type="button">
+                                Cancelar
+                            </button>
+                            <button
+                                class="w-full sm:w-auto px-8 h-12 rounded-lg bg-primary hover:bg-primary-dark text-white font-semibold shadow-md shadow-primary/20 transition-all transform active:scale-95 focus:ring-2 focus:ring-offset-2 focus:ring-primary flex items-center justify-center gap-2"
+                                type="button">
+                                <span class="material-symbols-outlined text-[20px]">save</span>
+                                Salvar Alterações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+        <!-- Simple Footer -->
+        <footer
+            class="py-6 text-center text-sm text-text-secondary border-t border-border-light dark:border-border-dark bg-white dark:bg-card-dark">
+            <p>© 2024 HCCELL - Sistema de Gerenciamento. Todos os direitos reservados.</p>
+        </footer>
+    </div>
+</body>
+
+</html>

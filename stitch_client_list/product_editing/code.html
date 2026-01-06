@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Editar Produto - HCCELL</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#049eaf",
+                        "primary-hover": "#038694",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#0f2123",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#162a2d",
+                        "border-light": "#e2e8f0",
+                        "border-dark": "#2d4a4d",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+<!-- Header -->
+<header class="sticky top-0 z-50 w-full border-b border-border-light dark:border-border-dark bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur supports-[backdrop-filter]:bg-surface-light/60">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex h-16 items-center justify-between">
+<!-- Logo -->
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center size-8 rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined text-2xl">phonelink_setup</span>
+</div>
+<span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">HCCELL</span>
+</div>
+<!-- Navigation -->
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-300 dark:hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-sm font-medium text-primary dark:text-primary transition-colors" href="#">Inventário</a>
+<a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-300 dark:hover:text-primary transition-colors" href="#">Serviços</a>
+<a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-300 dark:hover:text-primary transition-colors" href="#">Clientes</a>
+</nav>
+<!-- User Profile -->
+<div class="flex items-center gap-4">
+<button class="flex items-center justify-center size-9 rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover bg-center ring-2 ring-white dark:ring-slate-800 cursor-pointer" data-alt="User avatar of a man looking forward" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD-ncdX8I3VgNC3KEB6vQj0fU2zSGhnbZQJpbom-pNzmTLIxuweufIT0S12lqOu_aYfBXwKNGNtckb-HSywAfzdbSgo4PYaMB9bfV_508xOvxIkFySLPPJS-WN5MZjhSS5UHjCtMmUvVPNiALv4pjbGwIdI5bV7HJJxGE6nT4OoLlWplCqdt4cWhI7Q-xpIFODavhChz5o7-aQOgOU125kE5DLABlFhoXTK24_LYMHotoQFZR0IoBStJLilyP-0B3jsPRRV4m6ng_4");'></div>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 py-8 px-4 sm:px-6 lg:px-8">
+<div class="max-w-4xl mx-auto space-y-8">
+<!-- Breadcrumbs -->
+<nav aria-label="Breadcrumb" class="flex">
+<ol class="flex items-center space-x-2">
+<li>
+<a class="text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary transition-colors" href="#">Inventário</a>
+</li>
+<li>
+<span class="material-symbols-outlined text-slate-400 text-sm pt-1">chevron_right</span>
+</li>
+<li>
+<a aria-current="page" class="text-sm font-medium text-primary pointer-events-none" href="#">Editar Produto</a>
+</li>
+</ol>
+</nav>
+<!-- Page Header -->
+<div class="flex flex-col gap-2">
+<h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Editar Produto</h1>
+<p class="text-slate-500 dark:text-slate-400">Atualize as informações do produto no estoque da loja.</p>
+</div>
+<!-- Form Card -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden">
+<form class="p-6 md:p-8 space-y-8">
+<!-- Top Section: Basic Info -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Product Name -->
+<div class="space-y-2 md:col-span-2">
+<label class="block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900 dark:text-slate-200" for="product_name">
+                                Nome do Produto
+                            </label>
+<input class="flex h-11 w-full rounded-md border border-slate-300 dark:border-border-dark bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-100 transition-all shadow-sm" id="product_name" name="product_name" placeholder="Ex: Tela iPhone 11" type="text" value="Tela iPhone 13 Pro Max Original"/>
+</div>
+<!-- Category -->
+<div class="space-y-2">
+<label class="block text-sm font-medium leading-none text-slate-900 dark:text-slate-200" for="category">
+                                Categoria
+                            </label>
+<div class="relative">
+<select class="flex h-11 w-full items-center justify-between rounded-md border border-slate-300 dark:border-border-dark bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 appearance-none dark:text-slate-100 shadow-sm" id="category" name="category">
+<option selected="" value="screens">Telas &amp; Displays</option>
+<option value="batteries">Baterias</option>
+<option value="charging">Conectores de Carga</option>
+<option value="accessories">Acessórios</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+<span class="material-symbols-outlined text-lg">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Brand/Model (Optional Extra Field for Context) -->
+<div class="space-y-2">
+<label class="block text-sm font-medium leading-none text-slate-900 dark:text-slate-200" for="brand">
+                                Marca / Modelo Compatível
+                            </label>
+<input class="flex h-11 w-full rounded-md border border-slate-300 dark:border-border-dark bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-100 transition-all shadow-sm" id="brand" name="brand" type="text" value="Apple / iPhone 13 Pro Max"/>
+</div>
+</div>
+<div class="h-px bg-border-light dark:bg-border-dark"></div>
+<!-- Middle Section: Stock & Pricing -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Quantity -->
+<div class="space-y-2">
+<label class="block text-sm font-medium leading-none text-slate-900 dark:text-slate-200" for="quantity">
+                                Quantidade em Estoque
+                            </label>
+<div class="relative">
+<input class="flex h-11 w-full rounded-md border border-slate-300 dark:border-border-dark bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-100 transition-all shadow-sm pl-10" id="quantity" min="0" name="quantity" type="number" value="12"/>
+<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-3 text-slate-500">
+<span class="material-symbols-outlined text-lg">inventory_2</span>
+</div>
+</div>
+</div>
+<!-- Cost Price (Optional but often needed) -->
+<div class="space-y-2">
+<label class="block text-sm font-medium leading-none text-slate-900 dark:text-slate-200" for="cost_price">
+                                Preço de Custo
+                            </label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">R$</span>
+<input class="flex h-11 w-full rounded-md border border-slate-300 dark:border-border-dark bg-transparent px-3 py-2 pl-9 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-100 transition-all shadow-sm" id="cost_price" name="cost_price" type="text" value="950,00"/>
+</div>
+</div>
+<!-- Sale Price -->
+<div class="space-y-2">
+<label class="block text-sm font-medium leading-none text-slate-900 dark:text-slate-200" for="sale_price">
+                                Preço de Venda
+                            </label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">R$</span>
+<input class="flex h-11 w-full rounded-md border border-slate-300 dark:border-border-dark bg-transparent px-3 py-2 pl-9 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-100 transition-all shadow-sm font-medium" id="sale_price" name="sale_price" type="text" value="1.850,00"/>
+</div>
+</div>
+</div>
+<!-- Description Section -->
+<div class="space-y-2">
+<label class="block text-sm font-medium leading-none text-slate-900 dark:text-slate-200" for="description">
+                            Descrição / Observações
+                        </label>
+<textarea class="flex min-h-[80px] w-full rounded-md border border-slate-300 dark:border-border-dark bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-100 shadow-sm resize-none" id="description" name="description" placeholder="Adicione detalhes sobre o estado da peça, fornecedor, ou notas de garantia..." rows="4">Peça de reposição original retirada. Garantia de 3 meses para defeitos de fábrica.</textarea>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center justify-end gap-4 pt-4 border-t border-border-light dark:border-border-dark">
+<button class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-200 dark:border-border-dark hover:bg-slate-100 dark:hover:bg-slate-800 h-10 px-4 py-2 text-slate-900 dark:text-slate-100" type="button">
+                            Cancelar
+                        </button>
+<button class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-white hover:bg-primary-hover h-10 px-6 py-2 shadow-sm" type="submit">
+<span class="material-symbols-outlined text-[18px] mr-2">save</span>
+                            Salvar Alterações
+                        </button>
+</div>
+</form>
+</div>
+<!-- Danger Zone (Optional - for deleting product) -->
+<div class="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-900/30 p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+<div>
+<h3 class="text-sm font-semibold text-red-800 dark:text-red-400">Excluir Produto</h3>
+<p class="text-sm text-red-600/80 dark:text-red-400/70 mt-1">Esta ação não pode ser desfeita. Isso excluirá permanentemente o produto do inventário.</p>
+</div>
+<button class="whitespace-nowrap inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 border border-red-200 dark:border-red-900/50 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 h-9 px-4 py-2" type="button">
+                    Excluir
+                </button>
+</div>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HCCELL - New Product</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#049dae",
+                        "primary-dark": "#037a87",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#0f2123",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2c2e",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased transition-colors duration-200 min-h-screen flex flex-col">
+<!-- Top Navigation -->
+<header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-700 bg-surface-light dark:bg-surface-dark/80 backdrop-blur">
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<div class="flex h-16 items-center justify-between">
+<!-- Logo & Brand -->
+<div class="flex items-center gap-2">
+<div class="flex items-center justify-center size-8 rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">smartphone</span>
+</div>
+<span class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">HCCELL</span>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-sm font-medium text-primary border-b-2 border-primary py-5" href="#">Estoque</a>
+<a class="text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary transition-colors" href="#">Ordens</a>
+<a class="text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary transition-colors" href="#">Clientes</a>
+</nav>
+<!-- User Profile -->
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:text-primary dark:text-slate-400 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-slate-200 bg-cover bg-center ring-2 ring-white dark:ring-slate-700" data-alt="User profile avatar showing a generic silhouette" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuATq1kEJIV5kWyIR5kRjC9YdMLLDnWpejQiWPw1-kJGUik1AHmLNjU3UDhTINc7bP40L2h28czbsVmC-NQKHvqKhYcRt6Opkp4zHgJCMh4uv-zy_-PQG_vph6zDYa84qu7hcMzRBii02FWNO6MLYYAJ-rRGYuLUAPbl3r_fyJMa3yCWhaVEIS0lanw2s40UdIeAQeestdJwj8fDokRLa7LVqOryxHST6HPHUSe7Hs4kPdPKhCOE-sagIwetoL66qE1BF-Dz-SgELYw");'></div>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 py-8">
+<div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+<!-- Breadcrumbs -->
+<nav aria-label="Breadcrumb" class="flex mb-6">
+<ol class="flex items-center space-x-2">
+<li>
+<div>
+<a class="text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400" href="#">Estoque</a>
+</div>
+</li>
+<li>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+<a aria-current="page" class="ml-2 text-sm font-medium text-primary" href="#">Novo Produto</a>
+</div>
+</li>
+</ol>
+</nav>
+<!-- Page Header -->
+<div class="mb-8">
+<h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Cadastrar Novo Produto</h1>
+<p class="mt-2 text-base text-slate-600 dark:text-slate-400">Preencha os dados abaixo para adicionar um item ao estoque.</p>
+</div>
+<!-- Form Card -->
+<div class="bg-surface-light dark:bg-surface-dark shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10 rounded-xl overflow-hidden">
+<div class="p-6 md:p-8">
+<form action="#" class="space-y-6" method="POST">
+<!-- Product Name -->
+<div class="space-y-2">
+<label class="block text-sm font-medium leading-6 text-slate-900 dark:text-white" for="product-name">
+                                Nome do Produto
+                            </label>
+<div class="relative">
+<input class="block w-full rounded-lg border-0 py-3 px-4 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary dark:bg-slate-800 dark:text-white dark:ring-slate-700 dark:placeholder:text-slate-500 sm:text-sm sm:leading-6 transition-all" id="product-name" name="product-name" placeholder="Ex: Capa iPhone 13 Pro" type="text"/>
+</div>
+</div>
+<!-- Category -->
+<div class="space-y-2">
+<label class="block text-sm font-medium leading-6 text-slate-900 dark:text-white" for="category">
+                                Categoria
+                            </label>
+<div class="relative">
+<select class="block w-full rounded-lg border-0 py-3 pl-4 pr-10 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary dark:bg-slate-800 dark:text-white dark:ring-slate-700 sm:text-sm sm:leading-6 appearance-none transition-all" id="category" name="category">
+<option>Selecione uma categoria</option>
+<option>Capas</option>
+<option>Películas</option>
+<option>Carregadores</option>
+<option>Cabos</option>
+<option>Fones</option>
+<option>Outros</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+<span class="material-symbols-outlined text-slate-400">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Grid for Quantity and Price -->
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+<!-- Quantity -->
+<div class="space-y-2">
+<label class="block text-sm font-medium leading-6 text-slate-900 dark:text-white" for="quantity">
+                                    Quantidade
+                                </label>
+<div class="relative">
+<input class="block w-full rounded-lg border-0 py-3 px-4 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary dark:bg-slate-800 dark:text-white dark:ring-slate-700 dark:placeholder:text-slate-500 sm:text-sm sm:leading-6 transition-all" id="quantity" min="0" name="quantity" placeholder="0" type="number"/>
+</div>
+</div>
+<!-- Sale Price -->
+<div class="space-y-2">
+<label class="block text-sm font-medium leading-6 text-slate-900 dark:text-white" for="price">
+                                    Preço de Venda
+                                </label>
+<div class="relative rounded-md shadow-sm">
+<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+<span class="text-slate-500 sm:text-sm">R$</span>
+</div>
+<input class="block w-full rounded-lg border-0 py-3 pl-10 pr-4 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary dark:bg-slate-800 dark:text-white dark:ring-slate-700 dark:placeholder:text-slate-500 sm:text-sm sm:leading-6 transition-all" id="price" name="price" placeholder="0,00" type="text"/>
+</div>
+</div>
+</div>
+</form>
+</div>
+<!-- Footer Actions -->
+<div class="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 flex items-center justify-end gap-x-4 border-t border-slate-100 dark:border-slate-700/50">
+<button class="text-sm font-medium leading-6 text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" type="button">
+                        Cancelar
+                    </button>
+<button class="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors flex items-center gap-2" type="submit">
+<span class="material-symbols-outlined text-[18px]">save</span>
+                        Salvar Produto
+                    </button>
+</div>
+</div>
+<!-- Optional Help Text -->
+<p class="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">
+                Os produtos cadastrados estarão imediatamente disponíveis para ordens de serviço.
+            </p>
+</div>
+</main>
+<script>
+        // Simple dark mode toggle for demonstration purposes (not requested but helpful for testing theme)
+        // Check system preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</body></html>

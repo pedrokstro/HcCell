@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HCCELL Dashboard</title>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0395a5",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#0f2123",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#162a2c",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 1,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-72 hidden md:flex flex-col border-r border-slate-200 dark:border-slate-800 bg-surface-light dark:bg-surface-dark h-screen fixed left-0 top-0 z-10">
+<div class="p-6 flex flex-col h-full justify-between">
+<div class="flex flex-col gap-8">
+<!-- Branding -->
+<div class="flex gap-3 items-center">
+<div class="bg-primary/10 aspect-square rounded-xl size-10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">phonelink_setup</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-slate-900 dark:text-white text-lg font-bold leading-none tracking-tight">HCCELL</h1>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium mt-1">Repair Manager</p>
+</div>
+</div>
+<!-- Navigation -->
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-semibold">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-medium">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">build</span>
+<span class="text-sm font-medium">Service Orders</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-sm font-medium">Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-sm font-medium">Invoices</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</nav>
+</div>
+<!-- Bottom User Profile -->
+<div class="border-t border-slate-200 dark:border-slate-800 pt-6">
+<div class="flex gap-3 items-center p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Portrait of the current user logged in" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCEroaKJFYMzJCevcaB9d5TnWoXr3jtMPEZ8bNYuQnP8lGWCu7hORcFkD13chz6rGe9fxujbdGx2qPMDMVLyHlvgTvU6f-8IZZXSp3PWbrrcC0y2R9gr8Jl8-o0WuRmljQ07NtkgECS5l0oS7xn2I2HwynPFYzLoiwDHfeDriTWaGTci_MXXgxcrXPqAdJUE_d3Gfr2niSDD3pn-hmRP_bxveCDdG4f07HPvc-sg7vYTdWYKxFGoicBO9I4gC3qiNvH2VGlO3USI7M");'></div>
+<div class="flex flex-col">
+<p class="text-slate-900 dark:text-white text-sm font-semibold">Alex Morgan</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">Manager</p>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col md:ml-72 h-screen overflow-y-auto bg-background-light dark:bg-background-dark">
+<div class="max-w-7xl mx-auto w-full p-6 lg:p-10 flex flex-col gap-8">
+<!-- Header Section with Search & Action -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+<div class="flex flex-col gap-1">
+<h1 class="text-slate-900 dark:text-white text-3xl font-bold tracking-tight">Dashboard</h1>
+<p class="text-slate-500 dark:text-slate-400">Overview of today's repair operations.</p>
+</div>
+<div class="flex flex-1 max-w-2xl gap-4 items-center justify-end">
+<!-- Search Bar -->
+<div class="relative w-full max-w-md">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-400">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-2.5 border-none rounded-lg leading-5 bg-white dark:bg-surface-dark text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary shadow-sm sm:text-sm" placeholder="Search IMEI, Client, or Order #" type="text"/>
+</div>
+<!-- Action Button -->
+<button class="hidden sm:flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg shadow-sm shadow-primary/30 transition-all font-medium whitespace-nowrap">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                        New Order
+                    </button>
+</div>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Total Sales -->
+<div class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg text-green-600 dark:text-green-400">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<span class="text-green-600 dark:text-green-400 text-xs font-bold bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full">+15%</span>
+</div>
+<div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Sales (Today)</p>
+<p class="text-slate-900 dark:text-white text-2xl font-bold mt-1">$1,250.00</p>
+</div>
+</div>
+<!-- Awaiting Repair -->
+<div class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg text-orange-600 dark:text-orange-400">
+<span class="material-symbols-outlined">pending_actions</span>
+</div>
+<span class="text-orange-600 dark:text-orange-400 text-xs font-bold bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-full">+2 New</span>
+</div>
+<div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Awaiting Repair</p>
+<p class="text-slate-900 dark:text-white text-2xl font-bold mt-1">5 Devices</p>
+</div>
+</div>
+<!-- Completed Services -->
+<div class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg text-primary">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<span class="text-primary text-xs font-bold bg-primary/5 dark:bg-primary/10 px-2 py-1 rounded-full">+5</span>
+</div>
+<div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Completed Services</p>
+<p class="text-slate-900 dark:text-white text-2xl font-bold mt-1">12 Orders</p>
+</div>
+</div>
+<!-- Low Inventory -->
+<div class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg text-red-600 dark:text-red-400">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<span class="text-red-600 dark:text-red-400 text-xs font-bold bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-full">Alert</span>
+</div>
+<div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Low Inventory</p>
+<p class="text-slate-900 dark:text-white text-2xl font-bold mt-1">3 Items</p>
+</div>
+</div>
+</div>
+<!-- Recent Service Orders Section -->
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<h3 class="text-slate-900 dark:text-white text-lg font-bold tracking-tight">Recent Service Orders</h3>
+<a class="text-primary text-sm font-medium hover:underline" href="#">View All</a>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+<th class="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+<th class="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Client</th>
+<th class="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Device &amp; Service</th>
+<th class="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+<th class="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+<!-- Row 1 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="py-4 px-6 text-sm text-slate-600 dark:text-slate-300 font-medium">15-10-2023</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="bg-slate-200 dark:bg-slate-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300">JD</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">John Doe</span>
+<span class="text-xs text-slate-500">Regular Client</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex flex-col">
+<span class="text-sm text-slate-900 dark:text-white font-medium">iPhone 11</span>
+<span class="text-xs text-slate-500">Screen Replacement</span>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                            Concluído
+                                        </span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+<button class="text-slate-400 hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-[20px]">print</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="py-4 px-6 text-sm text-slate-600 dark:text-slate-300 font-medium">15-10-2023</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="bg-primary/20 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold text-primary">JS</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">Jane Smith</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex flex-col">
+<span class="text-sm text-slate-900 dark:text-white font-medium">Samsung S21</span>
+<span class="text-xs text-slate-500">Battery Replacement</span>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+<span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                            Em Andamento
+                                        </span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+<button class="text-slate-400 hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-[20px]">print</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="py-4 px-6 text-sm text-slate-600 dark:text-slate-300 font-medium">14-10-2023</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="bg-purple-100 dark:bg-purple-900/30 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold text-purple-600">BB</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">Bob Brown</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex flex-col">
+<span class="text-sm text-slate-900 dark:text-white font-medium">MacBook Air M1</span>
+<span class="text-xs text-slate-500">Data Recovery</span>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800">
+<span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                                            Aguardando Peça
+                                        </span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+<button class="text-slate-400 hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-[20px]">print</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="py-4 px-6 text-sm text-slate-600 dark:text-slate-300 font-medium">14-10-2023</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="bg-slate-200 dark:bg-slate-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300">AG</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">Alice Green</span>
+<span class="text-xs text-slate-500">Corporate</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex flex-col">
+<span class="text-sm text-slate-900 dark:text-white font-medium">iPad Pro 12.9</span>
+<span class="text-xs text-slate-500">Charging Port Repair</span>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">
+<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                            Cancelado
+                                        </span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+<button class="text-slate-400 hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-[20px]">print</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer / Pagination -->
+<div class="bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-200 dark:border-slate-800 px-6 py-3 flex items-center justify-between">
+<p class="text-xs text-slate-500">Showing 1-4 of 24 orders</p>
+<div class="flex gap-2">
+<button class="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 disabled:opacity-50">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer for Mobile/small screen spacing -->
+<div class="h-10 md:hidden"></div>
+</div>
+</main>
+<!-- Mobile floating action button -->
+<button class="md:hidden fixed bottom-6 right-6 bg-primary text-white p-4 rounded-full shadow-lg shadow-primary/40 flex items-center justify-center z-50">
+<span class="material-symbols-outlined">add</span>
+</button>
+</body></html>

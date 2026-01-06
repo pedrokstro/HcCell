@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>New Client Registration - HCCELL</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0395a5",
+                        "primary-dark": "#027a87",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#0f2123",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#162a2c",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.375rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display antialiased overflow-hidden">
+<div class="flex h-screen w-full">
+<!-- SideNavBar -->
+<aside class="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-surface-light dark:bg-surface-dark flex flex-col transition-all duration-300">
+<div class="p-6">
+<div class="flex items-center gap-3">
+<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
+<span class="material-symbols-outlined">handyman</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-slate-900 dark:text-white text-lg font-bold leading-none tracking-tight">HCCELL</h1>
+<p class="text-primary text-xs font-medium mt-1">Gestão de Reparos</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 group-hover:text-primary">dashboard</span>
+<span class="text-sm font-medium">Painel</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary dark:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined fill">group</span>
+<span class="text-sm font-medium">Clientes</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 group-hover:text-primary">description</span>
+<span class="text-sm font-medium">Ordens de Serviço</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 group-hover:text-primary">inventory_2</span>
+<span class="text-sm font-medium">Estoque</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 group-hover:text-primary">receipt_long</span>
+<span class="text-sm font-medium">Financeiro</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3 px-3 py-2">
+<div class="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+<img alt="User Avatar" class="h-full w-full object-cover" data-alt="User avatar portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAs8wFv1WeN09K4UioG38x9kOazNJdmLjPlV8cJaSgLW20f1JGX7lRs4c4OaJNuAMYukKQo1fejHBSgQj7DCuLGEarPGCaLro5ohuIqSpt6MSVOb50GAaY5j0m_7NAiP61hRi501sS_KqqDvxDPuW4dk6_pWlle2sRjz0CAVjS2_K4B5a5_5dJkUQWA8UL5QIyK1cMriqMkKjmbrM1nfDJunJAnDrzpIY5GgbWxZ5sG1TXuzPLbKIAAeJJ8Qhe99eZgxEwBVDUNRUY"/>
+</div>
+<div class="flex flex-col">
+<p class="text-sm font-medium text-slate-900 dark:text-white">Admin User</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">Gerente</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark">
+<div class="max-w-5xl mx-auto px-6 py-8">
+<!-- Breadcrumbs -->
+<nav aria-label="Breadcrumb" class="flex mb-6">
+<ol class="inline-flex items-center space-x-1 md:space-x-3">
+<li class="inline-flex items-center">
+<a class="inline-flex items-center text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white" href="#">
+                                Clientes
+                            </a>
+</li>
+<li>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+<span class="ml-1 text-sm font-medium text-primary md:ml-2">Novo Cadastro</span>
+</div>
+</li>
+</ol>
+</nav>
+<!-- Page Heading -->
+<div class="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+<div>
+<h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Novo Cliente</h2>
+<p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Cadastre as informações básicas para iniciar uma nova ordem de serviço.</p>
+</div>
+<div class="flex gap-3">
+<!-- Additional top-level actions if needed -->
+</div>
+</div>
+<!-- Registration Form Card -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="p-6 md:p-8 space-y-8">
+<!-- Personal Info Section -->
+<div>
+<div class="flex items-center gap-2 mb-6 pb-2 border-b border-slate-100 dark:border-slate-800">
+<span class="material-symbols-outlined text-primary">person</span>
+<h3 class="text-base font-semibold text-slate-900 dark:text-white">Dados Pessoais</h3>
+</div>
+<div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
+<!-- Name -->
+<div class="sm:col-span-6">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5" for="full-name">Nome Completo</label>
+<div class="relative">
+<input class="block w-full rounded-lg border-slate-300 bg-white dark:bg-slate-900/50 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-primary/20 sm:text-sm h-11 transition-all" id="full-name" name="full-name" placeholder="Ex: João da Silva" type="text"/>
+</div>
+</div>
+<!-- CPF -->
+<div class="sm:col-span-3">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5" for="cpf">CPF</label>
+<div class="relative">
+<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+<span class="material-symbols-outlined text-slate-400 text-[20px]">badge</span>
+</div>
+<input class="block w-full rounded-lg border-slate-300 bg-white dark:bg-slate-900/50 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-primary/20 sm:text-sm h-11 pl-10 transition-all" id="cpf" name="cpf" placeholder="000.000.000-00" type="text"/>
+</div>
+<p class="mt-1 text-xs text-slate-500">Digite apenas os números.</p>
+</div>
+<!-- Phone -->
+<div class="sm:col-span-3">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5" for="phone">Telefone / WhatsApp</label>
+<div class="relative">
+<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+<span class="material-symbols-outlined text-slate-400 text-[20px]">call</span>
+</div>
+<input class="block w-full rounded-lg border-slate-300 bg-white dark:bg-slate-900/50 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-primary/20 sm:text-sm h-11 pl-10 transition-all" id="phone" name="phone" placeholder="(00) 00000-0000" type="tel"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Optional Address Section for completeness (visual only) -->
+<div>
+<div class="flex items-center gap-2 mb-6 pb-2 border-b border-slate-100 dark:border-slate-800">
+<span class="material-symbols-outlined text-primary">pin_drop</span>
+<h3 class="text-base font-semibold text-slate-900 dark:text-white">Endereço (Opcional)</h3>
+</div>
+<div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
+<div class="sm:col-span-2">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5" for="cep">CEP</label>
+<input class="block w-full rounded-lg border-slate-300 bg-white dark:bg-slate-900/50 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-primary/20 sm:text-sm h-11" id="cep" name="cep" placeholder="00000-000" type="text"/>
+</div>
+<div class="sm:col-span-4">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5" for="address">Rua</label>
+<input class="block w-full rounded-lg border-slate-300 bg-white dark:bg-slate-900/50 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-primary/20 sm:text-sm h-11" id="address" name="address" type="text"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Actions Footer -->
+<div class="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
+<button class="px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors" type="button">
+                            Cancelar
+                        </button>
+<button class="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-dark text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-colors flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">check</span>
+                            Salvar Cliente
+                        </button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

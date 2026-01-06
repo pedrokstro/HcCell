@@ -1,0 +1,82 @@
+{
+    "name": "HcCell - Assistência Técnica",
+    "short_name": "HcCell",
+    "description": "Sistema de Gerenciamento de Assistência Técnica",
+    "start_url": "/",
+    "scope": "/",
+    "id": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#ffffff",
+    "theme_color": "#00CCFF",
+    "categories": [
+        "business",
+        "productivity"
+    ],
+    "lang": "pt-BR",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "/favicon.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/favicon.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Dashboard",
+            "short_name": "Painel",
+            "description": "Ir para o painel principal",
+            "url": "/dashboard",
+            "icons": [
+                {
+                    "src": "/favicon.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Ordens de Serviço",
+            "short_name": "Ordens",
+            "description": "Ver ordens de serviço",
+            "url": "/orders",
+            "icons": [
+                {
+                    "src": "/favicon.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Clientes",
+            "short_name": "Clientes",
+            "description": "Ver lista de clientes",
+            "url": "/clients",
+            "icons": [
+                {
+                    "src": "/favicon.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ]
+}

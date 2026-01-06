@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nova Ordem de Serviço - HCCELL</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0395a5",
+                        "primary-dark": "#027a87",
+                        "background-light": "#f8fbfc",
+                        "background-dark": "#0f2123",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2c2e",
+                        "input-light": "#e6f3f4",
+                        "input-dark": "#1e3538",
+                        "text-main": "#0c1b1c",
+                        "text-main-dark": "#e0e7e8",
+                        "text-secondary": "#4697a0",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-main dark:text-text-main-dark font-display min-h-screen flex flex-col transition-colors duration-200">
+<header class="sticky top-0 z-50 w-full border-b border-[#e6f3f4] dark:border-slate-800 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur">
+<div class="max-w-[1440px] mx-auto px-4 sm:px-10 h-16 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="size-8 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl">build_circle</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight text-text-main dark:text-white">HCCELL</h2>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-sm font-bold text-primary transition-colors" href="#">Ordens de Serviço</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Clientes</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Estoque</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="flex items-center justify-center size-10 rounded-lg hover:bg-input-light dark:hover:bg-input-dark transition-colors">
+<span class="material-symbols-outlined text-text-main dark:text-white">notifications</span>
+</button>
+<div class="size-9 rounded-full bg-cover bg-center border border-primary/20" data-alt="User profile avatar showing a generic person silhouette" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCOou-7md3MAGIi7ws1dj4S0mxvQajoJvbJa1FDUarw4YBQ3nv-diYCnUIV5KFaFTnjdrjdCChnhUyJXEAqcZz0aJ98JdC8nZYhHfJpRZ0r5UF4JfbAk0_hLM5dpIi2N2B70CRs7iMtWPk3DpIUBY0kYMNg7C7kP1aZzd94ShBf3vyQGQin29iJijwN6XH0IwQIQI_5inSxi_2FNiUTlH5aiQodHpz0qxDYxA48APMlGN1Kg-gotlXqR0Ffd9-M57u2_HzMbdYUaPo");'>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1 flex justify-center py-8 px-4 sm:px-8">
+<div class="w-full max-w-[1024px] flex flex-col gap-6">
+<div class="flex flex-wrap gap-2 text-sm">
+<a class="text-text-secondary hover:text-primary transition-colors" href="#">Dashboard</a>
+<span class="text-text-secondary">/</span>
+<a class="text-text-secondary hover:text-primary transition-colors" href="#">Ordens de Serviço</a>
+<span class="text-text-secondary">/</span>
+<span class="text-text-main dark:text-white font-medium">Nova OS</span>
+</div>
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-4 border-b border-gray-200 dark:border-gray-800">
+<div class="flex flex-col gap-1">
+<h1 class="text-3xl md:text-4xl font-black tracking-tight text-text-main dark:text-white">Nova Ordem de Serviço</h1>
+<p class="text-text-secondary dark:text-slate-400 text-base">Preencha os dados abaixo para registrar uma entrada de manutenção.</p>
+</div>
+</div>
+<form class="flex flex-col gap-8">
+<section class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-lg font-bold text-text-main dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">person_search</span>
+                        Dados do Cliente
+                    </h3>
+<button class="text-primary text-sm font-bold hover:underline" type="button">Novo Cliente</button>
+</div>
+<div class="relative">
+<label class="flex flex-col w-full">
+<span class="sr-only">Buscar Cliente</span>
+<div class="flex w-full items-stretch rounded-lg h-12 bg-input-light dark:bg-input-dark focus-within:ring-2 focus-within:ring-primary transition-all">
+<div class="flex items-center justify-center pl-4 text-text-secondary">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-text-main dark:text-white px-4 placeholder:text-text-secondary/70 h-full w-full" placeholder="Buscar cliente por Nome, CPF ou Telefone..." type="text"/>
+</div>
+</label>
+</div>
+</section>
+<section class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
+<div class="mb-4">
+<h3 class="text-lg font-bold text-text-main dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">smartphone</span>
+                        Dados do Aparelho
+                    </h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-text-main dark:text-gray-300">Modelo do Aparelho</label>
+<input class="h-11 rounded-lg bg-input-light dark:bg-input-dark border-none focus:ring-2 focus:ring-primary text-text-main dark:text-white placeholder:text-text-secondary/60" placeholder="Ex: iPhone 11, Samsung S20" type="text"/>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-text-main dark:text-gray-300">IMEI / Serial <span class="text-xs text-text-secondary font-normal">(Opcional)</span></label>
+<input class="h-11 rounded-lg bg-input-light dark:bg-input-dark border-none focus:ring-2 focus:ring-primary text-text-main dark:text-white placeholder:text-text-secondary/60" placeholder="Número de série" type="text"/>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-text-main dark:text-gray-300">Senha de Bloqueio</label>
+<div class="relative flex items-center">
+<span class="absolute left-3 text-text-secondary material-symbols-outlined text-[20px]">lock</span>
+<input class="h-11 w-full rounded-lg bg-input-light dark:bg-input-dark border-none focus:ring-2 focus:ring-primary text-text-main dark:text-white pl-10 placeholder:text-text-secondary/60" placeholder="Padrão ou PIN" type="text"/>
+</div>
+</div>
+<div class="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col gap-1.5">
+<label class="text-sm font-medium text-text-main dark:text-gray-300">Defeito Relatado</label>
+<textarea class="rounded-lg bg-input-light dark:bg-input-dark border-none focus:ring-2 focus:ring-primary text-text-main dark:text-white placeholder:text-text-secondary/60 resize-none p-3" placeholder="Descreva o problema relatado pelo cliente..." rows="3"></textarea>
+</div>
+</div>
+</section>
+<section class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
+<div class="mb-4">
+<h3 class="text-lg font-bold text-text-main dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">payments</span>
+                        Serviço e Valores
+                    </h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-text-main dark:text-gray-300">Serviço a ser feito</label>
+<div class="relative">
+<select class="h-11 w-full appearance-none rounded-lg bg-input-light dark:bg-input-dark border-none focus:ring-2 focus:ring-primary text-text-main dark:text-white px-3 pr-10">
+<option disabled="" selected="" value="">Selecione um serviço...</option>
+<option value="troca_tela">Troca de Tela</option>
+<option value="troca_bateria">Troca de Bateria</option>
+<option value="reparo_placa">Reparo de Placa</option>
+<option value="limpeza">Limpeza / Manutenção</option>
+<option value="software">Software / Desbloqueio</option>
+<option value="outro">Outro</option>
+</select>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary material-symbols-outlined">expand_more</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-text-main dark:text-gray-300">Status Inicial</label>
+<div class="flex gap-2 p-1 bg-input-light dark:bg-input-dark rounded-lg w-fit">
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="status" type="radio" value="pendente"/>
+<span class="px-4 py-1.5 rounded-md text-sm font-medium text-text-secondary peer-checked:bg-white dark:peer-checked:bg-surface-dark peer-checked:text-primary peer-checked:shadow-sm block transition-all">Pendente</span>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="status" type="radio" value="analise"/>
+<span class="px-4 py-1.5 rounded-md text-sm font-medium text-text-secondary peer-checked:bg-white dark:peer-checked:bg-surface-dark peer-checked:text-amber-600 peer-checked:shadow-sm block transition-all">Em Análise</span>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="status" type="radio" value="aprovado"/>
+<span class="px-4 py-1.5 rounded-md text-sm font-medium text-text-secondary peer-checked:bg-white dark:peer-checked:bg-surface-dark peer-checked:text-green-600 peer-checked:shadow-sm block transition-all">Aprovado</span>
+</label>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-text-main dark:text-gray-300">Valor Estimado</label>
+<div class="relative flex items-center">
+<span class="absolute left-3 text-text-secondary font-semibold">R$</span>
+<input class="h-11 w-full rounded-lg bg-input-light dark:bg-input-dark border-none focus:ring-2 focus:ring-primary text-text-main dark:text-white pl-10 font-medium placeholder:text-text-secondary/60" placeholder="0,00" step="0.01" type="number"/>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-text-main dark:text-gray-300">Obs. Internas <span class="text-xs text-text-secondary font-normal">(Não visível para o cliente)</span></label>
+<input class="h-11 rounded-lg bg-input-light dark:bg-input-dark border-none focus:ring-2 focus:ring-primary text-text-main dark:text-white placeholder:text-text-secondary/60" placeholder="Anotações técnicas..." type="text"/>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-text-main dark:text-gray-300">Data de Execução</label>
+<input class="h-11 rounded-lg bg-input-light dark:bg-input-dark border-none focus:ring-2 focus:ring-primary text-text-main dark:text-white placeholder:text-text-secondary/60 w-full px-3" type="date"/>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-text-main dark:text-gray-300">Fim da Garantia <span class="text-xs text-text-secondary font-normal">(Sugerido +90 dias)</span></label>
+<input class="h-11 rounded-lg bg-input-light dark:bg-input-dark border-none focus:ring-2 focus:ring-primary text-text-main dark:text-white placeholder:text-text-secondary/60 w-full px-3" type="date"/>
+</div>
+</div>
+</section>
+<div class="flex items-center justify-end gap-4 pt-4 border-t border-gray-200 dark:border-gray-800">
+<button class="px-6 py-2.5 rounded-lg text-sm font-bold text-text-main dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-surface-dark transition-colors" type="button">
+                    Cancelar
+                </button>
+<button class="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-dark text-white text-sm font-bold shadow-lg shadow-primary/30 flex items-center gap-2 transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">save</span>
+                    Gerar Ordem de Serviço
+                </button>
+</div>
+</form>
+</div>
+</main>
+
+</body></html>

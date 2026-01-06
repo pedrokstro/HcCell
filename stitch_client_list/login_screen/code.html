@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HCCELL Login</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+            extend: {
+                colors: {
+                "primary": "#0395a5",
+                "primary-dark": "#027a87",
+                "background-light": "#f5f8f8",
+                "background-dark": "#0f2123",
+                },
+                fontFamily: {
+                "display": ["Inter", "Noto Sans", "sans-serif"]
+                },
+                borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#0c1b1c] dark:text-white antialiased">
+<div class="flex min-h-screen flex-row w-full overflow-hidden">
+<!-- Left Side: Visual/Context -->
+<!-- Hidden on small screens, takes up 50% on large screens -->
+<div class="relative hidden w-0 flex-1 lg:block bg-slate-900">
+<div class="absolute inset-0 h-full w-full bg-cover bg-center" data-alt="Close up of electronic repair tools and circuit board on a workbench" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCFIbdPloRbW33Mp92BUZqVrJW0V-IraYCNz2aI_7vqW_NlBGdIRGMdnEUZhr9y_6B07_8pQEiHFd5pd3qNrK93xLG_iP96VJCIUI6SzDYLW7XpRiE4b6mpaK7ghifZ-Yl8cZAjqKnn0Jz1QlVrHXaWv6JLpOx-B_7isQllfSnBFU4aEI5aCLBYHkZKJzcp_Ydd7Mo5FFGTfDdpjVbjJdAqyyd5RFLaL8BuLKb8Kfj2mWcVcdxo57i0a6_cXvlmr-LRdsMQbEzXRv0');">
+</div>
+<!-- Overlay Gradient -->
+<div class="absolute inset-0 bg-gradient-to-t from-background-dark/90 via-primary/40 to-primary/20 backdrop-blur-[1px]"></div>
+<div class="absolute bottom-0 left-0 right-0 p-16 text-white">
+<div class="flex items-center gap-3 mb-6">
+<div class="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 backdrop-blur-md">
+<span class="material-symbols-outlined text-white" style="font-size: 28px;">phonelink_setup</span>
+</div>
+<span class="text-xl font-bold tracking-wide text-white">HCCELL System</span>
+</div>
+<blockquote class="space-y-2">
+<p class="text-lg font-medium leading-relaxed">"Efficiency in every repair. Manage your workflow, inventory, and customer relationships seamlessly."</p>
+</blockquote>
+</div>
+</div>
+<!-- Right Side: Login Form -->
+<div class="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-white dark:bg-background-dark w-full lg:w-1/2">
+<div class="mx-auto w-full max-w-sm lg:w-[420px]">
+<!-- Logo & Branding Header -->
+<div class="flex flex-col gap-6">
+<div class="flex items-center gap-3 text-primary">
+<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+<span class="material-symbols-outlined text-primary" style="font-size: 24px;">build_circle</span>
+</div>
+<h2 class="text-2xl font-black tracking-tight text-[#0c1b1c] dark:text-white">HCCELL</h2>
+</div>
+<div class="flex flex-col gap-2">
+<h1 class="text-3xl font-black leading-tight tracking-[-0.033em] text-[#0c1b1c] dark:text-white">Sign in to your account</h1>
+<p class="text-base text-slate-500 dark:text-slate-400">Manage repairs, inventory, and clients efficiently.</p>
+</div>
+</div>
+<div class="mt-10">
+<form action="#" class="space-y-6" method="POST">
+<!-- Email Input -->
+<div>
+<label class="block text-base font-medium leading-normal pb-2 text-[#0c1b1c] dark:text-slate-200" for="email">Email Address</label>
+<div class="relative">
+<input autocomplete="email" class="form-input flex w-full resize-none overflow-hidden rounded-lg text-[#0c1b1c] dark:text-white border border-[#cde6e9] dark:border-slate-700 bg-[#f8fbfc] dark:bg-slate-800/50 h-14 placeholder:text-[#4697a0] dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200" id="email" name="email" placeholder="technician@hccell.com" required="" type="email" value=""/>
+</div>
+</div>
+<!-- Password Input -->
+<div>
+<label class="block text-base font-medium leading-normal pb-2 text-[#0c1b1c] dark:text-slate-200" for="password">Password</label>
+<div class="flex w-full items-stretch rounded-lg group focus-within:ring-2 focus-within:ring-primary/20">
+<input autocomplete="current-password" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-l-lg text-[#0c1b1c] dark:text-white border border-[#cde6e9] dark:border-slate-700 bg-[#f8fbfc] dark:bg-slate-800/50 h-14 placeholder:text-[#4697a0] dark:placeholder:text-slate-500 p-[15px] border-r-0 text-base font-normal leading-normal focus:outline-none focus:border-primary transition-colors duration-200" id="password" name="password" placeholder="••••••••" required="" type="password" value=""/>
+<button class="text-[#4697a0] dark:text-slate-400 flex items-center justify-center px-4 rounded-r-lg border border-[#cde6e9] dark:border-slate-700 border-l-0 bg-[#f8fbfc] dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer group-focus-within:border-primary transition-colors duration-200" type="button">
+<span class="material-symbols-outlined" style="font-size: 24px;">visibility</span>
+</button>
+</div>
+</div>
+<!-- Additional Links -->
+<div class="flex items-center justify-between">
+<div class="flex items-center">
+<input class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary bg-[#f8fbfc] dark:bg-slate-800 dark:border-slate-600" id="remember-me" name="remember-me" type="checkbox"/>
+<label class="ml-2 block text-sm text-slate-600 dark:text-slate-400" for="remember-me">Remember me</label>
+</div>
+<div class="text-sm">
+<a class="font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary transition-colors" href="#">Forgot your password?</a>
+</div>
+</div>
+<!-- Submit Button -->
+<div>
+<button class="flex w-full justify-center rounded-lg bg-primary px-3 py-4 text-base font-bold text-white shadow-sm hover:bg-primary-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all duration-200" type="submit">
+                                Sign In
+                            </button>
+</div>
+</form>
+<!-- Contact Admin / Sign Up fallback -->
+<div class="mt-8 border-t border-slate-100 dark:border-slate-800 pt-6">
+<p class="text-center text-sm text-slate-500 dark:text-slate-400">
+                            Don't have an account? 
+                            <a class="font-semibold leading-6 text-primary hover:text-primary-dark transition-colors" href="#">Contact Admin</a>
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>
