@@ -12,6 +12,7 @@ export const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
 
   const [formData, setFormData] = useState({
@@ -23,6 +24,7 @@ export const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setLoading(true);
 
     try {
@@ -34,7 +36,7 @@ export const Login: React.FC = () => {
           redirectTo: window.location.origin + '/update-password',
         });
         if (error) throw error;
-        alert('Instruções enviadas! Verifique seu email para redefinir a senha.');
+        setSuccess('📧 Instruções enviadas! Verifique seu email para redefinir a senha.');
         setMode('signin');
       } else {
         const { data, error: signUpError } = await supabase.auth.signUp({
@@ -48,7 +50,7 @@ export const Login: React.FC = () => {
           }
         });
         if (signUpError) throw signUpError;
-        alert('Conta criada! Por favor faça login.');
+        setSuccess('✅ Conta criada com sucesso! Verifique seu email para confirmar o cadastro e depois faça login.');
         setMode('signin');
       }
     } catch (err: any) {
@@ -176,6 +178,16 @@ export const Login: React.FC = () => {
                     >
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {success && (
+                <div className="p-4 text-sm text-green-700 bg-green-50 rounded-xl border border-green-200 flex items-start gap-3 animate-fade-in">
+                  <span className="text-lg">✅</span>
+                  <div>
+                    <p className="font-bold mb-1">Sucesso!</p>
+                    <p>{success}</p>
                   </div>
                 </div>
               )}
