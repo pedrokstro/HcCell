@@ -25,6 +25,27 @@ export const OrderForm: React.FC = () => {
     const [productSearch, setProductSearch] = useState('');
     const [showProductSuggestions, setShowProductSuggestions] = useState(false);
 
+    // Manual Item State
+    const [manualName, setManualName] = useState('');
+    const [manualPrice, setManualPrice] = useState<string>('');
+    const [manualQty, setManualQty] = useState<number>(1);
+
+    const handleAddManualItem = () => {
+        if (!manualName || !manualPrice) return;
+        const price = parseFloat(manualPrice.replace(',', '.'));
+        if (isNaN(price)) return;
+
+        setSelectedProducts([...selectedProducts, {
+            productId: `manual-${Date.now()}`,
+            name: manualName,
+            price: price,
+            quantity: manualQty
+        }]);
+        setManualName('');
+        setManualPrice('');
+        setManualQty(1);
+    };
+
     // Filter products based on search
     const filteredProducts = products.filter(p =>
         (p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
@@ -39,12 +60,16 @@ export const OrderForm: React.FC = () => {
     const [clientSearch, setClientSearch] = useState('');
     const [showClientSuggestions, setShowClientSuggestions] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
+    const productSearchRef = useRef<HTMLDivElement>(null);
 
     // Close suggestions on click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
                 setShowClientSuggestions(false);
+            }
+            if (productSearchRef.current && !productSearchRef.current.contains(event.target as Node)) {
+                setShowProductSuggestions(false);
             }
         };
 
@@ -189,7 +214,7 @@ export const OrderForm: React.FC = () => {
         <div className="max-w-[1024px] mx-auto flex flex-col gap-6 pb-12">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-4 border-b border-gray-200 dark:border-neutral-800">
                 <div className="flex flex-col gap-1">
-                    <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+                    <h1 className="text-2xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
                         {id ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400 text-base">
@@ -198,9 +223,9 @@ export const OrderForm: React.FC = () => {
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6 md:gap-8">
                 {/* Client Selection Section */}
-                <section className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-800">
+                <section className="bg-white dark:bg-surface-dark p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-800">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Dados do Cliente</h3>
                         {!id && <button type="button" onClick={() => navigate('/clients/new')} className="text-primary text-sm font-bold hover:underline">Novo Cliente</button>}
@@ -273,7 +298,7 @@ export const OrderForm: React.FC = () => {
                 </section>
 
                 {/* Device Information Section */}
-                <section className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-800">
+                <section className="bg-white dark:bg-surface-dark p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-800">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                         <Smartphone size={20} className="text-primary" />
                         Informações do Aparelho
@@ -323,7 +348,7 @@ export const OrderForm: React.FC = () => {
                     </div>
                 </section>
 
-                <section className="bg-white dark:bg-surface-dark p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-800">
+                <section className="bg-white dark:bg-surface-dark p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-800">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <Settings size={20} className="text-primary" />
@@ -335,14 +360,17 @@ export const OrderForm: React.FC = () => {
                         {/* Product Selection */}
                         <div className="flex flex-col gap-3">
                             <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Adicionar Peças do Estoque</label>
-                            <div className="relative">
+                            <div className="relative" ref={productSearchRef}>
                                 <div className="flex w-full items-stretch rounded-lg h-11 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus-within:ring-2 focus-within:ring-primary transition-all">
-                                    <div className="flex items-center justify-center pl-3 text-slate-400">
-                                        <Package size={20} />
+                                    <div
+                                        className="flex items-center justify-center pl-3 text-slate-400 hover:text-primary cursor-pointer transition-colors"
+                                        onClick={() => setShowProductSuggestions(true)}
+                                    >
+                                        <Search size={20} />
                                     </div>
                                     <input
                                         className="flex-1 bg-transparent border-none focus:ring-0 text-slate-900 dark:text-white px-3 placeholder:text-slate-400 outline-none text-sm"
-                                        placeholder="Buscar peça por nome ou SKU..."
+                                        placeholder="Buscar peça (clique na lupa p/ todos)..."
                                         type="text"
                                         value={productSearch}
                                         onChange={(e) => {
@@ -353,7 +381,7 @@ export const OrderForm: React.FC = () => {
                                     />
                                 </div>
 
-                                {showProductSuggestions && productSearch.length > 0 && (
+                                {showProductSuggestions && (
                                     <div className="absolute z-20 w-full mt-1 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden">
                                         {filteredProducts.length > 0 ? (
                                             filteredProducts.map(product => (
@@ -377,6 +405,45 @@ export const OrderForm: React.FC = () => {
                                         )}
                                     </div>
                                 )}
+                            </div>
+
+                            <div className="flex flex-col gap-2 mt-2 pt-4 border-t border-slate-100 dark:border-neutral-800">
+                                <span className="text-xs font-bold text-slate-500 uppercase">Ou Adicione Manualmente (Item Avulso)</span>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <input
+                                        className="flex-[2] h-10 px-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white"
+                                        placeholder="Nome do item..."
+                                        value={manualName}
+                                        onChange={e => setManualName(e.target.value)}
+                                    />
+                                    <div className="flex gap-2 flex-1">
+                                        <input
+                                            className="w-20 h-10 px-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white"
+                                            type="number"
+                                            min="1"
+                                            placeholder="Qtd"
+                                            value={manualQty}
+                                            onChange={e => setManualQty(parseInt(e.target.value) || 1)}
+                                        />
+                                        <div className="relative flex-1">
+                                            <span className="absolute left-3 top-2.5 text-slate-400 text-xs font-bold">R$</span>
+                                            <input
+                                                className="w-full h-10 pl-8 pr-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white"
+                                                placeholder="0,00"
+                                                value={manualPrice}
+                                                onChange={e => setManualPrice(e.target.value)}
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleAddManualItem}
+                                            disabled={!manualName || !manualPrice}
+                                            className="h-10 px-4 bg-slate-800 dark:bg-neutral-700 text-white rounded-lg hover:bg-slate-700 dark:hover:bg-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            <Plus size={18} />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -412,20 +479,22 @@ export const OrderForm: React.FC = () => {
                         {/* Totals and Services */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-100 dark:border-neutral-800 pt-6">
                             <div className="space-y-4">
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Mão de Obra (R$)</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-2.5 text-slate-400 text-sm font-bold">R$</span>
-                                        <input
-                                            className="w-full h-11 pl-10 pr-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-white font-bold"
-                                            inputMode="decimal"
-                                            type="number"
-                                            value={priceServices || ''}
-                                            onChange={(e) => setPriceServices(parseFloat(e.target.value) || 0)}
-                                            placeholder="0,00"
-                                        />
+                                {id && (
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Mão de Obra (R$)</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-2.5 text-slate-400 text-sm font-bold">R$</span>
+                                            <input
+                                                className="w-full h-11 pl-10 pr-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-white font-bold"
+                                                inputMode="decimal"
+                                                type="number"
+                                                value={priceServices || ''}
+                                                onChange={(e) => setPriceServices(parseFloat(e.target.value) || 0)}
+                                                placeholder="0,00"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Desconto (R$)</label>
                                     <div className="relative">

@@ -1,12 +1,23 @@
 import React from 'react';
 import { useApp } from '../store';
-import { Search, Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Eye, Printer, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Search, Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Eye, Printer, ChevronRight, ChevronLeft, TrendingDown, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Dashboard: React.FC = () => {
   const { orders, products, clients } = useApp();
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [selectedStat, setSelectedStat] = React.useState<'sales' | 'awaiting' | 'completed' | 'lowStock' | null>(null);
+  const [selectedStat, setSelectedStat] = React.useState<'sales' | 'awaiting' | 'completed' | 'lowStock' | 'costs' | null>(null);
+
+  // Persist showValues preference
+  const [showValues, setShowValues] = React.useState(() => {
+    const saved = localStorage.getItem('dashboard_showValues');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('dashboard_showValues', JSON.stringify(showValues));
+  }, [showValues]);
+
   const [dateFilter, setDateFilter] = React.useState<'today' | 'yesterday' | 'week' | 'month' | 'all' | 'custom'>('today');
   const [customDate, setCustomDate] = React.useState<string>(new Date().toISOString().split('T')[0]);
 
@@ -59,7 +70,8 @@ export const Dashboard: React.FC = () => {
       sales: 'Vendas Totais',
       awaiting: 'Aguardando Reparo',
       completed: 'Serviços Concluídos',
-      lowStock: 'Estoque Baixo'
+      lowStock: 'Estoque Baixo',
+      costs: 'Custo Total (Peças)'
     };
 
     const getStatData = () => {
@@ -77,11 +89,21 @@ export const Dashboard: React.FC = () => {
             .map(o => {
               const client = clients.find(c => c.id === o.clientId);
               return {
-                label: o.deviceModel,
-                value: 'Concluído',
                 sub: `${client?.name || 'Cliente'} • ${new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' -')}`
               };
             });
+        case 'costs':
+          return ordersInDateData.filter(o => o.status === 'Concluído').map(order => {
+            const orderCost = (order.selectedProducts || []).reduce((acc, item) => {
+              const p = products.find(prod => prod.id === item.productId);
+              return acc + ((p?.priceCost || 0) * item.quantity);
+            }, 0);
+            return {
+              label: order.deviceModel,
+              value: `R$ ${orderCost.toFixed(2)}`,
+              sub: `OS #${order.id.slice(0, 8)}`
+            };
+          }).filter(item => item.value !== 'R$ 0.00');
         case 'lowStock':
           return products.filter(p => p.quantity <= (p.minStockLevel || 5))
             .map(p => ({ label: p.name, value: `${p.quantity} un`, sub: `Mín: ${p.minStockLevel || 5}` }));
@@ -131,6 +153,13 @@ export const Dashboard: React.FC = () => {
 
   // Simple stats calculation based on DATE FILTERED data
   const totalSales = ordersInDateData.filter(o => o.status === 'Concluído').reduce((acc, order) => acc + order.total, 0);
+  const totalCosts = ordersInDateData.filter(o => o.status === 'Concluído').reduce((acc, order) => {
+    const orderCost = (order.selectedProducts || []).reduce((prodAcc, item) => {
+      const product = products.find(p => p.id === item.productId);
+      return prodAcc + ((product?.priceCost || 0) * item.quantity);
+    }, 0);
+    return acc + orderCost;
+  }, 0);
   const pendingCount = ordersInDateData.filter(o => o.status === 'Pendente' || o.status === 'Em Andamento').length;
   const completedCount = ordersInDateData.filter(o => o.status === 'Concluído').length;
   const lowStockCount = products.filter(p => p.quantity <= (p.minStockLevel || 5)).length; // Inventory is always global
@@ -157,6 +186,14 @@ export const Dashboard: React.FC = () => {
         <div className="flex flex-col sm:flex-row gap-3 items-stretch lg:items-center">
           {/* Date Filters */}
           <div className="flex items-center bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 rounded-lg p-1 shadow-sm overflow-x-auto sm:overflow-visible">
+            <button
+              onClick={() => setShowValues(!showValues)}
+              className="px-3 py-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-neutral-800 rounded-md transition-all mr-1"
+              title={showValues ? "Ocultar valores" : "Mostrar valores"}
+            >
+              {showValues ? <Eye size={18} /> : <EyeOff size={18} />}
+            </button>
+            <div className="w-px h-4 bg-slate-200 dark:bg-neutral-700 mx-1"></div>
             <button onClick={() => setDateFilter('today')} className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-all ${dateFilter === 'today' ? 'bg-primary text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-neutral-800'}`}>Hoje</button>
             <button onClick={() => setDateFilter('yesterday')} className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-all ${dateFilter === 'yesterday' ? 'bg-primary text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-neutral-800'}`}>Ontem</button>
             <button onClick={() => setDateFilter('week')} className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-all ${dateFilter === 'week' ? 'bg-primary text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-neutral-800'}`}>7 Dias</button>
@@ -194,7 +231,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in-up">
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 animate-fade-in-up">
         {/* Sales */}
         <button
           onClick={() => setSelectedStat('sales')}
@@ -211,7 +248,30 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="relative z-10">
             <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wide">Faturamento {dateFilter === 'today' ? 'do Dia' : ''}</p>
-            <p className="text-slate-900 dark:text-white text-2xl font-black mt-1 tracking-tight">R$ {totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            <p className="text-slate-900 dark:text-white text-2xl font-black mt-1 tracking-tight">
+              {showValues ? `R$ ${totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ ----'}
+            </p>
+          </div>
+        </button>
+
+        {/* Costs */}
+        <button
+          onClick={() => setSelectedStat('costs')}
+          className="text-left bg-white dark:bg-surface-dark p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-neutral-800 flex flex-col gap-4 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all group relative overflow-hidden"
+        >
+          <div className="absolute right-0 top-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity dark:opacity-10 dark:group-hover:opacity-20">
+            <TrendingDown size={80} className="dark:text-white" />
+          </div>
+          <div className="flex items-center justify-between relative z-10">
+            <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-xl text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/30 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+              <TrendingDown size={24} />
+            </div>
+          </div>
+          <div className="relative z-10">
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wide">Custos (Peças)</p>
+            <p className="text-slate-900 dark:text-white text-2xl font-black mt-1 tracking-tight">
+              {showValues ? `R$ ${totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ ----'}
+            </p>
           </div>
         </button>
 

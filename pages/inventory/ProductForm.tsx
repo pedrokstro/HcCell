@@ -105,7 +105,7 @@ export const ProductForm: React.FC = () => {
                 </div>
             </div>
             <div className="bg-white dark:bg-surface-dark shadow-sm ring-1 ring-slate-900/5 dark:ring-white/5 rounded-xl overflow-hidden">
-                <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
+                <form onSubmit={handleSubmit} className="p-4 md:p-8 space-y-6 md:space-y-8">
 
                     {/* Basic Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -225,9 +225,33 @@ export const ProductForm: React.FC = () => {
                                         <span className="text-[10px] font-bold uppercase">Selecionar Foto</span>
                                     </div>
                                 )}
-                                <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-                                    <Plus className="text-white" size={32} />
-                                </div>
+                                {formData.imageUrl ? (
+                                    <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setFormData({ ...formData, imageUrl: '' });
+                                            }}
+                                            className="p-2 bg-red-500 rounded-full text-white hover:bg-red-600 transition-colors"
+                                            title="Remover imagem"
+                                        >
+                                            <Trash2 size={20} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => document.getElementById('file-input')?.click()}
+                                            className="p-2 bg-white rounded-full text-slate-900 hover:bg-slate-100 transition-colors"
+                                            title="Trocar imagem"
+                                        >
+                                            <ImageIcon size={20} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                                        <Plus className="text-slate-500" size={32} />
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex-1 w-full space-y-4">
@@ -269,7 +293,7 @@ export const ProductForm: React.FC = () => {
                                         type="text"
                                         className="block w-full rounded-lg border-0 py-2.5 px-4 text-slate-900 dark:text-white shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-neutral-700 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm bg-slate-50 dark:bg-neutral-900 focus:bg-white dark:focus:bg-neutral-800 transition-all placeholder:text-slate-400"
                                         placeholder="Ou cole o URL da imagem aqui..."
-                                        value={formData.imageUrl && !formData.imageUrl.startsWith('data:') ? formData.imageUrl : ''}
+                                        value={formData.imageUrl || ''}
                                         onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
                                     />
                                 </div>

@@ -11,10 +11,24 @@ const ICON_OPTIONS = [
     { name: 'screen_lock_portrait', label: 'Películas' },
     { name: 'battery_charging_full', label: 'Carregadores' },
     { name: 'cable', label: 'Cabos' },
-    { name: 'headphones', label: 'Fones' },
-    { name: 'build', label: 'Peças' },
+    { name: 'headphones', label: 'Fones/Audio' },
+    { name: 'build', label: 'Peças/Reparo' },
     { name: 'battery_alert', label: 'Baterias' },
-    { name: 'smartphone', label: 'Smartphones' }
+    { name: 'smartphone', label: 'Smartphones' },
+    { name: 'tablet_mac', label: 'Tablets' },
+    { name: 'watch', label: 'Relógios/Smartwatch' },
+    { name: 'laptop', label: 'Notebooks/PC' },
+    { name: 'print', label: 'Impressoras' },
+    { name: 'router', label: 'Rede/Wifi' },
+    { name: 'memory', label: 'Armazenamento' },
+    { name: 'sim_card', label: 'Chips/SIM' },
+    { name: 'videogame_asset', label: 'Games' },
+    { name: 'speaker', label: 'Caixas de Som' },
+    { name: 'mouse', label: 'Periféricos' },
+    { name: 'security', label: 'Segurança' },
+    { name: 'settings_remote', label: 'Controles' },
+    { name: 'usb', label: 'USB/Pendrive' },
+    { name: 'sd_card', label: 'Cartão SD' }
 ];
 
 const COLOR_OPTIONS = [
@@ -25,7 +39,15 @@ const COLOR_OPTIONS = [
     { value: 'pink', bg: 'bg-pink-100 dark:bg-pink-900/30', text: 'text-pink-600 dark:text-pink-400' },
     { value: 'slate', bg: 'bg-slate-100 dark:bg-slate-700', text: 'text-slate-600 dark:text-slate-300' },
     { value: 'red', bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-600 dark:text-red-400' },
-    { value: 'emerald', bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-600 dark:text-emerald-400' }
+    { value: 'emerald', bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-600 dark:text-emerald-400' },
+    { value: 'cyan', bg: 'bg-cyan-100 dark:bg-cyan-900/30', text: 'text-cyan-600 dark:text-cyan-400' },
+    { value: 'teal', bg: 'bg-teal-100 dark:bg-teal-900/30', text: 'text-teal-600 dark:text-teal-400' },
+    { value: 'lime', bg: 'bg-lime-100 dark:bg-lime-900/30', text: 'text-lime-600 dark:text-lime-400' },
+    { value: 'rose', bg: 'bg-rose-100 dark:bg-rose-900/30', text: 'text-rose-600 dark:text-rose-400' },
+    { value: 'violet', bg: 'bg-violet-100 dark:bg-violet-900/30', text: 'text-violet-600 dark:text-violet-400' },
+    { value: 'fuchsia', bg: 'bg-fuchsia-100 dark:bg-fuchsia-900/30', text: 'text-fuchsia-600 dark:text-fuchsia-400' },
+    { value: 'sky', bg: 'bg-sky-100 dark:bg-sky-900/30', text: 'text-sky-600 dark:text-sky-400' },
+    { value: 'orange', bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-600 dark:text-orange-400' }
 ];
 
 export const CategoriesList: React.FC = () => {
@@ -542,7 +564,15 @@ export const CategoriesList: React.FC = () => {
                                                                     cat.color === 'pink' ? 'bg-pink-500' :
                                                                         cat.color === 'red' ? 'bg-red-500' :
                                                                             cat.color === 'emerald' ? 'bg-emerald-500' :
-                                                                                'bg-slate-500'
+                                                                                cat.color === 'cyan' ? 'bg-cyan-500' :
+                                                                                    cat.color === 'teal' ? 'bg-teal-500' :
+                                                                                        cat.color === 'lime' ? 'bg-lime-500' :
+                                                                                            cat.color === 'rose' ? 'bg-rose-500' :
+                                                                                                cat.color === 'violet' ? 'bg-violet-500' :
+                                                                                                    cat.color === 'fuchsia' ? 'bg-fuchsia-500' :
+                                                                                                        cat.color === 'sky' ? 'bg-sky-500' :
+                                                                                                            cat.color === 'orange' ? 'bg-orange-500' :
+                                                                                                                'bg-slate-500'
                                                         }`}
                                                     style={{ width: `${percentage}%` }}
                                                 ></div>
@@ -629,39 +659,44 @@ export const CategoriesList: React.FC = () => {
                                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                             Ícone
                                         </label>
-                                        <div className="grid grid-cols-4 gap-2">
-                                            {ICON_OPTIONS.map((icon) => (
-                                                <button
-                                                    key={icon.name}
-                                                    onClick={() => setFormData({ ...formData, icon: icon.name })}
-                                                    className={`p-3 rounded-lg border-2 transition-all ${formData.icon === icon.name
-                                                        ? 'border-primary bg-primary/10'
-                                                        : 'border-slate-200 dark:border-neutral-700 hover:border-slate-300 dark:hover:border-neutral-600'
-                                                        }`}
-                                                    title={icon.label}
-                                                >
-                                                    <span className="material-icons-round text-slate-700 dark:text-slate-300">{icon.name}</span>
-                                                </button>
-                                            ))}
+                                        <div className="max-h-[160px] overflow-y-auto border border-slate-100 dark:border-neutral-800 rounded-lg p-1">
+                                            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                                                {ICON_OPTIONS.map((icon) => (
+                                                    <button
+                                                        key={icon.name}
+                                                        onClick={() => setFormData({ ...formData, icon: icon.name })}
+                                                        className={`p-2 rounded-lg border-2 transition-all flex flex-col items-center gap-1 ${formData.icon === icon.name
+                                                            ? 'border-primary bg-primary/10'
+                                                            : 'border-transparent hover:bg-slate-50 dark:hover:bg-neutral-800'
+                                                            }`}
+                                                        title={icon.label}
+                                                    >
+                                                        <span className="material-icons-round text-slate-700 dark:text-slate-300 text-2xl">{icon.name}</span>
+                                                        <span className="text-[10px] text-slate-500 truncate w-full text-center">{icon.label}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                             Cor
                                         </label>
-                                        <div className="grid grid-cols-4 gap-2">
-                                            {COLOR_OPTIONS.map((color) => (
-                                                <button
-                                                    key={color.value}
-                                                    onClick={() => setFormData({ ...formData, color: color.value })}
-                                                    className={`p-3 rounded-lg border-2 transition-all ${formData.color === color.value
-                                                        ? 'border-primary'
-                                                        : 'border-slate-200 dark:border-neutral-700 hover:border-slate-300 dark:hover:border-neutral-600'
-                                                        }`}
-                                                >
-                                                    <div className={`w-full h-6 rounded ${color.bg}`}></div>
-                                                </button>
-                                            ))}
+                                        <div className="max-h-[120px] overflow-y-auto border border-slate-100 dark:border-neutral-800 rounded-lg p-1">
+                                            <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
+                                                {COLOR_OPTIONS.map((color) => (
+                                                    <button
+                                                        key={color.value}
+                                                        onClick={() => setFormData({ ...formData, color: color.value })}
+                                                        className={`p-1.5 rounded-lg border-2 transition-all ${formData.color === color.value
+                                                            ? 'border-primary'
+                                                            : 'border-transparent hover:bg-slate-50 dark:hover:bg-neutral-800'
+                                                            }`}
+                                                    >
+                                                        <div className={`w-full h-8 rounded ${color.bg}`}></div>
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

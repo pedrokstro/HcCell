@@ -105,8 +105,23 @@ export const Reports: React.FC = () => {
 
         const revenueChange = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0;
 
+        const totalCosts = completedOrders.reduce((acc, order) => {
+            if (!order.selectedProducts) return acc;
+            return acc + order.selectedProducts.reduce((pAcc, item) => {
+                // Se for item manual ou produto não encontrado, custo é 0
+                const product = products.find(p => p.id === item.productId);
+                return pAcc + ((product?.priceCost || 0) * item.quantity);
+            }, 0);
+        }, 0);
+
+        const netProfit = totalRevenue - totalCosts;
+        const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+
         return {
             totalRevenue,
+            totalCosts,
+            netProfit,
+            profitMargin,
             totalServices,
             totalParts,
             totalDiscount,
@@ -116,11 +131,11 @@ export const Reports: React.FC = () => {
             inProgressCount: filteredOrders.filter(o => o.status === OrderStatus.IN_PROGRESS).length,
             revenueChange
         };
-    }, [completedOrders, filteredOrders, orders, dateFilter]);
+    }, [completedOrders, filteredOrders, orders, dateFilter, products]);
 
     // Dados para gráfico de faturamento diário/mensal
     const revenueChartData = useMemo(() => {
-        const data: { [key: string]: { name: string; faturamento: number; ordens: number } } = {};
+        const data: { [key: string]: { name: string; faturamento: number; ordens: number; lucro: number } } = {};
 
         completedOrders.forEach(order => {
             const date = new Date(order.createdAt);
@@ -135,10 +150,17 @@ export const Reports: React.FC = () => {
             }
 
             if (!data[key]) {
-                data[key] = { name: key, faturamento: 0, ordens: 0 };
+                data[key] = { name: key, faturamento: 0, ordens: 0, lucro: 0 };
             }
             data[key].faturamento += order.total;
             data[key].ordens += 1;
+
+            // Calc lucro for chart
+            const orderCost = (order.selectedProducts || []).reduce((acc, item) => {
+                const product = products.find(p => p.id === item.productId);
+                return acc + ((product?.priceCost || 0) * item.quantity);
+            }, 0);
+            data[key].lucro = (data[key].lucro || 0) + (order.total - orderCost);
         });
 
         return Object.values(data).sort((a, b) => {
@@ -279,6 +301,143 @@ export const Reports: React.FC = () => {
             .slice(0, 10);
     }, [filteredOrders]);
 
+    // Exportar para PDF
+    const handleExportPDF = () => {
+        const frame = document.createElement('iframe');
+        frame.style.position = 'absolute';
+        frame.style.top = '-9999px';
+        document.body.appendChild(frame);
+
+        const frameDoc = frame.contentWindow?.document;
+        if (!frameDoc) return;
+
+        const title = `Relatório de Vendas - ${dateFilter === 'custom' ? 'Período Personalizado' :
+            dateFilter === 'today' ? 'Hoje' :
+                dateFilter === 'week' ? 'Últimos 7 dias' :
+                    dateFilter === 'month' ? 'Este Mês' : 'Este Ano'}`;
+
+        let rows = '';
+        filteredOrders.forEach(order => {
+            const client = clients.find(c => c.id === order.clientId);
+            rows += `
+                <tr>
+                    <td>${order.displayId || order.id.slice(0, 8)}</td>
+                    <td>${new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
+                    <td>${client?.name || 'Desconhecido'}</td>
+                    <td>${order.deviceModel}</td>
+                    <td>
+                        <span class="status-badge ${order.status === 'Concluído' ? 'status-green' : order.status === 'Cancelado' ? 'status-red' : 'status-gray'}">
+                            ${order.status}
+                        </span>
+                    </td>
+                    <td class="right">R$ ${order.total.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+
+        const formatDate = (dateStr: string) => {
+            if (!dateStr) return '';
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
+        };
+
+        const periodText = dateFilter === 'custom' && startDate && endDate
+            ? `${formatDate(startDate)} até ${formatDate(endDate)}`
+            : new Date().toLocaleDateString('pt-BR');
+
+        frameDoc.write(`
+            <html>
+                <head>
+                    <title>Relatório HCCELL</title>
+                    <style>
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; }
+                        h1 { margin-bottom: 5px; color: #1e293b; }
+                        p.subtitle { color: #64748b; margin-bottom: 30px; font-size: 14px; }
+                        .metrics { display: flex; gap: 20px; margin-bottom: 40px; }
+                        .metric-card { border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; flex: 1; background: #fff; }
+                        .metric-title { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; margin-bottom: 8px; }
+                        .metric-value { font-size: 24px; font-weight: 900; color: #0f172a; }
+                        
+                        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                        th, td { border-bottom: 1px solid #e2e8f0; padding: 12px 8px; text-align: left; }
+                        th { background-color: #f8fafc; font-weight: bold; color: #475569; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+                        .right { text-align: right; }
+                        
+                        .status-badge { padding: 4px 8px; border-radius: 99px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+                        .status-green { background: #dcfce7; color: #166534; }
+                        .status-red { background: #fee2e2; color: #991b1b; }
+                        .status-gray { background: #f1f5f9; color: #475569; }
+
+                        .footer { margin-top: 50px; text-align: center; color: #94a3b8; font-size: 10px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>${title}</h1>
+                    <p class="subtitle">Gerado em ${new Date().toLocaleString('pt-BR')} • Período: ${periodText}</p>
+                    
+                    <div class="metrics">
+                        <div class="metric-card">
+                            <div class="metric-title">Faturamento</div>
+                            <div class="metric-value">R$ ${metrics.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-title">Custos (Peças)</div>
+                            <div class="metric-value" style="color: #ef4444;">- R$ ${metrics.totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-title">Lucro Líquido</div>
+                            <div class="metric-value" style="color: #22c55e;">R$ ${metrics.netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-title">Concluídas</div>
+                            <div class="metric-value">${metrics.ordersCount}</div>
+                        </div>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>OS</th>
+                                <th>Data</th>
+                                <th>Cliente</th>
+                                <th>Aparelho</th>
+                                <th>Status</th>
+                                <th class="right">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                        <tfoot>
+                             <tr>
+                                <td colspan="5" class="right" style="padding-top: 10px;"><strong>FATURAMENTO TOTAL</strong></td>
+                                <td class="right" style="padding-top: 10px;"><strong>R$ ${metrics.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
+                             </tr>
+                             <tr>
+                                <td colspan="5" class="right"><strong>CUSTOS TOTAIS (PEÇAS)</strong></td>
+                                <td class="right" style="color: #ef4444;"><strong>- R$ ${metrics.totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
+                             </tr>
+                             <tr>
+                                <td colspan="5" class="right" style="padding-top: 10px; font-size: 14px; border-top: 2px solid #e2e8f0;"><strong>LUCRO LÍQUIDO</strong></td>
+                                <td class="right" style="padding-top: 10px; font-size: 16px; color: #22c55e; border-top: 2px solid #e2e8f0;"><strong>R$ ${metrics.netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
+                             </tr>
+                        </tfoot>
+                    </table>
+                    
+                    <div class="footer">
+                        HCCELL Assistência Técnica • Sistema de Gestão
+                    </div>
+                </body>
+            </html>
+        `);
+        frameDoc.close();
+        setTimeout(() => {
+            frame.contentWindow?.focus();
+            frame.contentWindow?.print();
+            setTimeout(() => document.body.removeChild(frame), 1000);
+        }, 500);
+    };
+
     // Exportar para CSV
     const handleExportCSV = () => {
         const headers = ['ID', 'Data', 'Cliente', 'Aparelho', 'Status', 'Serviços', 'Peças', 'Desconto', 'Total', 'Pagamento'];
@@ -329,6 +488,7 @@ export const Reports: React.FC = () => {
                             { value: 'week', label: '7 dias' },
                             { value: 'month', label: 'Mês' },
                             { value: 'year', label: 'Ano' },
+                            { value: 'custom', label: 'Manual' },
                         ].map(option => (
                             <button
                                 key={option.value}
@@ -344,13 +504,24 @@ export const Reports: React.FC = () => {
                     </div>
 
                     {/* Exportar */}
-                    <button
-                        onClick={handleExportCSV}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 dark:bg-slate-700 text-white rounded-xl font-bold text-sm hover:bg-slate-900 transition-all"
-                    >
-                        <Download size={16} />
-                        Exportar
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleExportPDF}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all"
+                            title="Exportar PDF"
+                        >
+                            <FileText size={16} />
+                            PDF
+                        </button>
+                        <button
+                            onClick={handleExportCSV}
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-800 dark:bg-slate-700 text-white rounded-xl font-bold text-sm hover:bg-slate-900 transition-all"
+                            title="Exportar CSV"
+                        >
+                            <Download size={16} />
+                            CSV
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -375,7 +546,7 @@ export const Reports: React.FC = () => {
             )}
 
             {/* Cards de Métricas */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
                 {/* Faturamento Total */}
                 <div className="bg-gradient-to-br from-primary to-cyan-600 rounded-2xl p-6 text-white shadow-xl shadow-primary/20">
                     <div className="flex items-center justify-between mb-4">
@@ -391,40 +562,55 @@ export const Reports: React.FC = () => {
                         )}
                     </div>
                     <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">Faturamento</p>
-                    <p className="text-2xl md:text-3xl font-black">R$ {metrics.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    <p className="text-xl lg:text-2xl font-black">R$ {metrics.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                </div>
+
+                {/* Lucro Líquido */}
+                <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-green-500/10 rounded-bl-full -mr-4 -mt-4"></div>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400">
+                            <TrendingUp size={20} />
+                        </div>
+                        <div className="px-2 py-1 bg-green-100 dark:bg-green-900/20 rounded-lg text-[10px] font-bold text-green-700 dark:text-green-400">
+                            {metrics.profitMargin.toFixed(0)}% Margem
+                        </div>
+                    </div>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Lucro Líquido</p>
+                    <p className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white">R$ {metrics.netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                </div>
+
+                {/* Custos */}
+                <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-xl text-red-600 dark:text-red-400">
+                            <TrendingDown size={20} />
+                        </div>
+                    </div>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Custos (Peças)</p>
+                    <p className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white">R$ {metrics.totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
 
                 {/* Ticket Médio */}
                 <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-purple-600 dark:text-purple-400">
-                            <TrendingUp size={20} />
+                            <DollarSign size={20} />
                         </div>
                     </div>
                     <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Ticket Médio</p>
-                    <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">R$ {metrics.avgTicket.toFixed(2)}</p>
+                    <p className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white">R$ {metrics.avgTicket.toFixed(0)}</p>
                 </div>
 
                 {/* Ordens Concluídas */}
                 <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                        <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400">
                             <FileText size={20} />
                         </div>
                     </div>
                     <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Concluídas</p>
-                    <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">{metrics.ordersCount}</p>
-                </div>
-
-                {/* Em Andamento */}
-                <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400">
-                            <Wrench size={20} />
-                        </div>
-                    </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Em Andamento</p>
-                    <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">{metrics.inProgressCount + metrics.pendingCount}</p>
+                    <p className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white">{metrics.ordersCount}</p>
                 </div>
             </div>
 
@@ -453,7 +639,8 @@ export const Reports: React.FC = () => {
                                         formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Faturamento']}
                                         contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
                                     />
-                                    <Area type="monotone" dataKey="faturamento" stroke="#00CCFF" strokeWidth={3} fill="url(#colorFaturamento)" />
+                                    <Area type="monotone" dataKey="faturamento" stroke="#00CCFF" strokeWidth={3} fill="url(#colorFaturamento)" name="Faturamento" />
+                                    <Area type="monotone" dataKey="lucro" stroke="#22C55E" strokeWidth={3} fillOpacity={0} name="Lucro" />
                                 </AreaChart>
                             </ResponsiveContainer>
                         ) : (

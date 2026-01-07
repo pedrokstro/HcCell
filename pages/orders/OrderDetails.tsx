@@ -114,6 +114,8 @@ export const OrderDetails: React.FC = () => {
     };
 
     const handlePrintLabel = () => {
+        const originalTitle = document.title;
+        document.title = `etiqueta_${order.displayId || order.id.slice(0, 8)}`;
         const frame = document.createElement('iframe');
         frame.style.position = 'absolute';
         frame.style.top = '-9999px';
@@ -156,12 +158,17 @@ export const OrderDetails: React.FC = () => {
         setTimeout(() => {
             frame.contentWindow?.focus();
             frame.contentWindow?.print();
-            setTimeout(() => document.body.removeChild(frame), 1000);
+            setTimeout(() => {
+                document.body.removeChild(frame);
+                document.title = originalTitle;
+            }, 1000);
         }, 500);
     };
 
     // Impressão otimizada para impressora térmica 80mm (Epson TM-T20)
     const handlePrintThermal = () => {
+        const originalTitle = document.title;
+        document.title = `recibo_termico_${order.displayId || order.id.slice(0, 8)}`;
         const frame = document.createElement('iframe');
         frame.style.position = 'absolute';
         frame.style.top = '-9999px';
@@ -312,10 +319,7 @@ export const OrderDetails: React.FC = () => {
                     ${order.servicePerformed ? `<div class="small" style="margin: 1mm 0;">${order.servicePerformed}</div>` : ''}
                     
                     <table>
-                        <tr>
-                            <td>Mão de obra</td>
-                            <td class="right">R$ ${order.priceServices.toFixed(2)}</td>
-                        </tr>
+
                         <tr>
                             <td>Peças</td>
                             <td class="right">R$ ${order.priceParts.toFixed(2)}</td>
@@ -376,7 +380,10 @@ export const OrderDetails: React.FC = () => {
         setTimeout(() => {
             frame.contentWindow?.focus();
             frame.contentWindow?.print();
-            setTimeout(() => document.body.removeChild(frame), 1000);
+            setTimeout(() => {
+                document.body.removeChild(frame);
+                document.title = originalTitle;
+            }, 1000);
         }, 500);
     };
 
@@ -475,8 +482,14 @@ export const OrderDetails: React.FC = () => {
     };
 
     const handlePrint = () => {
+        const originalTitle = document.title;
+        document.title = `os${order.displayId || order.id.slice(0, 8)}`;
+
         const content = document.getElementById('receipt-content');
-        if (!content) return;
+        if (!content) {
+            document.title = originalTitle;
+            return;
+        }
 
         // Create a hidden iframe
         const frame = document.createElement('iframe');
@@ -500,7 +513,7 @@ export const OrderDetails: React.FC = () => {
         frameDoc.write(`
             <html>
                 <head>
-                    <title>Recibo OS #${order.displayId || order.id.slice(0, 8)}</title>
+                    <title>os{order.displayId || order.id.slice(0, 8)}.pdf</title>
                     ${styles}
                     <style>
                         body { 
@@ -538,6 +551,7 @@ export const OrderDetails: React.FC = () => {
             // Clean up after print dialog closes
             setTimeout(() => {
                 document.body.removeChild(frame);
+                document.title = originalTitle;
             }, 1000);
         }, 500);
     };
@@ -1180,10 +1194,7 @@ export const OrderDetails: React.FC = () => {
                                             <>
                                                 <table className="w-full text-xs">
                                                     <tbody className="font-bold text-slate-700">
-                                                        <tr className="border-b border-slate-50">
-                                                            <td className="py-2">Mão de obra especializada</td>
-                                                            <td className="py-2 text-right">R$ {order.priceServices.toFixed(2)}</td>
-                                                        </tr>
+
                                                         <tr className="border-b border-slate-50">
                                                             <td className="py-2">Peças e componentes</td>
                                                             <td className="py-2 text-right">R$ {order.priceParts.toFixed(2)}</td>

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from './lib/supabase';
-import { Client, Product, ServiceOrder, OrderStatus, User, Category, ProductMovement } from './types';
+import { Client, Product, ServiceOrder, OrderStatus, User, Category, ProductMovement, MovementType } from './types';
 
 interface AppContextType {
     clients: Client[];
@@ -363,9 +363,41 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const deleteOrder = async (id: string) => {
+        // Return parts to stock before deleting, if not already cancelled
+        const orderToDelete = orders.find(o => o.id === id);
+
+        if (orderToDelete && orderToDelete.status !== OrderStatus.CANCELLED && orderToDelete.selectedProducts?.length) {
+            for (const item of orderToDelete.selectedProducts) {
+                // Skip manual items
+                if (item.productId.startsWith('manual-')) continue;
+
+                const product = products.find(p => p.id === item.productId);
+                if (product) {
+                    // Update product quantity
+                    await supabase.from('products').update({
+                        quantity: product.quantity + item.quantity
+                    }).eq('id', product.id);
+
+                    // Log movement
+                    await supabase.from('product_movements').insert([{
+                        product_id: product.id,
+                        type: MovementType.ENTRY,
+                        quantity_change: item.quantity,
+                        price_old: product.priceSale,
+                        price_new: product.priceSale,
+                        note: `Estoque devolvido (Exclusão da OS #${id.slice(0, 8)})`,
+                        technician_name: user?.name || 'Sistema',
+                        created_at: new Date().toISOString()
+                    }]);
+                }
+            }
+        }
+
         const { error } = await supabase.from('service_orders').delete().eq('id', id);
         if (error) throw error;
-        setOrders(orders.filter(o => o.id !== id));
+
+        // Reload all data to ensure products match DB and order is gone
+        fetchAllData();
     };
 
     const addProductMovement = async (movement: Partial<ProductMovement>) => {

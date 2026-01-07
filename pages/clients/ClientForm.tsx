@@ -25,7 +25,7 @@ export const ClientForm: React.FC = () => {
   }, [id, clients]);
 
   const handleSubmit = () => {
-    if (!formData.name || !formData.cpf) return;
+    if (!formData.name) return;
 
     if (id) {
       updateClient({ ...formData, id } as Client);
@@ -70,10 +70,9 @@ export const ClientForm: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">CPF <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">CPF</label>
             <input
               type="text"
-              required
               className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               placeholder="000.000.000-00"
               value={formData.cpf}

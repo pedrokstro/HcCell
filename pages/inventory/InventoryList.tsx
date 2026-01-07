@@ -11,7 +11,7 @@ export const InventoryList: React.FC = () => {
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [statusFilter, setStatusFilter] = useState('all');
 
-    const totalValue = products.reduce((acc, p) => acc + (p.priceSale * p.quantity), 0);
+
     const lowStockCount = products.filter(p => p.quantity <= (p.minStockLevel || 5)).length;
 
     // Use categories from store for filter options, plus 'All'
@@ -66,16 +66,7 @@ export const InventoryList: React.FC = () => {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-fade-in-up">
-                    <div className="bg-white dark:bg-surface-dark p-5 rounded-xl border border-slate-200 dark:border-neutral-800 shadow-sm">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg text-green-600 dark:text-green-400">
-                                <DollarSign size={20} />
-                            </div>
-                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Valor Total</p>
-                        </div>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                    </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-in-up">
 
                     <div className="bg-white dark:bg-surface-dark p-5 rounded-xl border border-slate-200 dark:border-neutral-800 shadow-sm">
                         <div className="flex items-center gap-3 mb-2">
