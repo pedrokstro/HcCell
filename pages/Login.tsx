@@ -86,30 +86,7 @@ export const Login: React.FC = () => {
               <p className="text-xs font-bold text-slate-400 tracking-[0.25em] uppercase">Assistência Técnica</p>
             </div>
           </div>
-          {mode !== 'forgot' && (
-            <div className="flex p-1 bg-slate-100/80 backdrop-blur-sm rounded-xl mb-8 border border-slate-200">
-              <button
-                type="button"
-                onClick={() => { setMode('signin'); setError(null); }}
-                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${mode === 'signin'
-                  ? 'bg-white text-primary shadow-sm ring-1 ring-black/5'
-                  : 'text-slate-500 hover:text-slate-700'
-                  }`}
-              >
-                Entrar
-              </button>
-              <button
-                type="button"
-                onClick={() => { setMode('signup'); setError(null); }}
-                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${mode === 'signup'
-                  ? 'bg-white text-primary shadow-sm ring-1 ring-black/5'
-                  : 'text-slate-500 hover:text-slate-700'
-                  }`}
-              >
-                Criar Conta
-              </button>
-            </div>
-          )}
+          {/* Account creation disabled */}
 
           <div key={mode} className="animate-fade-in-up">
             <div className="flex flex-col gap-2 text-center mb-8">
