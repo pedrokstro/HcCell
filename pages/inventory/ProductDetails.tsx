@@ -180,11 +180,11 @@ export const ProductDetails: React.FC = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
                                 <div className="p-5 rounded-2xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20 flex flex-col gap-1 shadow-sm transition-all hover:scale-[1.02]">
                                     <span className="text-green-700 dark:text-green-400 text-[10px] uppercase font-bold tracking-wider">Preço de Venda</span>
-                                    <p className="text-3xl font-black text-green-800 dark:text-green-300">R$ {product.priceSale.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                    <p className="text-3xl font-black text-green-800 dark:text-green-300">R$ {(product.priceSale || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                                 </div>
                                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-neutral-900 border border-slate-200/60 dark:border-neutral-800 flex flex-col gap-1">
                                     <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold tracking-wider">Custo de Aquisição</span>
-                                    <p className="text-2xl font-bold text-slate-900 dark:text-white">R$ {product.priceCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                    <p className="text-2xl font-bold text-slate-900 dark:text-white">R$ {(product.priceCost || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                                 </div>
                                 <div className="p-5 rounded-2xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20 flex flex-col gap-1 shadow-sm transition-all hover:scale-[1.02]">
                                     <span className="text-blue-700 dark:text-blue-400 text-[10px] uppercase font-bold tracking-wider">Peças em Estoque</span>

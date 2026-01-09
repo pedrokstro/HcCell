@@ -40,7 +40,7 @@ const getStatusColor = (status: OrderStatus) => {
         case OrderStatus.PENDING: return 'bg-yellow-100 text-yellow-800';
         case OrderStatus.IN_PROGRESS: return 'bg-blue-100 text-blue-800';
         case OrderStatus.COMPLETED: return 'bg-green-100 text-green-800';
-        case OrderStatus.WAITING_PARTS: return 'bg-orange-100 text-orange-800';
+        case OrderStatus.WAITING_PAYMENT: return 'bg-orange-100 text-orange-800';
         case OrderStatus.CANCELLED: return 'bg-red-100 text-red-800';
         default: return 'bg-slate-100 text-slate-800';
     }
@@ -62,6 +62,7 @@ export const OrderDetails: React.FC = () => {
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | ''>('');
     const [serviceNotes, setServiceNotes] = useState('');
     const [isSavingService, setIsSavingService] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     // Ref for the QR Code (hidden but used for generating SVG)
     const qrRef = useRef<HTMLDivElement>(null);
@@ -89,8 +90,8 @@ export const OrderDetails: React.FC = () => {
             case OrderStatus.COMPLETED:
                 message += `Seu aparelho ${order.deviceModel} está pronto! O serviço foi concluído com sucesso. Valor total: R$ ${total}. Já pode vir retirar?`;
                 break;
-            case OrderStatus.WAITING_PARTS:
-                message += `Sobre seu aparelho ${order.deviceModel}: Estamos aguardando a chegada da peça necessária para o reparo. Assim que chegar, daremos prioridade!`;
+            case OrderStatus.WAITING_PAYMENT:
+                message += `Sobre seu aparelho ${order.deviceModel}: Estamos aguardando confirmação (Pagamento/Peça) para prosseguir!`;
                 break;
             case OrderStatus.IN_PROGRESS:
                 message += `Passando para avisar que já iniciamos o reparo do seu ${order.deviceModel}. Qualquer novidade avisamos!`;
@@ -448,15 +449,21 @@ export const OrderDetails: React.FC = () => {
     };
 
     const handleDelete = async () => {
-        if (window.confirm('Tem certeza que deseja excluir esta ordem de serviço permanentemente?')) {
-            try {
-                await deleteOrder(order.id);
-                navigate('/orders');
-                showToast('Ordem de serviço excluída.', 'success');
-            } catch (error) {
-                console.error("Failed to delete order", error);
-                showToast("Erro ao excluir ordem.", 'error');
-            }
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        setIsDeleting(true);
+        try {
+            await deleteOrder(order.id);
+            navigate('/orders');
+            showToast('Ordem de serviço excluída.', 'success');
+        } catch (error) {
+            console.error("Failed to delete order", error);
+            showToast("Erro ao excluir ordem.", 'error');
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteModal(false);
         }
     };
 
@@ -599,7 +606,7 @@ export const OrderDetails: React.FC = () => {
                         <FileText size={20} />
                         Gerar Recibo
                     </button>
-                    {(order.status === OrderStatus.PENDING || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_PARTS) && (
+                    {(order.status === OrderStatus.PENDING || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_PAYMENT) && (
                         <button onClick={handleComplete} className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 font-bold transition-all shadow-xl shadow-green-200">
                             <CheckCircle size={20} />
                             Concluir
@@ -639,7 +646,7 @@ export const OrderDetails: React.FC = () => {
                         </button>
                     </div>
 
-                    {(order.status === OrderStatus.PENDING || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_PARTS) && (
+                    {(order.status === OrderStatus.PENDING || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_PAYMENT) && (
                         <button onClick={handleComplete} className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-xl font-bold shadow-lg shadow-green-200">
                             <CheckCircle size={20} />
                             Concluir Serviço
@@ -718,6 +725,12 @@ export const OrderDetails: React.FC = () => {
                                         <p className="text-amber-700 dark:text-amber-400 font-bold text-xs bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 px-2 py-0.5 rounded-lg inline-block">{order.passcode || 'Nenhuma'}</p>
                                     </div>
                                 </div>
+                                {order.deviceImage && (
+                                    <div className="pt-4 mt-4 border-t border-slate-100 dark:border-neutral-800">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Foto do Aparelho</p>
+                                        <img src={order.deviceImage} alt="Foto do Aparelho" className="w-full h-auto rounded-xl border border-slate-200 dark:border-neutral-700 object-cover max-h-[300px]" />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -767,7 +780,7 @@ export const OrderDetails: React.FC = () => {
                                 >
                                     <option value={OrderStatus.PENDING}>{OrderStatus.PENDING}</option>
                                     <option value={OrderStatus.IN_PROGRESS}>{OrderStatus.IN_PROGRESS}</option>
-                                    <option value={OrderStatus.WAITING_PARTS}>{OrderStatus.WAITING_PARTS}</option>
+                                    <option value={OrderStatus.WAITING_PAYMENT}>{OrderStatus.WAITING_PAYMENT}</option>
                                     {order.status === OrderStatus.COMPLETED && (
                                         <option value={OrderStatus.COMPLETED}>{OrderStatus.COMPLETED}</option>
                                     )}
@@ -820,6 +833,15 @@ export const OrderDetails: React.FC = () => {
                                 <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Desconto</span>
                                 <span className="font-bold text-green-600 dark:text-green-400">- R$ {order.discount.toFixed(2)}</span>
                             </div>
+                            {(() => {
+                                const totalPartsCost = (order.selectedProducts || []).reduce((acc, item) => acc + ((item.cost || 0) * item.quantity), 0);
+                                return totalPartsCost > 0 ? (
+                                    <div className="flex justify-between items-center py-2 border-b border-slate-50 dark:border-neutral-800">
+                                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Custo das Peças</span>
+                                        <span className="font-bold text-red-600 dark:text-red-400">R$ {totalPartsCost.toFixed(2)}</span>
+                                    </div>
+                                ) : null;
+                            })()}
                             {order.paymentMethod && (
                                 <div className="flex justify-between items-center py-2 border-b border-slate-50 dark:border-neutral-800">
                                     <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Pagamento</span>
@@ -834,7 +856,7 @@ export const OrderDetails: React.FC = () => {
                     </div>
 
                     {/* Warranty Card */}
-                    {order.warrantyEnd && (
+                    {(order.warrantyEnd || order.noWarranty) && (
                         <div className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 overflow-hidden">
                             <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
@@ -843,59 +865,65 @@ export const OrderDetails: React.FC = () => {
                                     </div>
                                     <h2 className="font-bold text-slate-900 dark:text-white">Garantia</h2>
                                 </div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">90 Dias</span>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{order.noWarranty ? 'SEM GARANTIA' : '90 Dias'}</span>
                             </div>
                             <div className="p-6 space-y-6">
-                                {(() => {
-                                    const end = new Date(order.warrantyEnd);
-                                    const start = new Date(order.createdAt);
-                                    const now = new Date();
-                                    const totalDays = 90;
-                                    const diffTime = end.getTime() - now.getTime();
-                                    const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                    const progress = Math.max(0, Math.min(100, (remainingDays / totalDays) * 100));
-                                    const isExpired = remainingDays <= 0;
+                                {order.noWarranty ? (
+                                    <div className="text-center py-4">
+                                        <p className="text-sm font-medium text-slate-500">Este serviço foi registrado sem garantia.</p>
+                                    </div>
+                                ) : (
+                                    (() => {
+                                        const end = new Date(order.warrantyEnd!);
+                                        const start = new Date(order.createdAt);
+                                        const now = new Date();
+                                        const totalDays = 90;
+                                        const diffTime = end.getTime() - now.getTime();
+                                        const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                        const progress = Math.max(0, Math.min(100, (remainingDays / totalDays) * 100));
+                                        const isExpired = remainingDays <= 0;
 
-                                    return (
-                                        <>
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between items-center">
-                                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${isExpired ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                                                        {isExpired ? 'Expirada' : 'Ativa'}
-                                                    </span>
-                                                    <span className="text-xs font-bold text-slate-600">
-                                                        {isExpired ? 'Vencida' : `${remainingDays} dias restantes`}
-                                                    </span>
+                                        return (
+                                            <>
+                                                <div className="space-y-3">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${isExpired ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                                            {isExpired ? 'Expirada' : 'Ativa'}
+                                                        </span>
+                                                        <span className="text-xs font-bold text-slate-600">
+                                                            {isExpired ? 'Vencida' : `${remainingDays} dias restantes`}
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className={`h-full transition-all duration-1000 ${isExpired ? 'bg-red-500' : 'bg-primary'}`}
+                                                            style={{ width: `${progress}%` }}
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                    <div
-                                                        className={`h-full transition-all duration-1000 ${isExpired ? 'bg-red-500' : 'bg-primary'}`}
-                                                        style={{ width: `${progress}%` }}
-                                                    />
-                                                </div>
-                                            </div>
 
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className="bg-slate-50 dark:bg-neutral-900 p-4 rounded-2xl border border-slate-100 dark:border-neutral-800 text-center">
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Início</p>
-                                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{start.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="bg-slate-50 dark:bg-neutral-900 p-4 rounded-2xl border border-slate-100 dark:border-neutral-800 text-center">
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Início</p>
+                                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{start.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
+                                                    </div>
+                                                    <div className="bg-slate-50 dark:bg-neutral-900 p-4 rounded-2xl border border-slate-100 dark:border-neutral-800 text-center">
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Término</p>
+                                                        <p className="text-xs font-bold text-primary">{end.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="bg-slate-50 dark:bg-neutral-900 p-4 rounded-2xl border border-slate-100 dark:border-neutral-800 text-center">
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Término</p>
-                                                    <p className="text-xs font-bold text-primary">{end.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
-                                                </div>
-                                            </div>
 
-                                            <button
-                                                onClick={() => setShowWarrantyModal(true)}
-                                                className="w-full py-3 rounded-2xl border border-slate-200 dark:border-neutral-800 text-slate-600 dark:text-slate-400 text-xs font-bold hover:bg-slate-50 dark:hover:bg-neutral-900 hover:text-slate-900 dark:hover:text-white transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <Clock size={16} />
-                                                Renovar Garantia
-                                            </button>
-                                        </>
-                                    );
-                                })()}
+                                                <button
+                                                    onClick={() => setShowWarrantyModal(true)}
+                                                    className="w-full py-3 rounded-2xl border border-slate-200 dark:border-neutral-800 text-slate-600 dark:text-slate-400 text-xs font-bold hover:bg-slate-50 dark:hover:bg-neutral-900 hover:text-slate-900 dark:hover:text-white transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    <Clock size={16} />
+                                                    Renovar Garantia
+                                                </button>
+                                            </>
+                                        );
+                                    })()
+                                )}
                             </div>
                         </div>
                     )}
@@ -1019,6 +1047,47 @@ export const OrderDetails: React.FC = () => {
                                     <Check size={20} /> Confirmar Pagamento
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="w-full max-w-md transform overflow-hidden rounded-[32px] bg-white dark:bg-surface-dark p-8 text-center shadow-2xl transition-all border border-slate-100 dark:border-neutral-800 animate-in zoom-in-95 duration-300">
+                        <div className="mx-auto w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-6">
+                            <Trash2 size={32} className="text-red-600 dark:text-red-400" />
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Excluir Ordem?</h3>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
+                            Tem certeza que deseja excluir esta ordem de serviço <span className="font-bold text-slate-900 dark:text-white">#{order.id.slice(0, 8)}</span> permanentemente?
+                            <br /><span className="text-red-500 font-medium">Esta ação não pode ser desfeita.</span>
+                        </p>
+                        <div className="flex items-center justify-center gap-4">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="rounded-2xl px-8 py-3.5 text-sm font-bold text-slate-500 bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                disabled={isDeleting}
+                                className="flex items-center gap-2 rounded-2xl bg-red-600 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-red-200 dark:shadow-none hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isDeleting ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        Excluindo...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 size={18} />
+                                        Sim, Excluir
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../../store';
-import { Search, Save, User, Package, X, Plus, Calculator, Settings, Smartphone } from 'lucide-react';
+import { Search, Save, User, Package, X, Plus, Calculator, Settings, Smartphone, Image as ImageIcon, ShieldAlert, Upload } from 'lucide-react';
 import { OrderStatus, ServiceOrder, MovementType } from '../../types';
 
 export const OrderForm: React.FC = () => {
@@ -17,6 +17,19 @@ export const OrderForm: React.FC = () => {
     const [passcode, setPasscode] = useState('');
     const [priceServices, setPriceServices] = useState<number>(0);
     const [discount, setDiscount] = useState<number>(0);
+    const [deviceImage, setDeviceImage] = useState('');
+    const [noWarranty, setNoWarranty] = useState(false);
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setDeviceImage(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     // Selected Products from Inventory
     const [selectedProducts, setSelectedProducts] = useState<{ productId: string; quantity: number; price: number; name: string }[]>([]);
@@ -99,6 +112,8 @@ export const OrderForm: React.FC = () => {
                 setPasscode(orderToEdit.passcode || '');
                 setPriceServices(orderToEdit.priceServices || 0);
                 setDiscount(orderToEdit.discount || 0);
+                setDeviceImage(orderToEdit.deviceImage || '');
+                setNoWarranty(orderToEdit.noWarranty || false);
                 setSelectedProducts(orderToEdit.selectedProducts || []);
             }
         }
@@ -115,6 +130,7 @@ export const OrderForm: React.FC = () => {
                 productId: product.id,
                 name: product.name,
                 price: product.priceSale,
+                cost: product.priceCost || 0,
                 quantity: 1
             }]);
         }
@@ -132,35 +148,61 @@ export const OrderForm: React.FC = () => {
             alert('Por favor, selecione um cliente.');
             return;
         }
-        if (!deviceModel || !issueDescription) {
-            alert('Preencha os campos obrigatórios do aparelho.');
+        if (!deviceModel) {
+            alert('Preencha o modelo do aparelho.');
             return;
         }
 
         try {
-            // Deduct stock for selected products
-            for (const item of selectedProducts) {
-                const product = products.find(p => p.id === item.productId);
-                if (product) {
-                    await updateProduct({
-                        ...product,
-                        quantity: product.quantity - item.quantity
-                    });
-
-                    // Record Exit Movement
-                    await addProductMovement({
-                        productId: product.id,
-                        type: MovementType.EXIT,
-                        quantityChange: -item.quantity,
-                        note: `Consumido na Ordem de Serviço (nova/editada)`
-                    });
-                }
-            }
 
             if (id) {
-                // Update existing order
+                // EDIT MODE: Calculate differences (delta) in stock
                 const existingOrder = orders.find(o => o.id === id);
                 if (existingOrder) {
+                    const oldProducts = existingOrder.selectedProducts || [];
+                    const newProducts = selectedProducts;
+
+                    // Get all unique product IDs involved
+                    const allProductIds = new Set([
+                        ...oldProducts.map(p => p.productId),
+                        ...newProducts.map(p => p.productId)
+                    ]);
+
+                    for (const productId of allProductIds) {
+                        // Skip manual items
+                        if (productId.startsWith('manual-')) continue;
+
+                        const oldItem = oldProducts.find(p => p.productId === productId);
+                        const newItem = newProducts.find(p => p.productId === productId);
+
+                        const oldQty = oldItem ? oldItem.quantity : 0;
+                        const newQty = newItem ? newItem.quantity : 0;
+                        const diff = newQty - oldQty; // Positive: consumed more. Negative: returned to stock.
+
+                        if (diff !== 0) {
+                            const product = products.find(p => p.id === productId);
+                            if (product) {
+                                // Update Stock
+                                await updateProduct({
+                                    ...product,
+                                    quantity: product.quantity - diff
+                                });
+
+                                // Record Movement
+                                await addProductMovement({
+                                    productId: product.id,
+                                    type: diff > 0 ? MovementType.EXIT : MovementType.ENTRY,
+                                    quantityChange: diff > 0 ? -diff : Math.abs(diff),
+                                    note: `Atualização de OS (Edição)`
+                                });
+                            }
+                        }
+                    }
+
+                    // Save Order Updates
+                    // Save Order Updates
+                    const warrantyEnd = noWarranty ? null : (existingOrder.warrantyEnd || new Date(new Date().setDate(new Date().getDate() + 90)).toISOString());
+
                     await updateOrder({
                         ...existingOrder,
                         clientId: selectedClientId,
@@ -168,14 +210,39 @@ export const OrderForm: React.FC = () => {
                         serialNumber,
                         passcode,
                         issueDescription,
+                        deviceImage,
                         priceServices,
                         priceParts,
                         discount,
                         total,
+                        noWarranty,
+                        warrantyEnd: noWarranty ? null : warrantyEnd,
                         selectedProducts
                     });
                 }
             } else {
+                // NEW MODE: Deduct all selected products
+                for (const item of selectedProducts) {
+                    // Skip manual items
+                    if (item.productId.startsWith('manual-')) continue;
+
+                    const product = products.find(p => p.id === item.productId);
+                    if (product) {
+                        await updateProduct({
+                            ...product,
+                            quantity: product.quantity - item.quantity
+                        });
+
+                        // Record Exit Movement
+                        await addProductMovement({
+                            productId: product.id,
+                            type: MovementType.EXIT,
+                            quantityChange: -item.quantity,
+                            note: `Consumido na Ordem de Serviço (Nova)`
+                        });
+                    }
+                }
+
                 // Create new order
                 const createdAt = new Date().toISOString();
                 const warrantyEndDate = new Date();
@@ -187,13 +254,15 @@ export const OrderForm: React.FC = () => {
                     serialNumber,
                     passcode,
                     issueDescription,
+                    deviceImage,
                     status: OrderStatus.PENDING,
                     priceServices,
                     priceParts,
                     discount,
                     total,
                     createdAt,
-                    warrantyEnd: warrantyEndDate.toISOString(),
+                    noWarranty,
+                    warrantyEnd: noWarranty ? null : warrantyEndDate.toISOString(),
                     selectedProducts
                 } as Partial<ServiceOrder>);
             }
@@ -335,14 +404,35 @@ export const OrderForm: React.FC = () => {
                                 onChange={(e) => setPasscode(e.target.value)}
                             />
                         </div>
+                        <div className="flex flex-col gap-1.5 min-h-[120px]">
+                            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Foto do Aparelho (Opcional)</label>
+                            <div className="flex items-center gap-4">
+                                {deviceImage && (
+                                    <div className="relative group">
+                                        <img src={deviceImage} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
+                                        <button
+                                            type="button"
+                                            onClick={() => setDeviceImage('')}
+                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    </div>
+                                )}
+                                <label className="cursor-pointer bg-slate-50 dark:bg-neutral-900 border border-dashed border-slate-300 dark:border-neutral-700 text-slate-500 hover:text-primary hover:border-primary hover:bg-primary/5 transition-all rounded-lg p-4 flex flex-col items-center justify-center gap-2 text-xs font-bold w-full md:w-auto min-w-[120px]">
+                                    <Upload size={20} />
+                                    <span>Anexar Foto</span>
+                                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                                </label>
+                            </div>
+                        </div>
                         <div className="flex flex-col gap-1.5 md:col-span-2">
-                            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Problema Relatado *</label>
+                            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Problema Relatado</label>
                             <textarea
                                 className="w-full p-4 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-white min-h-[100px]"
                                 placeholder="Descreva o defeito informado pelo cliente..."
                                 value={issueDescription}
                                 onChange={(e) => setIssueDescription(e.target.value)}
-                                required
                             />
                         </div>
                     </div>
@@ -450,6 +540,10 @@ export const OrderForm: React.FC = () => {
                         {/* Selected Products List */}
                         {selectedProducts.length > 0 && (
                             <div className="space-y-2 border-t border-slate-100 dark:border-neutral-800 pt-4">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Peças Selecionadas</span>
+                                    <span className="text-xs text-slate-400">Clique no custo para editar</span>
+                                </div>
                                 {selectedProducts.map((item) => (
                                     <div key={item.productId} className="flex items-center justify-between bg-slate-50 dark:bg-neutral-900 p-3 rounded-lg border border-slate-200 dark:border-neutral-800 group animate-in slide-in-from-top-1 duration-200">
                                         <div className="flex items-center gap-3">
@@ -458,7 +552,9 @@ export const OrderForm: React.FC = () => {
                                             </div>
                                             <div className="flex flex-col">
                                                 <span className="text-sm font-bold text-slate-900 dark:text-white">{item.name}</span>
-                                                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Preço Un: R$ {item.price.toFixed(2)}</span>
+                                                <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider">
+                                                    <span className="text-slate-500 dark:text-slate-400 font-bold">Venda: R$ {item.price.toFixed(2)}</span>
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4">
@@ -476,24 +572,12 @@ export const OrderForm: React.FC = () => {
                             </div>
                         )}
 
+
                         {/* Totals and Services */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-100 dark:border-neutral-800 pt-6">
                             <div className="space-y-4">
                                 {id && (
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Mão de Obra (R$)</label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-2.5 text-slate-400 text-sm font-bold">R$</span>
-                                            <input
-                                                className="w-full h-11 pl-10 pr-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-white font-bold"
-                                                inputMode="decimal"
-                                                type="number"
-                                                value={priceServices || ''}
-                                                onChange={(e) => setPriceServices(parseFloat(e.target.value) || 0)}
-                                                placeholder="0,00"
-                                            />
-                                        </div>
-                                    </div>
+                                    <></>
                                 )}
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Desconto (R$)</label>
@@ -509,33 +593,51 @@ export const OrderForm: React.FC = () => {
                                         />
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="bg-slate-900 dark:bg-black rounded-2xl p-6 text-white flex flex-col justify-between shadow-xl shadow-slate-200 dark:shadow-none border border-slate-800 dark:border-neutral-800">
-                                <div className="space-y-3">
-                                    <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
-                                        <span>Subtotal Peças</span>
-                                        <span>R$ {priceParts.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
-                                        <span>Subtotal Serviços</span>
-                                        <span>R$ {priceServices.toFixed(2)}</span>
-                                    </div>
-                                    {discount > 0 && (
-                                        <div className="flex justify-between text-xs font-bold text-red-400 uppercase tracking-widest">
-                                            <span>Desconto</span>
-                                            <span>- R$ {discount.toFixed(2)}</span>
+                                <div className="bg-slate-900 dark:bg-black rounded-2xl p-6 text-white flex flex-col justify-between shadow-xl shadow-slate-200 dark:shadow-none border border-slate-800 dark:border-neutral-800">
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                            <span>Subtotal Peças</span>
+                                            <span>R$ {priceParts.toFixed(2)}</span>
                                         </div>
-                                    )}
-                                </div>
-                                <div className="border-t border-slate-800 dark:border-neutral-800 mt-4 pt-4 flex justify-between items-center">
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-black text-primary uppercase tracking-tighter">Total da Ordem</span>
-                                        <span className="text-3xl font-black">R$ {total.toFixed(2)}</span>
+                                        <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                            <span>Subtotal Serviços</span>
+                                            <span>R$ {priceServices.toFixed(2)}</span>
+                                        </div>
+                                        {discount > 0 && (
+                                            <div className="flex justify-between text-xs font-bold text-red-400 uppercase tracking-widest">
+                                                <span>Desconto</span>
+                                                <span>- R$ {discount.toFixed(2)}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                    <Calculator size={32} className="text-slate-700 dark:text-slate-600" />
+                                    <div className="border-t border-slate-800 dark:border-neutral-800 mt-4 pt-4 flex justify-between items-center">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-black text-primary uppercase tracking-tighter">Total da Ordem</span>
+                                            <span className="text-3xl font-black">R$ {total.toFixed(2)}</span>
+                                        </div>
+                                        <Calculator size={32} className="text-slate-700 dark:text-slate-600" />
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Warranty Checkbox */}
+                        <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 p-4 rounded-xl flex items-center gap-3 mt-4">
+                            <input
+                                type="checkbox"
+                                checked={noWarranty}
+                                onChange={(e) => setNoWarranty(e.target.checked)}
+                                className="w-5 h-5 rounded border-red-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                                id="noWarrantyCheck"
+                            />
+                            <label htmlFor="noWarrantyCheck" className="flex flex-col cursor-pointer">
+                                <span className="font-bold text-red-700 dark:text-red-400 text-sm flex items-center gap-2">
+                                    <ShieldAlert size={16} />
+                                    Este serviço NÃO POSSUI garantia
+                                </span>
+                                <span className="text-xs text-red-600/70 dark:text-red-400/70">Marque esta opção apenas para serviços isentos de garantia.</span>
+                            </label>
                         </div>
                     </div>
                 </section>
@@ -547,6 +649,6 @@ export const OrderForm: React.FC = () => {
                     </button>
                 </div>
             </form>
-        </div>
+        </div >
     );
 };

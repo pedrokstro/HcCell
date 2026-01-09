@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../store';
+import { OrderStatus } from '../types';
 import { Search, Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Eye, Printer, ChevronRight, ChevronLeft, TrendingDown, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -79,10 +80,17 @@ export const Dashboard: React.FC = () => {
         case 'sales':
           return ordersInDateData.filter(o => o.status === 'Concluído').map(o => ({ label: o.deviceModel, value: `R$ ${o.total.toFixed(2)}`, sub: new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' -') }));
         case 'awaiting':
-          return ordersInDateData.filter(o => o.status === 'Pendente' || o.status === 'Em Andamento')
+          // Show ALL active orders regardless of date filter
+          return orders.filter(o => o.status === OrderStatus.PENDING || o.status === OrderStatus.IN_PROGRESS || o.status === OrderStatus.WAITING_PAYMENT)
             .map(o => {
               const client = clients.find(c => c.id === o.clientId);
-              return { label: o.deviceModel, value: o.status, sub: client?.name || 'Cliente não encontrado' };
+              const dateStr = new Date(o.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+              const timeStr = new Date(o.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+              return {
+                label: o.deviceModel,
+                value: o.status,
+                sub: `${client?.name || 'Cliente não encontrado'} • ${dateStr} às ${timeStr}`
+              };
             });
         case 'completed':
           return ordersInDateData.filter(o => o.status === 'Concluído')
@@ -160,7 +168,7 @@ export const Dashboard: React.FC = () => {
     }, 0);
     return acc + orderCost;
   }, 0);
-  const pendingCount = ordersInDateData.filter(o => o.status === 'Pendente' || o.status === 'Em Andamento').length;
+  const pendingCount = orders.filter(o => o.status === OrderStatus.PENDING || o.status === OrderStatus.IN_PROGRESS || o.status === OrderStatus.WAITING_PAYMENT).length;
   const completedCount = ordersInDateData.filter(o => o.status === 'Concluído').length;
   const lowStockCount = products.filter(p => p.quantity <= (p.minStockLevel || 5)).length; // Inventory is always global
 
@@ -380,14 +388,16 @@ export const Dashboard: React.FC = () => {
                         </div>
                       </td>
                       <td className="py-4 px-6 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${order.status === 'Concluído' ? 'bg-green-50 text-green-700 border-green-100' :
-                          order.status === 'Pendente' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
-                            order.status === 'Cancelado' ? 'bg-red-50 text-red-700 border-red-100' :
-                              'bg-blue-50 text-blue-700 border-blue-100'
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${order.status === OrderStatus.COMPLETED ? 'bg-green-50 text-green-700 border-green-100' :
+                          order.status === OrderStatus.PENDING ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
+                            order.status === OrderStatus.CANCELLED ? 'bg-red-50 text-red-700 border-red-100' :
+                              order.status === OrderStatus.WAITING_PAYMENT ? 'bg-orange-50 text-orange-700 border-orange-100' :
+                                'bg-blue-50 text-blue-700 border-blue-100'
                           }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${order.status === 'Concluído' ? 'bg-green-500' :
-                            order.status === 'Pendente' ? 'bg-yellow-500' :
-                              order.status === 'Cancelado' ? 'bg-red-500' : 'bg-blue-500'
+                          <span className={`w-1.5 h-1.5 rounded-full ${order.status === OrderStatus.COMPLETED ? 'bg-green-500' :
+                            order.status === OrderStatus.PENDING ? 'bg-yellow-500' :
+                              order.status === OrderStatus.CANCELLED ? 'bg-red-500' :
+                                order.status === OrderStatus.WAITING_PAYMENT ? 'bg-orange-500' : 'bg-blue-500'
                             }`}></span>
                           {order.status}
                         </span>
@@ -436,10 +446,11 @@ export const Dashboard: React.FC = () => {
                     </span>
                     <h3 className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">{order.deviceModel}</h3>
                   </div>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${order.status === 'Concluído' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-100 dark:border-green-900/30' :
-                    order.status === 'Pendente' ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-100 dark:border-yellow-900/30' :
-                      order.status === 'Cancelado' ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-100 dark:border-red-900/30' :
-                        'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-100 dark:border-blue-900/30'
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${order.status === OrderStatus.COMPLETED ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-100 dark:border-green-900/30' :
+                    order.status === OrderStatus.PENDING ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-100 dark:border-yellow-900/30' :
+                      order.status === OrderStatus.CANCELLED ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-100 dark:border-red-900/30' :
+                        order.status === OrderStatus.WAITING_PAYMENT ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-900/30' :
+                          'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-100 dark:border-blue-900/30'
                     }`}>
                     {order.status}
                   </span>

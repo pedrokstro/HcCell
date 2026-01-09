@@ -46,7 +46,7 @@ export interface ProductMovement {
 export enum OrderStatus {
     PENDING = 'Pendente',
     IN_PROGRESS = 'Em Andamento',
-    WAITING_PARTS = 'Aguardando Peça',
+    WAITING_PAYMENT = 'Aguardando Pagamento',
     COMPLETED = 'Concluído',
     CANCELLED = 'Cancelado'
 }
@@ -57,11 +57,13 @@ export interface ServiceOrder {
     deviceModel: string;
     serialNumber?: string;
     passcode?: string;
+    deviceImage?: string; // Foto do aparelho
     issueDescription: string;
     serviceType?: string;
     status: OrderStatus;
     executionDate?: string;
-    warrantyEnd?: string;
+    warrantyEnd?: string | null;
+    noWarranty?: boolean; // Sem garantia
     priceServices: number;
     priceParts: number;
     discount: number;
@@ -69,7 +71,7 @@ export interface ServiceOrder {
     technician?: string;
     createdAt: string;
     internalNotes?: string;
-    selectedProducts?: { productId: string; quantity: number; price: number; name: string }[];
+    selectedProducts?: { productId: string; quantity: number; price: number; cost?: number; name: string }[];
     paymentMethod?: PaymentMethod;
     servicePerformed?: string;
 }

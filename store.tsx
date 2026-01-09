@@ -201,7 +201,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     internalNotes: o.internal_notes,
                     selectedProducts: o.selected_products || [],
                     paymentMethod: o.payment_method,
-                    servicePerformed: o.service_performed
+                    servicePerformed: o.service_performed,
+                    noWarranty: o.no_warranty,
+                    deviceImage: o.device_image
                 })));
             }
 
@@ -328,7 +330,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             warranty_end: order.warrantyEnd,
             selected_products: order.selectedProducts,
             payment_method: order.paymentMethod,
-            service_performed: order.servicePerformed
+            service_performed: order.servicePerformed,
+            no_warranty: order.noWarranty || false,
+            device_image: order.deviceImage
         };
 
         const { data, error } = await supabase.from('service_orders').insert([dbOrder]).select();
@@ -353,7 +357,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             warranty_end: order.warrantyEnd,
             selected_products: order.selectedProducts,
             payment_method: order.paymentMethod,
-            service_performed: order.servicePerformed
+            service_performed: order.servicePerformed,
+            no_warranty: order.noWarranty,
+            device_image: order.deviceImage
         };
 
         const { error } = await supabase.from('service_orders').update(dbOrder).eq('id', order.id);

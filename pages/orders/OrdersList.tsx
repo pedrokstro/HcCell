@@ -16,7 +16,7 @@ export const OrdersList: React.FC = () => {
             case OrderStatus.IN_PROGRESS: return 'bg-blue-100 text-blue-800';
             case OrderStatus.COMPLETED: return 'bg-green-100 text-green-800';
             case OrderStatus.CANCELLED: return 'bg-red-100 text-red-800';
-            case OrderStatus.WAITING_PARTS: return 'bg-orange-100 text-orange-800';
+            case OrderStatus.WAITING_PAYMENT: return 'bg-orange-100 text-orange-800';
             default: return 'bg-slate-100 text-slate-800';
         }
     };
@@ -134,7 +134,7 @@ export const OrdersList: React.FC = () => {
                                 <option value={OrderStatus.PENDING}>{OrderStatus.PENDING}</option>
                                 <option value={OrderStatus.IN_PROGRESS}>{OrderStatus.IN_PROGRESS}</option>
                                 <option value={OrderStatus.COMPLETED}>{OrderStatus.COMPLETED}</option>
-                                <option value={OrderStatus.WAITING_PARTS}>{OrderStatus.WAITING_PARTS}</option>
+                                <option value={OrderStatus.WAITING_PAYMENT}>{OrderStatus.WAITING_PAYMENT}</option>
                                 <option value={OrderStatus.CANCELLED}>{OrderStatus.CANCELLED}</option>
                             </select>
                         </div>

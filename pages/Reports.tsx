@@ -106,12 +106,18 @@ export const Reports: React.FC = () => {
         const revenueChange = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0;
 
         const totalCosts = completedOrders.reduce((acc, order) => {
-            if (!order.selectedProducts) return acc;
-            return acc + order.selectedProducts.reduce((pAcc, item) => {
-                // Se for item manual ou produto não encontrado, custo é 0
+            const partsCost = (order.selectedProducts || []).reduce((pAcc, item) => {
+                // Tenta usar o custo salvo no item (convertendo para garantias)
+                const savedCost = item.cost !== undefined && item.cost !== null ? Number(item.cost) : undefined;
+
+                if (savedCost !== undefined && !isNaN(savedCost)) {
+                    return pAcc + (savedCost * item.quantity);
+                }
+                // Fallback: busca no cadastro do produto (para ordens antigas)
                 const product = products.find(p => p.id === item.productId);
                 return pAcc + ((product?.priceCost || 0) * item.quantity);
             }, 0);
+            return acc + Number(partsCost);
         }, 0);
 
         const netProfit = totalRevenue - totalCosts;
@@ -157,6 +163,10 @@ export const Reports: React.FC = () => {
 
             // Calc lucro for chart
             const orderCost = (order.selectedProducts || []).reduce((acc, item) => {
+                const savedCost = item.cost !== undefined && item.cost !== null ? Number(item.cost) : undefined;
+                if (savedCost !== undefined && !isNaN(savedCost)) {
+                    return acc + (savedCost * item.quantity);
+                }
                 const product = products.find(p => p.id === item.productId);
                 return acc + ((product?.priceCost || 0) * item.quantity);
             }, 0);
@@ -182,7 +192,7 @@ export const Reports: React.FC = () => {
         const statusColors: { [key: string]: string } = {
             [OrderStatus.PENDING]: '#EAB308',
             [OrderStatus.IN_PROGRESS]: '#3B82F6',
-            [OrderStatus.WAITING_PARTS]: '#F97316',
+            [OrderStatus.WAITING_PAYMENT]: '#F97316',
             [OrderStatus.COMPLETED]: '#22C55E',
             [OrderStatus.CANCELLED]: '#EF4444'
         };
@@ -190,7 +200,7 @@ export const Reports: React.FC = () => {
         const statusLabels: { [key: string]: string } = {
             [OrderStatus.PENDING]: 'Pendente',
             [OrderStatus.IN_PROGRESS]: 'Em Andamento',
-            [OrderStatus.WAITING_PARTS]: 'Aguard. Peças',
+            [OrderStatus.WAITING_PAYMENT]: 'Aguard. Pagto',
             [OrderStatus.COMPLETED]: 'Concluído',
             [OrderStatus.CANCELLED]: 'Cancelado'
         };

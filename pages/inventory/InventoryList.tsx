@@ -159,6 +159,7 @@ export const InventoryList: React.FC = () => {
                                 <tr>
                                     <th className="px-6 py-4 font-medium">Produto / SKU</th>
                                     <th className="px-6 py-4 font-medium">Categoria</th>
+                                    <th className="px-6 py-4 font-medium">Preço (Custo)</th>
                                     <th className="px-6 py-4 font-medium">Preço (Venda)</th>
                                     <th className="px-6 py-4 font-medium">Quantidade</th>
                                     <th className="px-6 py-4 font-medium">Status</th>
@@ -187,6 +188,7 @@ export const InventoryList: React.FC = () => {
                                             <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
                                                 <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-neutral-800 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300">{product.category}</span>
                                             </td>
+                                            <td className="px-6 py-4 font-medium text-slate-500 dark:text-slate-400">R$ {(product.priceCost || 0).toFixed(2)}</td>
                                             <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">R$ {product.priceSale.toFixed(2)}</td>
                                             <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{product.quantity} un</td>
                                             <td className="px-6 py-4">
@@ -207,7 +209,7 @@ export const InventoryList: React.FC = () => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                                        <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
                                             Nenhum produto encontrado para estes filtros.
                                         </td>
                                     </tr>

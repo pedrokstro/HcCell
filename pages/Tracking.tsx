@@ -79,7 +79,7 @@ export const Tracking: React.FC = () => {
         switch (status) {
             case OrderStatus.PENDING: return { icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100', text: 'Seu aparelho está na fila para avaliação.' };
             case OrderStatus.IN_PROGRESS: return { icon: Package, color: 'text-blue-600', bg: 'bg-blue-100', text: 'Nossos técnicos estão trabalhando no seu aparelho.' };
-            case OrderStatus.WAITING_PARTS: return { icon: AlertTriangle, color: 'text-orange-600', bg: 'bg-orange-100', text: 'Estamos aguardando a chegada de peças para continuar.' };
+            case OrderStatus.WAITING_PAYMENT: return { icon: AlertTriangle, color: 'text-orange-600', bg: 'bg-orange-100', text: 'Estamos aguardando confirmação (Pagamento/Peça) para continuar.' };
             case OrderStatus.COMPLETED: return { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100', text: 'Pronto! Seu aparelho pode ser retirado.' };
             case OrderStatus.CANCELLED: return { icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-100', text: 'Este serviço foi cancelado.' };
             default: return { icon: Clock, color: 'text-slate-600', bg: 'bg-slate-100', text: 'Status desconhecido.' };
