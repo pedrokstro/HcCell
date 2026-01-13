@@ -53,7 +53,7 @@ export enum OrderStatus {
 
 export interface ServiceOrder {
     id: string;
-    clientId: string;
+    clientId?: string | null;
     deviceModel: string;
     serialNumber?: string;
     passcode?: string;

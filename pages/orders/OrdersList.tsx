@@ -238,8 +238,14 @@ export const OrdersList: React.FC = () => {
                                             </td>
                                             <td className="px-6 py-4 min-w-[200px]">
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-medium text-slate-900 dark:text-white">{order.deviceModel}</span>
-                                                    <span className="text-xs text-slate-500 dark:text-slate-500 truncate max-w-[200px]">{order.issueDescription}</span>
+                                                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                                        {order.serviceType === 'VENDA_DIRETA' ? 'Venda de Produto' : order.deviceModel}
+                                                    </span>
+                                                    <span className="text-xs text-slate-500 dark:text-slate-500 truncate max-w-[200px]" title={order.serviceType === 'VENDA_DIRETA' ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ')) : order.issueDescription}>
+                                                        {order.serviceType === 'VENDA_DIRETA'
+                                                            ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ') || 'Produtos Diversos')
+                                                            : order.issueDescription}
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -293,7 +299,9 @@ export const OrdersList: React.FC = () => {
                                 <div className="flex justify-between items-start mb-3">
                                     <div>
                                         <span className="text-xs font-mono text-slate-500 dark:text-slate-400 mb-1 block">#{order.displayId || order.id.slice(0, 8)}</span>
-                                        <h3 className="font-bold text-slate-900 dark:text-white">{order.deviceModel}</h3>
+                                        <h3 className="font-bold text-slate-900 dark:text-white">
+                                            {order.serviceType === 'VENDA_DIRETA' ? 'Venda de Produto' : order.deviceModel}
+                                        </h3>
                                     </div>
                                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${getStatusColor(order.status)}`}>
                                         {order.status}
@@ -301,7 +309,9 @@ export const OrdersList: React.FC = () => {
                                 </div>
 
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2 bg-slate-50 dark:bg-neutral-900 p-2 rounded-lg border border-slate-100 dark:border-neutral-800 italic">
-                                    "{order.issueDescription}"
+                                    "{order.serviceType === 'VENDA_DIRETA'
+                                        ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ') || 'Produtos Diversos')
+                                        : order.issueDescription}"
                                 </p>
 
                                 <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-neutral-800">

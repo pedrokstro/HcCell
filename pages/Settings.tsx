@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useApp } from '../store';
-import { User, Mail, Phone, BadgeCheck, Save, Upload, X, Lock, Bell, Trash2, Eye, EyeOff, Shield } from 'lucide-react';
+import { User, Mail, Phone, BadgeCheck, Save, Upload, X, Lock, Bell, Trash2, Eye, EyeOff, Shield, Info, FileText } from 'lucide-react';
+import { APP_VERSION, APP_NAME } from '../constants';
+import { ChangeLogModal } from '../components/ChangeLogModal';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../components/Toast';
 
@@ -11,6 +13,7 @@ export const Settings: React.FC = () => {
     const [profileImage, setProfileImage] = useState(user.avatarUrl);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
+    const [showChangelog, setShowChangelog] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Form state
@@ -186,7 +189,7 @@ export const Settings: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-[600px] animate-fade-in">
+        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-[600px] animate-fade-in">
             {/* Sidebar Navigation */}
             <aside className="w-full lg:w-64 shrink-0">
                 <div className="lg:sticky lg:top-24 bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 lg:border-none p-4 lg:p-0">
@@ -210,6 +213,15 @@ export const Settings: React.FC = () => {
                                     }`}
                             >
                                 <BadgeCheck size={18} /> <span className="text-sm font-medium">Conta</span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('about')}
+                                className={`flex items-center gap-3 rounded-lg px-4 py-2.5 whitespace-nowrap w-full text-left transition-colors ${activeTab === 'about'
+                                    ? 'bg-primary/10 text-primary dark:bg-primary/20'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-neutral-800'
+                                    }`}
+                            >
+                                <Info size={18} /> <span className="text-sm font-medium">Sobre</span>
                             </button>
                         </div>
                     </div>
@@ -456,7 +468,46 @@ export const Settings: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                {activeTab === 'about' && (
+                    <div className="rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-surface-dark shadow-sm overflow-hidden animate-fade-in-up">
+                        <div className="p-6 border-b border-slate-100 dark:border-neutral-800 flex items-center gap-3">
+                            <div className="p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg">
+                                <Info size={20} />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Sobre o Sistema</h3>
+                        </div>
+                        <div className="p-8 flex flex-col items-center text-center">
+                            <div className="size-20 bg-slate-100 dark:bg-neutral-800 rounded-2xl flex items-center justify-center mb-4">
+                                <FileText size={40} className="text-slate-400" />
+                            </div>
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">{APP_NAME}</h2>
+                            <p className="text-slate-500 dark:text-slate-400 font-medium mb-8">Versão instalada: <span className="text-primary font-bold">v{APP_VERSION}</span></p>
+
+                            <button
+                                onClick={() => setShowChangelog(true)}
+                                className="px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold hover:opacity-90 transition-opacity shadow-lg shadow-slate-900/20 flex items-center gap-2"
+                            >
+                                <FileText size={18} />
+                                Ver Notas da Versão (Changelog)
+                            </button>
+
+                            <p className="mt-12 text-xs text-slate-400">
+                                © 2026 Todos os direitos reservados.
+                            </p>
+                        </div>
+                    </div>
+                )}
             </main>
+
+
+
+            <ChangeLogModal
+                isOpen={showChangelog}
+                onClose={() => setShowChangelog(false)}
+                onConfirm={() => setShowChangelog(false)}
+                showHistory={true}
+            />
         </div>
     );
 };

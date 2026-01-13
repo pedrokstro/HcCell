@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef } from 'react';
 import QRCode from 'react-qr-code';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../../store';

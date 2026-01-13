@@ -1,7 +1,7 @@
 import React from 'react';
 import { useApp } from '../store';
 import { OrderStatus } from '../types';
-import { Search, Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Eye, Printer, ChevronRight, ChevronLeft, TrendingDown, EyeOff } from 'lucide-react';
+import { Search, Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Eye, Printer, ChevronRight, ChevronLeft, TrendingDown, EyeOff, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Dashboard: React.FC = () => {
@@ -21,6 +21,7 @@ export const Dashboard: React.FC = () => {
 
   const [dateFilter, setDateFilter] = React.useState<'today' | 'yesterday' | 'week' | 'month' | 'all' | 'custom'>('today');
   const [customDate, setCustomDate] = React.useState<string>(new Date().toISOString().split('T')[0]);
+  const [customEndDate, setCustomEndDate] = React.useState<string>(new Date().toISOString().split('T')[0]);
 
   // Helper to check if a date matches the filter
   const isDateInFilter = (dateStr: string) => {
@@ -44,9 +45,13 @@ export const Dashboard: React.FC = () => {
         return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
       case 'custom':
         if (!customDate) return true;
-        const selected = new Date(customDate + 'T12:00:00'); // Fix timezone offset issues roughly
-        const selectedDay = new Date(selected.getFullYear(), selected.getMonth(), selected.getDate());
-        return dateDay.getTime() === selectedDay.getTime();
+        const start = new Date(customDate);
+        start.setHours(0, 0, 0, 0);
+
+        const end = customEndDate ? new Date(customEndDate) : new Date(customDate);
+        end.setHours(23, 59, 59, 999);
+
+        return date.getTime() >= start.getTime() && date.getTime() <= end.getTime();
       case 'all':
       default:
         return true;
@@ -104,7 +109,8 @@ export const Dashboard: React.FC = () => {
           return ordersInDateData.filter(o => o.status === 'Concluído').map(order => {
             const orderCost = (order.selectedProducts || []).reduce((acc, item) => {
               const p = products.find(prod => prod.id === item.productId);
-              return acc + ((p?.priceCost || 0) * item.quantity);
+              const cost = item.cost !== undefined ? item.cost : (p?.priceCost || 0);
+              return acc + (cost * item.quantity);
             }, 0);
             return {
               label: order.deviceModel,
@@ -164,7 +170,8 @@ export const Dashboard: React.FC = () => {
   const totalCosts = ordersInDateData.filter(o => o.status === 'Concluído').reduce((acc, order) => {
     const orderCost = (order.selectedProducts || []).reduce((prodAcc, item) => {
       const product = products.find(p => p.id === item.productId);
-      return prodAcc + ((product?.priceCost || 0) * item.quantity);
+      const cost = item.cost !== undefined ? item.cost : (product?.priceCost || 0);
+      return prodAcc + (cost * item.quantity);
     }, 0);
     return acc + orderCost;
   }, 0);
@@ -172,7 +179,7 @@ export const Dashboard: React.FC = () => {
   const completedCount = ordersInDateData.filter(o => o.status === 'Concluído').length;
   const lowStockCount = products.filter(p => p.quantity <= (p.minStockLevel || 5)).length; // Inventory is always global
 
-  const displayOrders = searchQuery ? filteredOrders : ordersInDateData.slice(0, 10); // Show more recent orders
+  const displayOrders = searchQuery ? filteredOrders : ordersInDateData; // Show all filtered orders (removed slice)
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
@@ -208,14 +215,31 @@ export const Dashboard: React.FC = () => {
             <button onClick={() => setDateFilter('month')} className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-all ${dateFilter === 'month' ? 'bg-primary text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-neutral-800'}`}>Mês</button>
             <button onClick={() => setDateFilter('all')} className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-all ${dateFilter === 'all' ? 'bg-primary text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-neutral-800'}`}>Todos</button>
             <div className="w-px h-4 bg-slate-200 dark:bg-neutral-700 mx-1"></div>
-            <input
-              type="date"
-              value={customDate}
-              onChange={(e) => { setCustomDate(e.target.value); setDateFilter('custom'); }}
-              constrain-ratio=""
-              className={`bg-transparent border-none p-0 text-xs font-bold text-slate-600 dark:text-slate-400 focus:ring-0 cursor-pointer w-[24px] sm:w-auto ${dateFilter === 'custom' ? 'text-primary' : ''}`}
-              title="Escolher data específica"
-            />
+            {dateFilter === 'custom' ? (
+              <div className="flex items-center gap-1 ml-1 animate-in fade-in slide-in-from-left-2">
+                <input
+                  type="date"
+                  value={customDate}
+                  onChange={(e) => setCustomDate(e.target.value)}
+                  className="bg-transparent border-none p-0 text-xs font-bold text-primary focus:ring-0 cursor-pointer w-[95px]"
+                />
+                <span className="text-slate-400 text-[10px]">até</span>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="bg-transparent border-none p-0 text-xs font-bold text-primary focus:ring-0 cursor-pointer w-[95px]"
+                />
+              </div>
+            ) : (
+              <button
+                onClick={() => setDateFilter('custom')}
+                className="ml-1 p-1.5 text-slate-400 hover:text-primary hover:bg-slate-50 dark:hover:bg-neutral-800 rounded-md transition-colors"
+                title="Data Personalizada"
+              >
+                <Calendar size={16} />
+              </button>
+            )}
           </div>
 
           <div className="relative w-full sm:w-64">
@@ -383,8 +407,14 @@ export const Dashboard: React.FC = () => {
                       </td>
                       <td className="py-4 px-6 min-w-[200px]">
                         <div className="flex flex-col">
-                          <span className="text-sm text-slate-900 dark:text-white font-bold">{order.deviceModel}</span>
-                          <span className="text-xs text-slate-500 dark:text-slate-500 truncate max-w-[200px]">{order.issueDescription}</span>
+                          <span className="text-sm text-slate-900 dark:text-white font-bold">
+                            {order.serviceType === 'VENDA_DIRETA' ? 'Venda de Produto' : order.deviceModel}
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-slate-500 truncate max-w-[200px]" title={order.serviceType === 'VENDA_DIRETA' ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ')) : order.issueDescription}>
+                            {order.serviceType === 'VENDA_DIRETA'
+                              ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ') || 'Produtos Diversos')
+                              : order.issueDescription}
+                          </span>
                         </div>
                       </td>
                       <td className="py-4 px-6 whitespace-nowrap">
@@ -444,7 +474,9 @@ export const Dashboard: React.FC = () => {
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wide">
                       {new Date(order.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} • {new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">{order.deviceModel}</h3>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">
+                      {order.serviceType === 'VENDA_DIRETA' ? 'Venda de Produto' : order.deviceModel}
+                    </h3>
                   </div>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${order.status === OrderStatus.COMPLETED ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-100 dark:border-green-900/30' :
                     order.status === OrderStatus.PENDING ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-100 dark:border-yellow-900/30' :
@@ -456,7 +488,9 @@ export const Dashboard: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mb-3">
-                  {order.issueDescription}
+                  {order.serviceType === 'VENDA_DIRETA'
+                    ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ') || 'Produtos Diversos')
+                    : order.issueDescription}
                 </p>
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-neutral-800">
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Valor Total</span>

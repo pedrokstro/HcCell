@@ -41,6 +41,7 @@ export const OrderForm: React.FC = () => {
     // Manual Item State
     const [manualName, setManualName] = useState('');
     const [manualPrice, setManualPrice] = useState<string>('');
+    const [manualCost, setManualCost] = useState<string>('');
     const [manualQty, setManualQty] = useState<number>(1);
 
     const handleAddManualItem = () => {
@@ -52,10 +53,12 @@ export const OrderForm: React.FC = () => {
             productId: `manual-${Date.now()}`,
             name: manualName,
             price: price,
+            cost: parseFloat(manualCost.replace(',', '.')) || 0,
             quantity: manualQty
         }]);
         setManualName('');
         setManualPrice('');
+        setManualCost('');
         setManualQty(1);
     };
 
@@ -499,36 +502,45 @@ export const OrderForm: React.FC = () => {
 
                             <div className="flex flex-col gap-2 mt-2 pt-4 border-t border-slate-100 dark:border-neutral-800">
                                 <span className="text-xs font-bold text-slate-500 uppercase">Ou Adicione Manualmente (Item Avulso)</span>
-                                <div className="flex flex-col sm:flex-row gap-2">
+                                <div className="flex flex-col lg:flex-row gap-2">
                                     <input
-                                        className="flex-[2] h-10 px-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white"
+                                        className="flex-1 h-10 px-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white min-w-[200px]"
                                         placeholder="Nome do item..."
                                         value={manualName}
                                         onChange={e => setManualName(e.target.value)}
                                     />
-                                    <div className="flex gap-2 flex-1">
+                                    <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
                                         <input
-                                            className="w-20 h-10 px-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white"
+                                            className="w-16 h-10 px-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white text-center"
                                             type="number"
                                             min="1"
                                             placeholder="Qtd"
                                             value={manualQty}
                                             onChange={e => setManualQty(parseInt(e.target.value) || 1)}
                                         />
-                                        <div className="relative flex-1">
+                                        <div className="relative w-32 shrink-0">
                                             <span className="absolute left-3 top-2.5 text-slate-400 text-xs font-bold">R$</span>
                                             <input
                                                 className="w-full h-10 pl-8 pr-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white"
-                                                placeholder="0,00"
+                                                placeholder="Preço"
                                                 value={manualPrice}
                                                 onChange={e => setManualPrice(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="relative w-28 shrink-0">
+                                            <input
+                                                className="w-full h-10 px-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white"
+                                                placeholder="Custo (Op)"
+                                                title="Preço de Custo (Opcional)"
+                                                value={manualCost}
+                                                onChange={e => setManualCost(e.target.value)}
                                             />
                                         </div>
                                         <button
                                             type="button"
                                             onClick={handleAddManualItem}
                                             disabled={!manualName || !manualPrice}
-                                            className="h-10 px-4 bg-slate-800 dark:bg-neutral-700 text-white rounded-lg hover:bg-slate-700 dark:hover:bg-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            className="h-10 px-4 bg-slate-800 dark:bg-neutral-700 text-white rounded-lg hover:bg-slate-700 dark:hover:bg-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
                                         >
                                             <Plus size={18} />
                                         </button>

@@ -6,10 +6,12 @@ import {
     Tag,
     BarChart3,
     Settings,
+    ShoppingCart,
 } from 'lucide-react';
 
 export const navItems = [
     { icon: LayoutDashboard, label: 'Painel', path: '/dashboard' },
+    { icon: ShoppingCart, label: 'PDV', path: '/sales' },
     { icon: Users, label: 'Clientes', path: '/clients' },
     { icon: Wrench, label: 'Ordens de Serviço', path: '/orders' },
     { icon: Package, label: 'Estoque', path: '/inventory' },

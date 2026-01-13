@@ -4,6 +4,7 @@ import { useApp } from '../store';
 import { navItems } from './navItems';
 import { LogOut, Moon, Sun } from 'lucide-react';
 import { AnimatedLogo } from './AnimatedLogo';
+import { APP_VERSION, APP_NAME, DEVELOPER_NAME } from '../constants';
 
 export const Sidebar: React.FC = () => {
     const { user, logout, darkMode, toggleTheme } = useApp();
@@ -69,6 +70,15 @@ export const Sidebar: React.FC = () => {
                             <LogOut size={18} />
                         </button>
                     </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 text-center select-none pb-2">
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        {APP_NAME} <span className="text-primary font-black ml-1">v{APP_VERSION}</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-1 font-medium">
+                        Dev by <span className="text-slate-700 dark:text-slate-300 font-bold">{DEVELOPER_NAME}</span>
+                    </p>
                 </div>
             </div>
         </aside>

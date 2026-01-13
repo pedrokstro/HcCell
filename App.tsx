@@ -15,8 +15,10 @@ import { OrdersList } from './pages/orders/OrdersList';
 import { OrderDetails } from './pages/orders/OrderDetails';
 import { OrderForm } from './pages/orders/OrderForm';
 import { Reports } from './pages/Reports';
+import { SalesPoint } from './pages/sales/SalesPoint';
 import { Settings } from './pages/Settings';
 import { ToastProvider } from './components/Toast';
+import { UpdateNotification } from './components/UpdateNotification';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useApp();
@@ -50,6 +52,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/orders/:id/edit" element={<ProtectedRoute><OrderForm /></ProtectedRoute>} />
 
       <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+      <Route path="/sales" element={<ProtectedRoute><SalesPoint /></ProtectedRoute>} />
 
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     </Routes>
@@ -61,6 +64,7 @@ const App: React.FC = () => {
     <ToastProvider>
       <AppProvider>
         <Router>
+          <UpdateNotification />
           <AppRoutes />
         </Router>
       </AppProvider>
