@@ -11,18 +11,35 @@ export default {
         extend: {
             colors: {
                 primary: {
-                    DEFAULT: '#00CCFF',
+                    50: '#F0FDFF',
+                    100: '#E0F8FF',
+                    200: '#B8F0FF',
+                    300: '#7ADFFF',
+                    400: '#33D5FF',
+                    DEFAULT: '#00CCFF', // Seu ciano original
+                    600: '#00A3CC',
+                    700: '#007A99',
+                    800: '#005166',
+                    900: '#002933',
                     dark: '#00A3CC',
                     light: '#E6FAFF',
                 },
                 background: {
-                    light: '#f5f8f8',
-                    dark: '#0a0a0a',
+                    light: '#F8FAFC', // Slate 50 - Mais limpo
+                    dark: '#020617',  // Slate 950 - Profundo
                 },
                 surface: {
-                    light: '#ffffff',
-                    dark: '#171717',
+                    light: '#FFFFFF',
+                    dark: '#0F172A',  // Slate 900
+                },
+                slate: {
+                    950: '#020617',
                 }
+            },
+            boxShadow: {
+                'glass': '0 8px 32px 0 rgba(0, 204, 255, 0.1)',
+                'glass-dark': '0 8px 32px 0 rgba(0, 0, 0, 0.4)',
+                'primary-glow': '0 0 15px rgba(0, 204, 255, 0.3)',
             },
             fontFamily: {
                 sans: ['Inter', 'sans-serif'],
@@ -34,6 +51,7 @@ export default {
                 'zoom-in': 'zoomIn 0.3s ease-out',
                 'spin-slow': 'spinSlow 8s linear infinite',
                 'spin-slow-reverse': 'spinSlowReverse 6s linear infinite',
+                'float': 'float 3s ease-in-out infinite',
             },
             keyframes: {
                 fadeIn: {
@@ -60,6 +78,10 @@ export default {
                     '0%': { transform: 'rotate(0deg)' },
                     '100%': { transform: 'rotate(-360deg)' },
                 },
+                float: {
+                    '0%, 100%': { transform: 'translateY(0)' },
+                    '50%': { transform: 'translateY(-10px)' },
+                }
             },
         },
     },

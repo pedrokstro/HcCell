@@ -4,6 +4,22 @@ import { APP_VERSION } from '../constants';
 
 const CHANGELOG = [
     {
+        version: '2.0.4',
+        date: '03 Mar 2026',
+        changes: [
+            {
+                title: "Nova Regra de Garantia",
+                description: "A garantia de 90 dias agora começa a contar automaticamente a partir do momento em que a Ordem de Serviço é marcada como 'Concluída', garantindo maior precisão nos prazos.",
+                type: "new"
+            },
+            {
+                title: "Painel Dinâmico e Sidebar Retrátil",
+                description: "A barra lateral agora pode ser encolhida para você ganhar mais espaço de tela, lembrando a sua preferência. Além disso, os cards do painel inicial ganharam novas animações.",
+                type: "new"
+            }
+        ]
+    },
+    {
         version: '2.0.2',
         date: '12 Jan 2026',
         changes: [
@@ -114,8 +130,8 @@ export const ChangeLogModal: React.FC<ChangeLogModalProps> = ({ isOpen, onClose,
                                     {ver.changes.map((update, index) => (
                                         <div key={index} className="flex gap-4 group">
                                             <div className={`mt-1 shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border ${update.type === 'new'
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/30'
-                                                    : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-100 dark:border-green-900/30'
+                                                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/30'
+                                                : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-100 dark:border-green-900/30'
                                                 }`}>
                                                 {update.type === 'new' ? <Zap size={20} /> : <Check size={20} />}
                                             </div>

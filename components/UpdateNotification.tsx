@@ -5,27 +5,28 @@ import { ChangeLogModal } from './ChangeLogModal';
 
 export const UpdateNotification: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const { isAuthenticated } = useApp();
+    const { isAuthenticated, user } = useApp();
+
+    const storageKey = `app_last_seen_version_${user.id}`;
 
     useEffect(() => {
-        if (!isAuthenticated) return;
+        if (!isAuthenticated || !user.id) return;
 
-        const lastVersion = localStorage.getItem('app_last_seen_version');
+        const lastVersion = localStorage.getItem(storageKey);
         if (lastVersion !== APP_VERSION) {
             const timer = setTimeout(() => setIsOpen(true), 1500);
             return () => clearTimeout(timer);
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, user.id, storageKey]);
 
     const handleDismiss = () => {
         setIsOpen(false);
-        // Não salva versao, então aparecerá de novo no reload (F5) ou novo login
     };
 
     const handleConfirm = () => {
         setIsOpen(false);
-        // Salva versão, não aparecerá mais até que APP_VERSION mude
-        localStorage.setItem('app_last_seen_version', APP_VERSION);
+        // Salva versão específica para este usuário
+        localStorage.setItem(storageKey, APP_VERSION);
     };
 
     if (!isOpen) return null;

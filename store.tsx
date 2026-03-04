@@ -24,6 +24,8 @@ interface AppContextType {
     logout: () => Promise<void>;
     darkMode: boolean;
     toggleTheme: () => void;
+    isSidebarCollapsed: boolean;
+    toggleSidebar: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -59,6 +61,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, [darkMode]);
 
     const toggleTheme = () => setDarkMode(!darkMode);
+
+    // Sidebar State
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const sidebarKey = `sidebar_collapsed_${user.id}`;
+
+    useEffect(() => {
+        if (user.id) {
+            const saved = localStorage.getItem(sidebarKey);
+            setIsSidebarCollapsed(saved === 'true');
+        }
+    }, [user.id, sidebarKey]);
+
+    const toggleSidebar = () => {
+        const newState = !isSidebarCollapsed;
+        setIsSidebarCollapsed(newState);
+        if (user.id) {
+            localStorage.setItem(sidebarKey, newState.toString());
+        }
+    };
 
     const [clients, setClients] = useState<Client[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
@@ -337,6 +358,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             service_type: order.serviceType
         };
 
+        // If newly added as Completed, set warranty
+        if (dbOrder.status === OrderStatus.COMPLETED && !dbOrder.no_warranty && !dbOrder.warranty_end) {
+            const date = new Date();
+            date.setDate(date.getDate() + 90);
+            dbOrder.warranty_end = date.toISOString();
+        }
+
         const { data, error } = await supabase.from('service_orders').insert([dbOrder]).select();
 
         if (error) throw error;
@@ -364,6 +392,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             device_image: order.deviceImage,
             service_type: order.serviceType
         };
+
+        // Rule: Warranty starts when the order is completed
+        if (order.status === OrderStatus.COMPLETED && !order.noWarranty && !order.warrantyEnd) {
+            const date = new Date();
+            date.setDate(date.getDate() + 90);
+            dbOrder.warranty_end = date.toISOString();
+        }
 
         const { error } = await supabase.from('service_orders').update(dbOrder).eq('id', order.id);
         if (error) throw error;
@@ -433,7 +468,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             addProduct, updateProduct, deleteProduct, addProductMovement,
             addOrder, updateOrder, deleteOrder,
             isAuthenticated, login, logout,
-            darkMode, toggleTheme
+            darkMode, toggleTheme,
+            isSidebarCollapsed, toggleSidebar
         }}>
             {children}
         </AppContext.Provider>

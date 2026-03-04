@@ -20,8 +20,28 @@ import { Settings } from './pages/Settings';
 import { ToastProvider } from './components/Toast';
 import { UpdateNotification } from './components/UpdateNotification';
 
+const LoadingScreen: React.FC = () => (
+  <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col items-center justify-center relative overflow-hidden transition-colors duration-300">
+    <div className="relative z-10 flex flex-col items-center gap-6 p-8">
+      <div className="relative">
+        <div className="w-16 h-16 border-4 border-slate-200 dark:border-slate-800 rounded-full"></div>
+        <div className="w-16 h-16 border-4 border-primary rounded-full absolute top-0 left-0 border-t-transparent animate-spin"></div>
+      </div>
+      <div className="flex flex-col items-center gap-2">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Carregando Sistema</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Verificando sua sessão...</p>
+      </div>
+    </div>
+  </div>
+);
+
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useApp();
+  const { isAuthenticated, loading } = useApp();
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }

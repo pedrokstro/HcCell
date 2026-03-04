@@ -64,7 +64,7 @@ export const Login: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-row w-full overflow-hidden bg-background-light">
       {/* Left Side: Visual */}
-      <div className="relative hidden w-0 flex-1 lg:block bg-slate-900">
+      <div className="relative hidden w-0 flex-1 lg:block bg-slate-900 border-r border-slate-200">
         <div
           className="absolute inset-0 h-full w-full bg-cover bg-center"
           style={{ backgroundImage: "url('/bg-login.jpg')" }}
@@ -78,11 +78,11 @@ export const Login: React.FC = () => {
       </div>
 
       {/* Right Side: Form */}
-      <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-white w-full lg:w-1/2 animate-fade-in">
+      <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-white w-full lg:w-1/2 animate-fade-in transition-colors duration-300">
         <div className="mx-auto w-full max-w-sm lg:w-[420px] animate-fade-in-up">
           <div className="flex flex-col gap-6">
             <div className="flex flex-col items-center gap-2">
-              <AnimatedLogo size="md" />
+              <AnimatedLogo size="md" forceLight />
               <p className="text-xs font-bold text-slate-400 tracking-[0.25em] uppercase">Assistência Técnica</p>
             </div>
           </div>
@@ -160,7 +160,7 @@ export const Login: React.FC = () => {
               )}
 
               {success && (
-                <div className="p-4 text-sm text-green-700 bg-green-50 rounded-xl border border-green-200 flex items-start gap-3 animate-fade-in">
+                <div className="p-4 text-sm text-green-700 bg-green-50 rounded-xl border border-green-200 flex items-start gap-3 animate-fade-in text-left">
                   <span className="text-lg">✅</span>
                   <div>
                     <p className="font-bold mb-1">Sucesso!</p>
@@ -170,7 +170,7 @@ export const Login: React.FC = () => {
               )}
 
               {error && (
-                <div className="p-4 text-sm text-red-600 bg-red-50/50 rounded-xl border border-red-100 flex items-center animate-fade-in">
+                <div className="p-4 text-sm text-red-600 bg-red-50/50 rounded-xl border border-red-100 flex items-center animate-fade-in text-left">
                   <span className="font-medium mr-1">Erro:</span> {error}
                 </div>
               )}

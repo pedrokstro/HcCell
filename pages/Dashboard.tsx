@@ -3,6 +3,7 @@ import { useApp } from '../store';
 import { OrderStatus } from '../types';
 import { Search, Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Eye, Printer, ChevronRight, ChevronLeft, TrendingDown, EyeOff, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { FloatingActionButton } from '../components/FloatingActionButton';
 
 export const Dashboard: React.FC = () => {
   const { orders, products, clients } = useApp();
@@ -198,9 +199,9 @@ export const Dashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch lg:items-center">
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-3 items-stretch sm:items-center">
           {/* Date Filters */}
-          <div className="flex items-center bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 rounded-lg p-1 shadow-sm overflow-x-auto sm:overflow-visible">
+          <div className="flex items-center bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 rounded-lg p-1 shadow-sm w-full sm:w-auto overflow-x-auto no-scrollbar">
             <button
               onClick={() => setShowValues(!showValues)}
               className="px-3 py-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-neutral-800 rounded-md transition-all mr-1"
@@ -254,13 +255,14 @@ export const Dashboard: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Link to="/orders/new" className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg shadow-sm shadow-primary/30 transition-all font-bold text-sm whitespace-nowrap">
+          <Link to="/orders/new" className="hidden sm:flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg shadow-sm shadow-primary/30 transition-all font-bold text-sm whitespace-nowrap">
             <Plus size={18} />
-            <span className="hidden sm:inline">Nova OS</span>
-            <span className="sm:hidden">Novo</span>
+            <span>Nova OS</span>
           </Link>
         </div>
       </div>
+
+      <FloatingActionButton to="/orders/new" label="Nova OS" />
 
       {/* Stats Grid */}
       <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 animate-fade-in-up">
@@ -269,12 +271,12 @@ export const Dashboard: React.FC = () => {
           onClick={() => setSelectedStat('sales')}
           className="text-left bg-white dark:bg-surface-dark p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-neutral-800 flex flex-col gap-4 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-0 top-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity dark:opacity-10 dark:group-hover:opacity-20">
+          <div className="absolute right-0 top-0 p-3 opacity-10 scale-110 rotate-6 transition-all duration-700 dark:opacity-15 pointer-events-none animate-pulse">
             <DollarSign size={80} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-xl text-green-600 dark:text-green-400 border border-green-100 dark:border-green-900/30 group-hover:bg-green-600 group-hover:text-white transition-colors">
-              <DollarSign size={24} />
+            <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-xl text-green-600 dark:text-green-400 border border-green-100 dark:border-green-900/30 group-hover:bg-green-600 group-hover:text-white group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-green-500/20 transition-all duration-300">
+              <DollarSign size={24} className="animate-pulse" />
             </div>
             {dateFilter === 'today' && <span className="text-[10px] font-black uppercase tracking-widest text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full border border-green-100 dark:border-green-900/30">Hoje</span>}
           </div>
@@ -291,12 +293,12 @@ export const Dashboard: React.FC = () => {
           onClick={() => setSelectedStat('costs')}
           className="text-left bg-white dark:bg-surface-dark p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-neutral-800 flex flex-col gap-4 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-0 top-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity dark:opacity-10 dark:group-hover:opacity-20">
+          <div className="absolute right-0 top-0 p-3 opacity-10 scale-105 -translate-x-1 transition-all duration-700 dark:opacity-15 pointer-events-none animate-pulse">
             <TrendingDown size={80} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-xl text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/30 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-              <TrendingDown size={24} />
+            <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-xl text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/30 group-hover:bg-purple-600 group-hover:text-white group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-purple-500/20 transition-all duration-300">
+              <TrendingDown size={24} className="animate-bounce" style={{ animationDuration: '3s' }} />
             </div>
           </div>
           <div className="relative z-10">
@@ -312,12 +314,12 @@ export const Dashboard: React.FC = () => {
           onClick={() => setSelectedStat('awaiting')}
           className="text-left bg-white dark:bg-surface-dark p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-neutral-800 flex flex-col gap-4 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-0 top-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity dark:opacity-10 dark:group-hover:opacity-20">
+          <div className="absolute right-0 top-0 p-3 opacity-10 scale-110 animate-spin-slow dark:opacity-15 pointer-events-none">
             <Clock size={80} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-xl text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/30 group-hover:bg-orange-600 group-hover:text-white transition-colors">
-              <Clock size={24} />
+            <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-xl text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/30 group-hover:bg-orange-600 group-hover:text-white group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-orange-500/20 transition-all duration-300">
+              <Clock size={24} className="animate-spin-slow" />
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-full border border-orange-100 dark:border-orange-900/30">Pendentes</span>
           </div>
@@ -332,12 +334,12 @@ export const Dashboard: React.FC = () => {
           onClick={() => setSelectedStat('completed')}
           className="text-left bg-white dark:bg-surface-dark p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-neutral-800 flex flex-col gap-4 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-0 top-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity dark:opacity-10 dark:group-hover:opacity-20">
+          <div className="absolute right-0 top-0 p-3 opacity-10 scale-110 translate-y-1 transition-all duration-700 dark:opacity-15 pointer-events-none animate-pulse">
             <CheckCircle size={80} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-              <CheckCircle size={24} />
+            <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30 group-hover:bg-blue-600 group-hover:text-white group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-blue-500/20 transition-all duration-300">
+              <CheckCircle size={24} className="animate-fade-in" style={{ animationIterationCount: 'infinite', animationDuration: '3s' }} />
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-full border border-blue-100 dark:border-blue-900/30">Prontos</span>
           </div>
@@ -352,12 +354,12 @@ export const Dashboard: React.FC = () => {
           onClick={() => setSelectedStat('lowStock')}
           className="text-left bg-white dark:bg-surface-dark p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-neutral-800 flex flex-col gap-4 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-0 top-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity dark:opacity-10 dark:group-hover:opacity-20">
+          <div className="absolute right-0 top-0 p-3 opacity-10 scale-110 rotate-3 transition-all duration-700 dark:opacity-15 pointer-events-none animate-pulse">
             <AlertTriangle size={80} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-xl text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 group-hover:bg-red-600 group-hover:text-white transition-colors">
-              <AlertTriangle size={24} />
+            <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-xl text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 group-hover:bg-red-600 group-hover:text-white group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-red-500/20 transition-all duration-300">
+              <AlertTriangle size={24} className="animate-bounce" />
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-full border border-red-100 dark:border-red-900/30">Alerta</span>
           </div>

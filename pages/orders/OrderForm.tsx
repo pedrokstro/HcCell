@@ -203,9 +203,6 @@ export const OrderForm: React.FC = () => {
                     }
 
                     // Save Order Updates
-                    // Save Order Updates
-                    const warrantyEnd = noWarranty ? null : (existingOrder.warrantyEnd || new Date(new Date().setDate(new Date().getDate() + 90)).toISOString());
-
                     await updateOrder({
                         ...existingOrder,
                         clientId: selectedClientId,
@@ -219,7 +216,7 @@ export const OrderForm: React.FC = () => {
                         discount,
                         total,
                         noWarranty,
-                        warrantyEnd: noWarranty ? null : warrantyEnd,
+                        warrantyEnd: noWarranty ? null : existingOrder.warrantyEnd,
                         selectedProducts
                     });
                 }
@@ -248,8 +245,6 @@ export const OrderForm: React.FC = () => {
 
                 // Create new order
                 const createdAt = new Date().toISOString();
-                const warrantyEndDate = new Date();
-                warrantyEndDate.setDate(warrantyEndDate.getDate() + 90);
 
                 await addOrder({
                     clientId: selectedClientId,
@@ -265,7 +260,7 @@ export const OrderForm: React.FC = () => {
                     total,
                     createdAt,
                     noWarranty,
-                    warrantyEnd: noWarranty ? null : warrantyEndDate.toISOString(),
+                    warrantyEnd: null, // Let store.tsx handle it if status changes to Completed later
                     selectedProducts
                 } as Partial<ServiceOrder>);
             }

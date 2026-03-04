@@ -107,37 +107,50 @@ export const OrdersList: React.FC = () => {
                 </div>
 
                 <div className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 p-4 shadow-sm flex flex-col gap-4">
-                    {/* Linha 1: Busca e Status */}
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <div className="flex-1 relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Search size={20} className="text-slate-400" />
-                            </div>
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-neutral-800 rounded-lg bg-slate-50 dark:bg-neutral-900 focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm text-slate-900 dark:text-white placeholder-slate-400"
-                                placeholder="Buscar por OS, Cliente ou Aparelho..."
-                            />
+                    {/* Linha 1: Busca */}
+                    <div className="relative w-full">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Search size={20} className="text-slate-400" />
                         </div>
-                        <div className="relative min-w-[180px]">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Filter size={18} className="text-slate-400" />
-                            </div>
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                                className="block w-full pl-10 pr-10 py-2.5 border border-slate-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-surface-dark text-slate-900 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm appearance-none cursor-pointer"
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-neutral-800 rounded-lg bg-slate-50 dark:bg-neutral-900 focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm text-slate-900 dark:text-white placeholder-slate-400"
+                            placeholder="Buscar por OS, Cliente ou Aparelho..."
+                        />
+                    </div>
+
+                    {/* Filtros de Status (Pílulas) */}
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+                        <button
+                            onClick={() => setStatusFilter('')}
+                            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all border ${statusFilter === ''
+                                    ? 'bg-slate-800 dark:bg-white text-white dark:text-slate-900 border-slate-800 dark:border-white shadow-sm'
+                                    : 'bg-transparent text-slate-600 dark:text-slate-300 border-slate-200 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-900'
+                                }`}
+                        >
+                            Todos
+                        </button>
+                        {[
+                            { value: OrderStatus.PENDING, label: 'Pendente', colorClass: 'bg-yellow-500' },
+                            { value: OrderStatus.IN_PROGRESS, label: 'Em Andamento', colorClass: 'bg-blue-500' },
+                            { value: OrderStatus.WAITING_PAYMENT, label: 'Aguard. Pag.', colorClass: 'bg-orange-500' },
+                            { value: OrderStatus.COMPLETED, label: 'Concluído', colorClass: 'bg-green-500' },
+                            { value: OrderStatus.CANCELLED, label: 'Cancelado', colorClass: 'bg-red-500' }
+                        ].map(status => (
+                            <button
+                                key={status.value}
+                                onClick={() => setStatusFilter(status.value === statusFilter ? '' : status.value)}
+                                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all border ${statusFilter === status.value
+                                        ? 'bg-primary text-white border-primary shadow-sm shadow-primary/30'
+                                        : 'bg-transparent text-slate-600 dark:text-slate-300 border-slate-200 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-900'
+                                    }`}
                             >
-                                <option value="">Status: Todos</option>
-                                <option value={OrderStatus.PENDING}>{OrderStatus.PENDING}</option>
-                                <option value={OrderStatus.IN_PROGRESS}>{OrderStatus.IN_PROGRESS}</option>
-                                <option value={OrderStatus.COMPLETED}>{OrderStatus.COMPLETED}</option>
-                                <option value={OrderStatus.WAITING_PAYMENT}>{OrderStatus.WAITING_PAYMENT}</option>
-                                <option value={OrderStatus.CANCELLED}>{OrderStatus.CANCELLED}</option>
-                            </select>
-                        </div>
+                                <div className={`w-2 h-2 rounded-full ${statusFilter === status.value ? 'bg-white' : status.colorClass}`}></div>
+                                {status.label}
+                            </button>
+                        ))}
                     </div>
 
                     {/* Linha 2: Filtro por Data */}

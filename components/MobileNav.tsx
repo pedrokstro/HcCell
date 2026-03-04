@@ -19,22 +19,24 @@ export const MobileNav: React.FC = () => {
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
             <div className="flex items-center justify-center gap-1 px-2 py-2 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 border border-slate-200 dark:border-white/10">
-                {navItems.map((item) => (
-                    <NavLink
-                        key={item.path}
-                        to={item.path}
-                        className={({ isActive }) => `
+                {navItems
+                    .filter(item => item.path !== '/sales' && item.path !== '/inventory')
+                    .map((item) => (
+                        <NavLink
+                            key={item.path}
+                            to={item.path}
+                            className={({ isActive }) => `
                             flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200
                             ${isActive
-                                ? 'bg-primary text-white shadow-lg shadow-primary/40 scale-105'
-                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 active:scale-90'
-                            }
+                                    ? 'bg-primary text-white shadow-lg shadow-primary/40 scale-105'
+                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 active:scale-90'
+                                }
                         `}
-                        title={item.label}
-                    >
-                        <item.icon size={20} strokeWidth={2} />
-                    </NavLink>
-                ))}
+                            title={item.label}
+                        >
+                            <item.icon size={20} strokeWidth={2} />
+                        </NavLink>
+                    ))}
 
                 {/* Divider */}
                 <div className="w-px h-6 bg-slate-200 dark:bg-white/20 mx-1" />
