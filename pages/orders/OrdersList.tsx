@@ -1,9 +1,11 @@
 import React from 'react';
 import { useApp } from '../../store';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, Plus, FileText, Filter, Calendar } from 'lucide-react';
+import { Search, Plus, FileText, Filter, Calendar, Clock, CheckCircle, AlertTriangle, XCircle, TrendingUp } from 'lucide-react';
 import { OrderStatus } from '../../types';
-import { FloatingActionButton } from '../../components/FloatingActionButton';
+import { CustomDropdown } from '../../components/CustomDropdown';
+import { DatePicker } from '../../components/DatePicker';
+
 
 export const OrdersList: React.FC = () => {
     const { orders, clients } = useApp();
@@ -27,6 +29,29 @@ export const OrdersList: React.FC = () => {
     const [dateFilter, setDateFilter] = React.useState<string>('');
     const [startDate, setStartDate] = React.useState<string>('');
     const [endDate, setEndDate] = React.useState<string>('');
+    const [isStatusSheetOpen, setIsStatusSheetOpen] = React.useState(false);
+    const [isDateSheetOpen, setIsDateSheetOpen] = React.useState(false);
+
+    const statusOptions = [
+        { value: '', label: 'Todos os Status', icon: <Filter size={18} /> },
+        { value: OrderStatus.PENDING, label: 'Pendente', icon: <Clock size={18} className="text-yellow-500" /> },
+        { value: OrderStatus.IN_PROGRESS, label: 'Em Andamento', icon: <TrendingUp size={18} className="text-blue-500" /> },
+        { value: OrderStatus.WAITING_PAYMENT, label: 'Aguard. Pag.', icon: <Clock size={18} className="text-orange-500" /> },
+        { value: OrderStatus.COMPLETED, label: 'Concluído', icon: <CheckCircle size={18} className="text-green-500" /> },
+        { value: OrderStatus.CANCELLED, label: 'Cancelado', icon: <XCircle size={18} className="text-red-500" /> }
+    ];
+
+    const dateOptions = [
+        { value: '', label: 'Todo o Período', icon: <Filter size={18} /> },
+        { value: 'today', label: 'Hoje', icon: <Clock size={18} /> },
+        { value: 'week', label: 'Esta Semana', icon: <Calendar size={18} /> },
+        { value: 'month', label: 'Este Mês', icon: <Calendar size={18} /> },
+        { value: 'custom', label: 'Personalizado', icon: <Search size={18} /> }
+    ];
+
+    const currentStatusLabel = statusOptions.find(o => o.value === statusFilter)?.label || 'Status';
+    const currentDateLabel = dateOptions.find(o => o.value === dateFilter)?.label || 'Data';
+
 
     // Função auxiliar para criar data no horário local a partir de string YYYY-MM-DD
     const parseLocalDate = (dateStr: string): Date => {
@@ -121,79 +146,50 @@ export const OrdersList: React.FC = () => {
                         />
                     </div>
 
-                    {/* Filtros de Status (Pílulas) */}
-                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
-                        <button
-                            onClick={() => setStatusFilter('')}
-                            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all border ${statusFilter === ''
-                                    ? 'bg-slate-800 dark:bg-white text-white dark:text-slate-900 border-slate-800 dark:border-white shadow-sm'
-                                    : 'bg-transparent text-slate-600 dark:text-slate-300 border-slate-200 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-900'
-                                }`}
-                        >
-                            Todos
-                        </button>
-                        {[
-                            { value: OrderStatus.PENDING, label: 'Pendente', colorClass: 'bg-yellow-500' },
-                            { value: OrderStatus.IN_PROGRESS, label: 'Em Andamento', colorClass: 'bg-blue-500' },
-                            { value: OrderStatus.WAITING_PAYMENT, label: 'Aguard. Pag.', colorClass: 'bg-orange-500' },
-                            { value: OrderStatus.COMPLETED, label: 'Concluído', colorClass: 'bg-green-500' },
-                            { value: OrderStatus.CANCELLED, label: 'Cancelado', colorClass: 'bg-red-500' }
-                        ].map(status => (
-                            <button
-                                key={status.value}
-                                onClick={() => setStatusFilter(status.value === statusFilter ? '' : status.value)}
-                                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all border ${statusFilter === status.value
-                                        ? 'bg-primary text-white border-primary shadow-sm shadow-primary/30'
-                                        : 'bg-transparent text-slate-600 dark:text-slate-300 border-slate-200 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-900'
-                                    }`}
-                            >
-                                <div className={`w-2 h-2 rounded-full ${statusFilter === status.value ? 'bg-white' : status.colorClass}`}></div>
-                                {status.label}
-                            </button>
-                        ))}
+                    {/* Filtros de Status e Data */}
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <CustomDropdown
+                            label="FILTRAR POR STATUS"
+                            options={statusOptions}
+                            selectedValue={statusFilter}
+                            onSelect={setStatusFilter}
+                            icon={<Filter size={18} />}
+                            className="w-full sm:w-64"
+                        />
+
+                        <CustomDropdown
+                            label="FILTRAR POR PERÍODO"
+                            options={dateOptions}
+                            selectedValue={dateFilter}
+                            onSelect={(val) => {
+                                setDateFilter(val);
+                                if (val !== 'custom') {
+                                    setStartDate('');
+                                    setEndDate('');
+                                }
+                            }}
+                            icon={<Calendar size={18} />}
+                            className="w-full sm:w-64"
+                        />
                     </div>
 
-                    {/* Linha 2: Filtro por Data */}
-                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                        <div className="relative min-w-[180px]">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Calendar size={18} className="text-slate-400" />
-                            </div>
-                            <select
-                                value={dateFilter}
-                                onChange={(e) => {
-                                    setDateFilter(e.target.value);
-                                    if (e.target.value !== 'custom') {
-                                        setStartDate('');
-                                        setEndDate('');
-                                    }
-                                }}
-                                className="block w-full pl-10 pr-10 py-2.5 border border-slate-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-surface-dark text-slate-900 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm appearance-none cursor-pointer"
-                            >
-                                <option value="">Período: Todos</option>
-                                <option value="today">Hoje</option>
-                                <option value="week">Esta Semana</option>
-                                <option value="month">Este Mês</option>
-                                <option value="custom">Personalizado</option>
-                            </select>
-                        </div>
-
                         {dateFilter === 'custom' && (
-                            <div className="flex flex-wrap items-center gap-2 animate-fade-in">
-                                <span className="text-sm text-slate-500 dark:text-slate-400">De:</span>
-                                <input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    className="px-3 py-2 border border-slate-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-surface-dark text-slate-900 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm"
-                                />
-                                <span className="text-sm text-slate-500 dark:text-slate-400">Até:</span>
-                                <input
-                                    type="date"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    className="px-3 py-2 border border-slate-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-surface-dark text-slate-900 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm"
-                                />
+                            <div className="flex flex-col sm:flex-row items-center gap-2 animate-fade-in w-full sm:w-auto">
+                                <div className="w-full sm:w-48">
+                                    <DatePicker 
+                                        value={startDate} 
+                                        onChange={setStartDate} 
+                                        placeholder="De"
+                                    />
+                                </div>
+                                <span className="text-slate-400 text-[10px] uppercase font-bold px-1">até</span>
+                                <div className="w-full sm:w-48">
+                                    <DatePicker 
+                                        value={endDate} 
+                                        onChange={setEndDate} 
+                                        placeholder="Até"
+                                    />
+                                </div>
                             </div>
                         )}
 
@@ -206,18 +202,16 @@ export const OrdersList: React.FC = () => {
                                     setStartDate('');
                                     setEndDate('');
                                 }}
-                                className="text-sm text-primary hover:text-primary-dark font-medium transition-colors whitespace-nowrap"
+                                className="text-sm text-primary hover:text-primary-dark font-medium transition-colors whitespace-nowrap self-start sm:self-center px-1"
                             >
                                 Limpar filtros
                             </button>
                         )}
-                    </div>
 
-                    {/* Contador de resultados */}
-                    <div className="text-sm text-slate-500 dark:text-slate-400">
-                        Exibindo <span className="font-semibold text-slate-700 dark:text-slate-300">{filteredOrders.length}</span> de <span className="font-semibold text-slate-700 dark:text-slate-300">{orders.length}</span> ordens
+                        <div className="text-sm text-slate-500 dark:text-slate-400 mt-2 px-1">
+                            Exibindo <span className="font-semibold text-slate-700 dark:text-slate-300">{filteredOrders.length}</span> de <span className="font-semibold text-slate-700 dark:text-slate-300">{orders.length}</span> ordens
+                        </div>
                     </div>
-                </div>
 
                 {/* Desktop Table View */}
                 <div className="hidden md:block bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 shadow-sm overflow-hidden animate-fade-in-up">
@@ -357,8 +351,7 @@ export const OrdersList: React.FC = () => {
                 </div>
             </div>
 
-            {/* FAB Mobile */}
-            <FloatingActionButton to="/orders/new" label="Nova Ordem" />
+            {/* FAB Mobile removed - integrated into MobileNav */}
         </>
     );
 };

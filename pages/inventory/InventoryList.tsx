@@ -3,13 +3,25 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../../store';
 import { Search, Download, Plus, MoreVertical, TrendingUp, AlertTriangle, Package, Image as ImageIcon, Filter, DollarSign, Tags } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { FloatingActionButton } from '../../components/FloatingActionButton';
+
+
+import { CustomDropdown } from '../../components/CustomDropdown';
 
 export const InventoryList: React.FC = () => {
     const { products, categories } = useApp();
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [isStatusSheetOpen, setIsStatusSheetOpen] = useState(false);
+
+    const statusOptions = [
+        { value: 'all', label: 'Todos os Status', icon: <Filter size={18} /> },
+        { value: 'in_stock', label: 'Em Estoque', icon: <Package size={18} className="text-emerald-500" /> },
+        { value: 'low_stock', label: 'Estoque Baixo', icon: <AlertTriangle size={18} className="text-amber-500" /> },
+        { value: 'out_of_stock', label: 'Sem Estoque', icon: <AlertTriangle size={18} className="text-red-500" /> }
+    ];
+
+    const currentStatusLabel = statusOptions.find(o => o.value === statusFilter)?.label || 'Status';
 
 
     const lowStockCount = products.filter(p => p.quantity <= (p.minStockLevel || 5)).length;
@@ -101,39 +113,25 @@ export const InventoryList: React.FC = () => {
 
                 {/* Toolbar */}
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex overflow-x-auto border-b border-slate-200 dark:border-neutral-800 pb-px -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-hide">
-                        <nav className="flex space-x-6 min-w-max">
-                            {categoryOptions.map((cat) => (
-                                <button
-                                    key={cat}
-                                    onClick={() => setCategoryFilter(cat)}
-                                    className={`border-b-2 px-1 pb-3 text-sm font-medium transition-colors ${categoryFilter === cat
-                                        ? 'border-primary text-primary font-bold'
-                                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                                        }`}
-                                >
-                                    {cat === 'All' ? 'Todas' : cat}
-                                </button>
-                            ))}
-                        </nav>
-                    </div>
 
                     <div className="flex flex-col sm:flex-row gap-3">
-                        <div className="relative min-w-[150px]">
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                <Filter size={16} className="text-slate-400" />
-                            </div>
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                                className="block w-full rounded-lg border border-slate-200 dark:border-neutral-800 bg-white dark:bg-surface-dark py-2 pl-10 pr-8 text-sm text-slate-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary appearance-none cursor-pointer"
-                            >
-                                <option value="all">Todos os Status</option>
-                                <option value="in_stock">Em Estoque</option>
-                                <option value="low_stock">Estoque Baixo</option>
-                                <option value="out_of_stock">Sem Estoque</option>
-                            </select>
-                        </div>
+                        <CustomDropdown
+                            label="CATEGORIA"
+                            options={categoryOptions.map(cat => ({ value: cat, label: cat === 'All' ? 'Todas as Categorias' : cat }))}
+                            selectedValue={categoryFilter}
+                            onSelect={setCategoryFilter}
+                            icon={<Tags size={18} />}
+                            className="w-full sm:w-56"
+                        />
+
+                        <CustomDropdown
+                            label="STATUS"
+                            options={statusOptions}
+                            selectedValue={statusFilter}
+                            onSelect={setStatusFilter}
+                            icon={<Filter size={18} />}
+                            className="w-full sm:w-56"
+                        />
 
                         <div className="relative w-full sm:w-72">
                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -274,8 +272,7 @@ export const InventoryList: React.FC = () => {
                 </div>
             </div>
 
-            {/* FAB Mobile */}
-            <FloatingActionButton to="/inventory/new" label="Novo Produto" />
+            {/* FAB Mobile removed */}
         </>
     );
 };

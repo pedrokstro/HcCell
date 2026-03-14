@@ -14,8 +14,11 @@ import {
     Filter,
     ArrowUpRight,
     ArrowDownRight,
-    Package
+    Package,
+    ChevronDown
 } from 'lucide-react';
+import { CustomDropdown } from '../components/CustomDropdown';
+import { DatePicker } from '../components/DatePicker';
 import {
     BarChart,
     Bar,
@@ -492,26 +495,21 @@ export const Reports: React.FC = () => {
 
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Filtro de período */}
-                    <div className="flex items-center gap-2 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 rounded-xl p-1">
-                        {[
+                    {/* Period Filter Dropdown */}
+                    <CustomDropdown
+                        label="FILTRAR POR PERÍODO"
+                        options={[
                             { value: 'today', label: 'Hoje' },
-                            { value: 'week', label: '7 dias' },
-                            { value: 'month', label: 'Mês' },
-                            { value: 'year', label: 'Ano' },
-                            { value: 'custom', label: 'Manual' },
-                        ].map(option => (
-                            <button
-                                key={option.value}
-                                onClick={() => setDateFilter(option.value as DateFilter)}
-                                className={`px-3 py-2 text-xs font-bold rounded-lg transition-all ${dateFilter === option.value
-                                    ? 'bg-primary text-white'
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-neutral-800'
-                                    }`}
-                            >
-                                {option.label}
-                            </button>
-                        ))}
-                    </div>
+                            { value: 'week', label: 'Últimos 7 dias' },
+                            { value: 'month', label: 'Este Mês' },
+                            { value: 'year', label: 'Este Ano' },
+                            { value: 'custom', label: 'Personalizado' },
+                        ]}
+                        selectedValue={dateFilter}
+                        onSelect={(val) => setDateFilter(val as DateFilter)}
+                        icon={<Calendar size={18} />}
+                        className="w-full sm:w-64"
+                    />
 
                     {/* Exportar */}
                     <div className="flex items-center gap-2">
@@ -537,20 +535,17 @@ export const Reports: React.FC = () => {
 
             {/* Filtro customizado */}
             {dateFilter === 'custom' && (
-                <div className="flex items-center gap-4 mb-6 p-4 bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800">
-                    <Calendar size={20} className="text-slate-400" />
-                    <input
-                        type="date"
-                        value={startDate}
-                        onChange={e => setStartDate(e.target.value)}
-                        className="px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-sm"
+                <div className="flex flex-col sm:flex-row items-center gap-4 mb-6 p-6 bg-white dark:bg-surface-dark rounded-[24px] border border-slate-100 dark:border-white/5 shadow-sm">
+                    <DatePicker 
+                        label="Data Inicial" 
+                        value={startDate} 
+                        onChange={setStartDate} 
                     />
-                    <span className="text-slate-400">até</span>
-                    <input
-                        type="date"
-                        value={endDate}
-                        onChange={e => setEndDate(e.target.value)}
-                        className="px-3 py-2 bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg text-sm"
+                    <div className="hidden sm:block text-slate-300 dark:text-neutral-700 font-bold mt-4">até</div>
+                    <DatePicker 
+                        label="Data Final" 
+                        value={endDate} 
+                        onChange={setEndDate} 
                     />
                 </div>
             )}

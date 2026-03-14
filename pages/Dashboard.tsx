@@ -1,14 +1,32 @@
 import React from 'react';
 import { useApp } from '../store';
 import { OrderStatus } from '../types';
-import { Search, Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Eye, Printer, ChevronRight, ChevronLeft, TrendingDown, EyeOff, Calendar } from 'lucide-react';
+import { Search, Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Eye, Printer, ChevronRight, ChevronLeft, TrendingDown, EyeOff, Calendar, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { FloatingActionButton } from '../components/FloatingActionButton';
+import { CustomDropdown } from '../components/CustomDropdown';
+import { DatePicker } from '../components/DatePicker';
+
 
 export const Dashboard: React.FC = () => {
   const { orders, products, clients } = useApp();
-  const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedStat, setSelectedStat] = React.useState<'sales' | 'awaiting' | 'completed' | 'lowStock' | 'costs' | null>(null);
+  const [isDateSheetOpen, setIsDateSheetOpen] = React.useState(false);
+
+  const [dateFilter, setDateFilter] = React.useState<'today' | 'yesterday' | 'week' | 'month' | 'all' | 'custom'>('today');
+  const [customDate, setCustomDate] = React.useState<string>(new Date().toISOString().split('T')[0]);
+  const [customEndDate, setCustomEndDate] = React.useState<string>(new Date().toISOString().split('T')[0]);
+  const [searchQuery, setSearchQuery] = React.useState('');
+
+  const dateFilterOptions = [
+    { value: 'today', label: 'Hoje', icon: <Clock size={18} /> },
+    { value: 'yesterday', label: 'Ontem', icon: <TrendingDown size={18} /> },
+    { value: 'week', label: 'Últimos 7 Dias', icon: <Calendar size={18} /> },
+    { value: 'month', label: 'Este Mês', icon: <Calendar size={18} /> },
+    { value: 'all', label: 'Todo o Período', icon: <Filter size={18} /> },
+    { value: 'custom', label: 'Personalizado', icon: <Search size={18} /> }
+  ];
+
+  const currentDateLabel = dateFilterOptions.find(o => o.value === dateFilter)?.label || 'Filtrar Data';
 
   // Persist showValues preference
   const [showValues, setShowValues] = React.useState(() => {
@@ -20,9 +38,7 @@ export const Dashboard: React.FC = () => {
     localStorage.setItem('dashboard_showValues', JSON.stringify(showValues));
   }, [showValues]);
 
-  const [dateFilter, setDateFilter] = React.useState<'today' | 'yesterday' | 'week' | 'month' | 'all' | 'custom'>('today');
-  const [customDate, setCustomDate] = React.useState<string>(new Date().toISOString().split('T')[0]);
-  const [customEndDate, setCustomEndDate] = React.useState<string>(new Date().toISOString().split('T')[0]);
+
 
   // Helper to check if a date matches the filter
   const isDateInFilter = (dateStr: string) => {
@@ -201,59 +217,54 @@ export const Dashboard: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-3 items-stretch sm:items-center">
           {/* Date Filters */}
-          <div className="flex items-center bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 rounded-lg p-1 shadow-sm w-full sm:w-auto overflow-x-auto no-scrollbar">
-            <button
-              onClick={() => setShowValues(!showValues)}
-              className="px-3 py-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-neutral-800 rounded-md transition-all mr-1"
-              title={showValues ? "Ocultar valores" : "Mostrar valores"}
-            >
-              {showValues ? <Eye size={18} /> : <EyeOff size={18} />}
-            </button>
-            <div className="w-px h-4 bg-slate-200 dark:bg-neutral-700 mx-1"></div>
-            <button onClick={() => setDateFilter('today')} className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-all ${dateFilter === 'today' ? 'bg-primary text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-neutral-800'}`}>Hoje</button>
-            <button onClick={() => setDateFilter('yesterday')} className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-all ${dateFilter === 'yesterday' ? 'bg-primary text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-neutral-800'}`}>Ontem</button>
-            <button onClick={() => setDateFilter('week')} className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-all ${dateFilter === 'week' ? 'bg-primary text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-neutral-800'}`}>7 Dias</button>
-            <button onClick={() => setDateFilter('month')} className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-all ${dateFilter === 'month' ? 'bg-primary text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-neutral-800'}`}>Mês</button>
-            <button onClick={() => setDateFilter('all')} className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-all ${dateFilter === 'all' ? 'bg-primary text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-neutral-800'}`}>Todos</button>
-            <div className="w-px h-4 bg-slate-200 dark:bg-neutral-700 mx-1"></div>
-            {dateFilter === 'custom' ? (
-              <div className="flex items-center gap-1 ml-1 animate-in fade-in slide-in-from-left-2">
-                <input
-                  type="date"
-                  value={customDate}
-                  onChange={(e) => setCustomDate(e.target.value)}
-                  className="bg-transparent border-none p-0 text-xs font-bold text-primary focus:ring-0 cursor-pointer w-[95px]"
-                />
-                <span className="text-slate-400 text-[10px]">até</span>
-                <input
-                  type="date"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="bg-transparent border-none p-0 text-xs font-bold text-primary focus:ring-0 cursor-pointer w-[95px]"
+          {/* Date Filter Dropdown */}
+          <CustomDropdown
+            label="FILTRAR POR PERÍODO"
+            options={dateFilterOptions}
+            selectedValue={dateFilter}
+            onSelect={(val) => setDateFilter(val as any)}
+            icon={<Calendar size={18} />}
+            className="w-full sm:w-64"
+          />
+
+          {dateFilter === 'custom' && (
+            <div className="flex flex-col sm:flex-row items-center gap-2 animate-fade-in w-full sm:w-auto">
+              <div className="w-full sm:w-48">
+                <DatePicker 
+                  value={customDate} 
+                  onChange={setCustomDate} 
                 />
               </div>
-            ) : (
-              <button
-                onClick={() => setDateFilter('custom')}
-                className="ml-1 p-1.5 text-slate-400 hover:text-primary hover:bg-slate-50 dark:hover:bg-neutral-800 rounded-md transition-colors"
-                title="Data Personalizada"
-              >
-                <Calendar size={16} />
-              </button>
-            )}
-          </div>
-
-          <div className="relative w-full sm:w-64">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={16} className="text-slate-400" />
+              <span className="text-slate-400 text-[10px] uppercase font-bold px-1">até</span>
+              <div className="w-full sm:w-48">
+                <DatePicker 
+                  value={customEndDate} 
+                  onChange={setCustomEndDate} 
+                />
+              </div>
             </div>
-            <input
-              type="text"
-              className="block w-full pl-9 pr-3 py-2 border border-slate-200 dark:border-neutral-800 rounded-lg leading-5 bg-white dark:bg-surface-dark text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-sm"
-              placeholder="Buscar serviço..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          )}
+
+          <div className="flex items-center gap-3 w-full lg:w-auto">
+            <button
+              onClick={() => setShowValues(!showValues)}
+              className="p-2.5 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-500 shadow-sm transition-all hover:border-primary/50"
+              title={showValues ? "Ocultar valores" : "Mostrar valores"}
+            >
+              {showValues ? <Eye size={20} /> : <EyeOff size={20} />}
+            </button>
+            <div className="relative w-full sm:w-64">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search size={16} className="text-slate-400" />
+              </div>
+              <input
+                type="text"
+                className="block w-full pl-9 pr-3 py-2.5 border border-slate-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-surface-dark text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-sm transition-all"
+                placeholder="Buscar serviço..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
           <Link to="/orders/new" className="hidden sm:flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg shadow-sm shadow-primary/30 transition-all font-bold text-sm whitespace-nowrap">
             <Plus size={18} />
@@ -262,7 +273,7 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <FloatingActionButton to="/orders/new" label="Nova OS" />
+
 
       {/* Stats Grid */}
       <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 animate-fade-in-up">

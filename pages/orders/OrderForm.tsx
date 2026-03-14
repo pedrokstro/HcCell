@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../../store';
-import { Search, Save, User, Package, X, Plus, Calculator, Settings, Smartphone, Image as ImageIcon, ShieldAlert, Upload } from 'lucide-react';
+import { Search, Save, User, Package, X, Plus, Calculator, Settings, Smartphone, Image as ImageIcon, ShieldAlert, Upload, PenLine } from 'lucide-react';
 import { OrderStatus, ServiceOrder, MovementType } from '../../types';
+import { CustomDropdown } from '../../components/CustomDropdown';
 
 export const OrderForm: React.FC = () => {
     const navigate = useNavigate();
@@ -72,9 +74,7 @@ export const OrderForm: React.FC = () => {
     const priceParts = selectedProducts.reduce((acc, p) => acc + (p.price * p.quantity), 0);
     const total = (priceServices + priceParts) - discount;
 
-    // Client Search State
-    const [clientSearch, setClientSearch] = useState('');
-    const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+    // Client & Product Refs
     const searchRef = useRef<HTMLDivElement>(null);
     const productSearchRef = useRef<HTMLDivElement>(null);
 
@@ -82,7 +82,7 @@ export const OrderForm: React.FC = () => {
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-                setShowClientSuggestions(false);
+                // Client suggestions logic removed as it uses CustomDropdown now
             }
             if (productSearchRef.current && !productSearchRef.current.contains(event.target as Node)) {
                 setShowProductSuggestions(false);
@@ -95,12 +95,6 @@ export const OrderForm: React.FC = () => {
         };
     }, []);
 
-    // Filter clients based on search
-    const filteredClients = clients.filter(c =>
-        c.name.toLowerCase().includes(clientSearch.toLowerCase()) ||
-        c.phone?.includes(clientSearch) ||
-        c.cpf?.includes(clientSearch)
-    );
 
     const selectedClient = clients.find(c => c.id === selectedClientId);
 
@@ -273,8 +267,6 @@ export const OrderForm: React.FC = () => {
 
     const handleSelectClient = (clientId: string) => {
         setSelectedClientId(clientId);
-        setClientSearch('');
-        setShowClientSuggestions(false);
     };
 
     return (
@@ -292,89 +284,73 @@ export const OrderForm: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-6 md:gap-8">
                 {/* Client Selection Section */}
-                <section className="bg-white dark:bg-surface-dark p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-800">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Dados do Cliente</h3>
-                        {!id && <button type="button" onClick={() => navigate('/clients/new')} className="text-primary text-sm font-bold hover:underline">Novo Cliente</button>}
+                <section className="bg-white dark:bg-surface-dark p-6 rounded-[24px] shadow-sm border border-slate-100 dark:border-white/5">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">Dados do Cliente</h3>
+                        {!id && (
+                            <button 
+                                type="button" 
+                                onClick={() => navigate('/clients/new')} 
+                                className="text-primary text-xs font-black uppercase tracking-widest hover:underline"
+                            >
+                                + Novo Cliente
+                            </button>
+                        )}
                     </div>
 
-                    {!selectedClient ? (
-                        <div className="relative" ref={searchRef}>
-                            <div className="flex w-full items-stretch rounded-lg h-12 bg-slate-50 dark:bg-neutral-900 focus-within:ring-2 focus-within:ring-primary transition-all border border-slate-200 dark:border-neutral-800">
-                                <div
-                                    className="flex items-center justify-center pl-4 text-slate-400 hover:text-primary cursor-pointer transition-colors"
-                                    onClick={() => setShowClientSuggestions(true)}
-                                >
-                                    <Search size={20} />
-                                </div>
-                                <input
-                                    className="flex-1 bg-transparent border-none focus:ring-0 text-slate-900 dark:text-white px-4 placeholder:text-slate-400 h-full w-full outline-none"
-                                    placeholder="Buscar por Nome, CPF ou Telefone (clique na lupa para listar todos)"
-                                    type="text"
-                                    value={clientSearch}
-                                    onChange={(e) => {
-                                        setClientSearch(e.target.value);
-                                        setShowClientSuggestions(true);
-                                    }}
-                                    onFocus={() => setShowClientSuggestions(true)}
-                                />
-                            </div>
-                            {/* Suggestions Dropdown */}
-                            {showClientSuggestions && (
-                                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                    {filteredClients.length > 0 ? (
-                                        filteredClients.map(client => (
-                                            <div
-                                                key={client.id}
-                                                onClick={() => handleSelectClient(client.id)}
-                                                className="p-3 hover:bg-slate-50 dark:hover:bg-neutral-800 cursor-pointer border-b border-slate-50 dark:border-neutral-800 last:border-none flex items-center justify-between"
-                                            >
-                                                <div>
-                                                    <p className="font-medium text-slate-900 dark:text-white">{client.name}</p>
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400">{client.phone} • {client.cpf}</p>
-                                                </div>
-                                                <div className="text-primary opacity-0 hover:opacity-100">Selecionar</div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="p-4 text-center text-slate-500 dark:text-slate-400 text-sm">Nenhum cliente encontrado.</div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30 rounded-lg p-4">
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 flex items-center justify-center">
-                                    <User size={20} />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-slate-900 dark:text-white">{selectedClient.name}</p>
-                                    <p className="text-sm text-slate-600 dark:text-slate-300">{selectedClient.phone} {selectedClient.cpf && `• ${selectedClient.cpf}`}</p>
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setSelectedClientId(null)}
-                                className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:underline"
+                    <div className="space-y-4">
+                        <CustomDropdown
+                            label="Selecionar Cliente"
+                            placeholder="Busque por nome, CPF ou telefone..."
+                            options={clients.map(c => ({
+                                value: c.id,
+                                label: c.name,
+                                subLabel: `${c.phone || ''} ${c.cpf ? '• ' + c.cpf : ''}`,
+                                icon: <User size={18} />
+                            }))}
+                            selectedValue={selectedClientId || ''}
+                            onSelect={(val) => setSelectedClientId(val)}
+                            className="w-full"
+                        />
+                        
+                        {selectedClient && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="flex items-center justify-between bg-slate-50 dark:bg-neutral-900/50 border border-slate-100 dark:border-white/5 rounded-2xl p-4"
                             >
-                                Trocar
-                            </button>
-                        </div>
-                    )}
+                                <div className="flex items-center gap-3">
+                                    <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                                        <User size={24} />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-slate-900 dark:text-white">{selectedClient.name}</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">{selectedClient.phone} {selectedClient.cpf && `• ${selectedClient.cpf}`}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedClientId(null)}
+                                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </motion.div>
+                        )}
+                    </div>
                 </section>
 
                 {/* Device Information Section */}
-                <section className="bg-white dark:bg-surface-dark p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-800">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                <section className="bg-white dark:bg-surface-dark p-6 rounded-[24px] shadow-sm border border-slate-100 dark:border-white/5">
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white mb-8 flex items-center gap-2 uppercase tracking-widest text-xs">
                         <Smartphone size={20} className="text-primary" />
                         Informações do Aparelho
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Modelo do Aparelho *</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Modelo do Aparelho *</label>
                             <input
-                                className="w-full h-11 px-4 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-white"
+                                className="w-full h-12 px-4 rounded-2xl bg-slate-50 dark:bg-neutral-900/50 border-2 border-slate-100 dark:border-white/5 focus:outline-none focus:border-primary transition-all text-slate-900 dark:text-white font-bold"
                                 placeholder="Ex: iPhone 13 Pro"
                                 type="text"
                                 value={deviceModel}
@@ -383,9 +359,9 @@ export const OrderForm: React.FC = () => {
                             />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Número de Série / IMEI</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Número de Série / IMEI</label>
                             <input
-                                className="w-full h-11 px-4 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-white font-mono"
+                                className="w-full h-12 px-4 rounded-2xl bg-slate-50 dark:bg-neutral-900/50 border-2 border-slate-100 dark:border-white/5 focus:outline-none focus:border-primary transition-all text-slate-900 dark:text-white font-mono font-bold"
                                 placeholder="Opcional"
                                 type="text"
                                 value={serialNumber}
@@ -393,9 +369,9 @@ export const OrderForm: React.FC = () => {
                             />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Senha do Aparelho</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha do Aparelho</label>
                             <input
-                                className="w-full h-11 px-4 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-white"
+                                className="w-full h-12 px-4 rounded-2xl bg-slate-50 dark:bg-neutral-900/50 border-2 border-slate-100 dark:border-white/5 focus:outline-none focus:border-primary transition-all text-slate-900 dark:text-white font-bold"
                                 placeholder="Gesto ou PIN (Opcional)"
                                 type="text"
                                 value={passcode}
@@ -403,31 +379,31 @@ export const OrderForm: React.FC = () => {
                             />
                         </div>
                         <div className="flex flex-col gap-1.5 min-h-[120px]">
-                            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Foto do Aparelho (Opcional)</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Foto do Aparelho (Opcional)</label>
                             <div className="flex items-center gap-4">
                                 {deviceImage && (
                                     <div className="relative group">
-                                        <img src={deviceImage} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
+                                        <img src={deviceImage} alt="Preview" className="w-24 h-24 object-cover rounded-2xl border-2 border-slate-100 dark:border-white/5" />
                                         <button
                                             type="button"
                                             onClick={() => setDeviceImage('')}
-                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 shadow-lg"
                                         >
-                                            <X size={12} />
+                                            <X size={14} />
                                         </button>
                                     </div>
                                 )}
-                                <label className="cursor-pointer bg-slate-50 dark:bg-neutral-900 border border-dashed border-slate-300 dark:border-neutral-700 text-slate-500 hover:text-primary hover:border-primary hover:bg-primary/5 transition-all rounded-lg p-4 flex flex-col items-center justify-center gap-2 text-xs font-bold w-full md:w-auto min-w-[120px]">
-                                    <Upload size={20} />
+                                <label className="cursor-pointer bg-slate-50 dark:bg-neutral-900 border-2 border-dashed border-slate-200 dark:border-white/10 text-slate-400 hover:text-primary hover:border-primary hover:bg-primary/5 transition-all rounded-2xl p-6 flex flex-col items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest w-full md:w-auto min-w-[140px]">
+                                    <Upload size={24} />
                                     <span>Anexar Foto</span>
                                     <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                                 </label>
                             </div>
                         </div>
                         <div className="flex flex-col gap-1.5 md:col-span-2">
-                            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Problema Relatado</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Problema Relatado</label>
                             <textarea
-                                className="w-full p-4 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-white min-h-[100px]"
+                                className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-neutral-900/50 border-2 border-slate-100 dark:border-white/5 focus:outline-none focus:border-primary transition-all text-slate-900 dark:text-white min-h-[120px] font-bold"
                                 placeholder="Descreva o defeito informado pelo cliente..."
                                 value={issueDescription}
                                 onChange={(e) => setIssueDescription(e.target.value)}
@@ -587,11 +563,11 @@ export const OrderForm: React.FC = () => {
                                     <></>
                                 )}
                                 <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Desconto (R$)</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Desconto (R$)</label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-2.5 text-slate-400 text-sm font-bold">R$</span>
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-black">R$</span>
                                         <input
-                                            className="w-full h-11 pl-10 pr-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-slate-900 dark:text-white font-bold text-red-600 dark:text-red-400"
+                                            className="w-full h-12 pl-12 pr-4 rounded-2xl bg-red-50/50 dark:bg-red-900/10 border-2 border-red-100/50 dark:border-red-900/20 focus:outline-none focus:border-red-500 transition-all text-red-600 dark:text-red-400 font-black text-lg"
                                             inputMode="decimal"
                                             type="number"
                                             value={discount || ''}

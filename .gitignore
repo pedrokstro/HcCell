@@ -39,3 +39,6 @@ Thumbs.db
 
 # PWA generated files
 dev-dist
+
+# Agents and Skills
+.agent

@@ -4,7 +4,7 @@ import { Plus, Search, MoreVertical, Tag, Package, Edit2, Trash2, X, CheckCircle
 import { supabase } from '../../lib/supabase';
 import { Category } from '../../types';
 import { useToast } from '../../components/Toast';
-import { FloatingActionButton } from '../../components/FloatingActionButton';
+
 
 const ICON_OPTIONS = [
     { name: 'cases', label: 'Capas' },
@@ -720,8 +720,7 @@ export const CategoriesList: React.FC = () => {
                 }
             </div>
 
-            {/* FAB Mobile */}
-            <FloatingActionButton onClick={() => openModal()} label="Nova Categoria" />
+            {/* FAB Mobile removed */}
         </>
     );
 };

@@ -11,7 +11,7 @@ import {
   FileText
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FloatingActionButton } from '../../components/FloatingActionButton';
+
 
 export const ClientsList: React.FC = () => {
   const { clients } = useApp();
@@ -210,8 +210,7 @@ export const ClientsList: React.FC = () => {
         </div>
       </div>
 
-      {/* FAB Mobile */}
-      <FloatingActionButton to="/clients/new" label="Novo Cliente" />
+      {/* FAB Mobile removed */}
     </>
   );
 };

@@ -17,6 +17,7 @@ import {
     PenLine
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { CustomDropdown } from '../../components/CustomDropdown';
 
 export const SalesPoint: React.FC = () => {
     const { products, clients, categories, addOrder, updateProduct, addProductMovement } = useApp();
@@ -312,30 +313,18 @@ export const SalesPoint: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Categories */}
-                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                        <button
-                            onClick={() => setSelectedCategory('all')}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-bold whitespace-nowrap transition-colors ${selectedCategory === 'all'
-                                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                                : 'bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-neutral-700'
-                                }`}
-                        >
-                            Todos
-                        </button>
-                        {categories.map(cat => (
-                            <button
-                                key={cat.id}
-                                onClick={() => setSelectedCategory(cat.name)}
-                                className={`px-4 py-1.5 rounded-lg text-sm font-bold whitespace-nowrap transition-colors ${selectedCategory === cat.name
-                                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                                    : 'bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-neutral-700'
-                                    }`}
-                            >
-                                {cat.name}
-                            </button>
-                        ))}
-                    </div>
+                    {/* Categories Dropdown */}
+                    <CustomDropdown
+                        label="FILTRAR POR CATEGORIA"
+                        options={[
+                            { value: 'all', label: 'Todas as Categorias' },
+                            ...categories.map(cat => ({ value: cat.name, label: cat.name }))
+                        ]}
+                        selectedValue={selectedCategory}
+                        onSelect={(val) => setSelectedCategory(val)}
+                        icon={<Package size={18} />}
+                        className="w-full sm:w-64"
+                    />
                 </div>
 
                 {/* Products Grid */}
@@ -488,21 +477,19 @@ export const SalesPoint: React.FC = () => {
                 <div className="p-4 bg-slate-50 dark:bg-neutral-900 border-t border-slate-200 dark:border-neutral-800 space-y-4">
 
                     {/* Customer Select */}
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Cliente (Opcional)</label>
-                        <div className="relative">
-                            <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                            <select
-                                className="w-full pl-9 pr-4 py-2 bg-white dark:bg-neutral-800 border-0 rounded-lg text-sm focus:ring-2 focus:ring-primary shadow-sm text-slate-900 dark:text-white"
-                                value={selectedClientId}
-                                onChange={e => setSelectedClientId(e.target.value)}
-                            >
-                                <option value="">Consumidor Final (Balcão)</option>
-                                {clients.map(client => (
-                                    <option key={client.id} value={client.id}>{client.name}</option>
-                                ))}
-                            </select>
-                        </div>
+                    {/* Customer Selection Dropdown */}
+                    <div className="space-y-1">
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cliente</label>
+                        <CustomDropdown
+                            label="SELECIONAR CLIENTE"
+                            options={[
+                                { value: '', label: 'Consumidor Final (Balcão)', icon: <UserIcon size={16} /> },
+                                ...clients.map(c => ({ value: c.id, label: c.name, icon: <UserIcon size={16} /> }))
+                            ]}
+                            selectedValue={selectedClientId}
+                            onSelect={(val) => setSelectedClientId(val)}
+                            className="w-full"
+                        />
                     </div>
 
                     {/* Payment Method */}
