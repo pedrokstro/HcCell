@@ -1,7 +1,8 @@
 import React from 'react';
 import { useApp } from '../store';
 import { OrderStatus } from '../types';
-import { Search, Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Eye, Printer, ChevronRight, ChevronLeft, TrendingDown, EyeOff, Calendar, Filter } from 'lucide-react';
+import { Search, Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Eye, Printer, ChevronRight, ChevronLeft, TrendingDown, EyeOff, Calendar, Filter, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { DatePicker } from '../components/DatePicker';
@@ -103,7 +104,7 @@ export const Dashboard: React.FC = () => {
           return ordersInDateData.filter(o => o.status === 'Concluído').map(o => ({ label: o.deviceModel, value: `R$ ${o.total.toFixed(2)}`, sub: new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' -') }));
         case 'awaiting':
           // Show ALL active orders regardless of date filter
-          return orders.filter(o => o.status === OrderStatus.PENDING || o.status === OrderStatus.IN_PROGRESS || o.status === OrderStatus.WAITING_PAYMENT)
+          return orders.filter(o => o.status === OrderStatus.PENDING || o.status === OrderStatus.IN_PROGRESS || o.status === OrderStatus.WAITING_WITHDRAWAL)
             .map(o => {
               const client = clients.find(c => c.id === o.clientId);
               const dateStr = new Date(o.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
@@ -146,39 +147,76 @@ export const Dashboard: React.FC = () => {
     const data = getStatData();
 
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
-        <div className="bg-white dark:bg-surface-dark rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200 border border-transparent dark:border-neutral-800">
-          <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 flex items-center justify-between bg-slate-50/50 dark:bg-neutral-900/50">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{titles[selectedStat]}</h3>
-            <button onClick={() => setSelectedStat(null)} className="p-2 hover:bg-slate-200 dark:hover:bg-neutral-800 rounded-full transition-colors text-slate-400">
-              <Plus className="rotate-45" size={20} />
-            </button>
-          </div>
-          <div className="p-6 max-h-[60vh] overflow-y-auto">
-            <div className="flex flex-col gap-3">
-              {data.length > 0 ? data.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-neutral-900/50 border border-slate-100 dark:border-neutral-800 hover:border-primary/30 transition-colors">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{item.label}</span>
-                    <span className="text-xs text-slate-500">{item.sub}</span>
-                  </div>
-                  <span className={`text-sm font-bold ${selectedStat === 'lowStock' ? 'text-red-600' : 'text-primary'}`}>{item.value}</span>
-                </div>
-              )) : (
-                <p className="text-center py-8 text-slate-500 italic">Nenhum registro encontrado para o período selecionado.</p>
-              )}
-            </div>
-          </div>
-          <div className="px-6 py-4 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex justify-end">
-            <button
+      <AnimatePresence>
+        {selectedStat && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={() => setSelectedStat(null)}
-              className="px-4 py-2 bg-slate-200 dark:bg-neutral-800 hover:bg-slate-300 dark:hover:bg-neutral-700 text-slate-700 dark:text-slate-300 rounded-lg font-bold text-sm transition-colors"
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="relative bg-white dark:bg-surface-dark rounded-[32px] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 dark:border-neutral-800 flex flex-col max-h-[90vh]"
             >
-              Fechar
-            </button>
+              <div className="px-8 py-6 border-b border-slate-100 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-surface-dark relative z-10">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">Estatísticas</span>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{titles[selectedStat]}</h3>
+                </div>
+                <button 
+                  onClick={() => setSelectedStat(null)} 
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full transition-colors text-slate-400"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
+                <div className="flex flex-col gap-4">
+                  {data.length > 0 ? data.map((item, idx) => (
+                    <motion.div 
+                      key={idx}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-neutral-900/50 border border-slate-100 dark:border-neutral-800 hover:border-primary/30 transition-all hover:shadow-md"
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{item.label}</span>
+                        <span className="text-xs text-slate-500 font-medium">{item.sub}</span>
+                      </div>
+                      <span className={`text-base font-black ${selectedStat === 'lowStock' ? 'text-red-600' : 'text-primary'}`}>{item.value}</span>
+                    </motion.div>
+                  )) : (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-slate-50 dark:bg-neutral-900 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-neutral-800">
+                        <Search size={24} className="text-slate-300" />
+                      </div>
+                      <p className="text-slate-500 font-bold text-sm">Nenhum registro encontrado</p>
+                      <p className="text-xs text-slate-400 mt-1">Tente ajustar o filtro de período.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="px-8 py-6 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 relative z-10">
+                <button
+                  onClick={() => setSelectedStat(null)}
+                  className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-sm transition-all active:scale-95 shadow-xl shadow-slate-900/20"
+                >
+                  FECHAR RELATÓRIO
+                </button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      </div>
+        )}
+      </AnimatePresence>
     );
   };
 
@@ -192,7 +230,7 @@ export const Dashboard: React.FC = () => {
     }, 0);
     return acc + orderCost;
   }, 0);
-  const pendingCount = orders.filter(o => o.status === OrderStatus.PENDING || o.status === OrderStatus.IN_PROGRESS || o.status === OrderStatus.WAITING_PAYMENT).length;
+  const pendingCount = orders.filter(o => o.status === OrderStatus.PENDING || o.status === OrderStatus.IN_PROGRESS || o.status === OrderStatus.WAITING_WITHDRAWAL).length;
   const completedCount = ordersInDateData.filter(o => o.status === 'Concluído').length;
   const lowStockCount = products.filter(p => p.quantity <= (p.minStockLevel || 5)).length; // Inventory is always global
 
@@ -276,109 +314,117 @@ export const Dashboard: React.FC = () => {
 
 
       {/* Stats Grid */}
-      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 animate-fade-in-up">
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
         {/* Sales */}
-        <button
+        <motion.button
+          whileHover={{ y: -5, scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => setSelectedStat('sales')}
-          className="text-left bg-white dark:bg-surface-dark p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-neutral-800 flex flex-col gap-4 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-4 hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-0 top-0 p-3 opacity-10 scale-110 rotate-6 transition-all duration-700 dark:opacity-15 pointer-events-none animate-pulse">
-            <DollarSign size={80} className="dark:text-white" />
+          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none">
+            <DollarSign size={100} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-xl text-green-600 dark:text-green-400 border border-green-100 dark:border-green-900/30 group-hover:bg-green-600 group-hover:text-white group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-green-500/20 transition-all duration-300">
-              <DollarSign size={24} className="animate-pulse" />
+            <div className="p-2 sm:p-3 bg-green-50 dark:bg-green-900/20 rounded-2xl text-green-600 dark:text-green-400 border border-green-100 dark:border-green-900/30 group-hover:bg-green-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
+              <DollarSign size={24} />
             </div>
             {dateFilter === 'today' && <span className="text-[10px] font-black uppercase tracking-widest text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full border border-green-100 dark:border-green-900/30">Hoje</span>}
           </div>
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wide">Faturamento {dateFilter === 'today' ? 'do Dia' : ''}</p>
-            <p className="text-slate-900 dark:text-white text-2xl font-black mt-1 tracking-tight">
+            <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-widest">Faturamento {dateFilter === 'today' ? 'do Dia' : ''}</p>
+            <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">
               {showValues ? `R$ ${totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ ----'}
             </p>
           </div>
-        </button>
+        </motion.button>
 
         {/* Costs */}
-        <button
+        <motion.button
+          whileHover={{ y: -5, scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => setSelectedStat('costs')}
-          className="text-left bg-white dark:bg-surface-dark p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-neutral-800 flex flex-col gap-4 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-4 hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-0 top-0 p-3 opacity-10 scale-105 -translate-x-1 transition-all duration-700 dark:opacity-15 pointer-events-none animate-pulse">
-            <TrendingDown size={80} className="dark:text-white" />
+          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none">
+            <TrendingDown size={100} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-xl text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/30 group-hover:bg-purple-600 group-hover:text-white group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-purple-500/20 transition-all duration-300">
-              <TrendingDown size={24} className="animate-bounce" style={{ animationDuration: '3s' }} />
+            <div className="p-2 sm:p-3 bg-purple-50 dark:bg-purple-900/20 rounded-2xl text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/30 group-hover:bg-purple-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
+              <TrendingDown size={24} />
             </div>
           </div>
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wide">Custos (Peças)</p>
-            <p className="text-slate-900 dark:text-white text-2xl font-black mt-1 tracking-tight">
+            <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-widest">Custos (Peças)</p>
+            <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">
               {showValues ? `R$ ${totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ ----'}
             </p>
           </div>
-        </button>
+        </motion.button>
 
         {/* Awaiting */}
-        <button
+        <motion.button
+          whileHover={{ y: -5, scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => setSelectedStat('awaiting')}
-          className="text-left bg-white dark:bg-surface-dark p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-neutral-800 flex flex-col gap-4 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-4 hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-0 top-0 p-3 opacity-10 scale-110 animate-spin-slow dark:opacity-15 pointer-events-none">
-            <Clock size={80} className="dark:text-white" />
+          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none">
+            <Clock size={100} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-xl text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/30 group-hover:bg-orange-600 group-hover:text-white group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-orange-500/20 transition-all duration-300">
-              <Clock size={24} className="animate-spin-slow" />
+            <div className="p-2 sm:p-3 bg-orange-50 dark:bg-orange-900/20 rounded-2xl text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/30 group-hover:bg-orange-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
+              <Clock size={24} />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-full border border-orange-100 dark:border-orange-900/30">Pendentes</span>
           </div>
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wide">Em Aberto</p>
-            <p className="text-slate-900 dark:text-white text-2xl font-black mt-1 tracking-tight">{pendingCount}</p>
+            <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-widest">Em Aberto</p>
+            <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">{pendingCount}</p>
           </div>
-        </button>
+        </motion.button>
 
         {/* Completed */}
-        <button
+        <motion.button
+          whileHover={{ y: -5, scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => setSelectedStat('completed')}
-          className="text-left bg-white dark:bg-surface-dark p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-neutral-800 flex flex-col gap-4 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-4 hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-0 top-0 p-3 opacity-10 scale-110 translate-y-1 transition-all duration-700 dark:opacity-15 pointer-events-none animate-pulse">
-            <CheckCircle size={80} className="dark:text-white" />
+          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none">
+            <CheckCircle size={100} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30 group-hover:bg-blue-600 group-hover:text-white group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-blue-500/20 transition-all duration-300">
-              <CheckCircle size={24} className="animate-fade-in" style={{ animationIterationCount: 'infinite', animationDuration: '3s' }} />
+            <div className="p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/20 rounded-2xl text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30 group-hover:bg-blue-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
+              <CheckCircle size={24} />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-full border border-blue-100 dark:border-blue-900/30">Prontos</span>
           </div>
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wide">Concluídos</p>
-            <p className="text-slate-900 dark:text-white text-2xl font-black mt-1 tracking-tight">{completedCount}</p>
+            <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-widest">Concluídos</p>
+            <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">{completedCount}</p>
           </div>
-        </button>
+        </motion.button>
 
         {/* Low Inventory (Global) */}
-        <button
+        <motion.button
+          whileHover={{ y: -5, scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => setSelectedStat('lowStock')}
-          className="text-left bg-white dark:bg-surface-dark p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-neutral-800 flex flex-col gap-4 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-4 hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden col-span-2 md:col-span-1"
         >
-          <div className="absolute right-0 top-0 p-3 opacity-10 scale-110 rotate-3 transition-all duration-700 dark:opacity-15 pointer-events-none animate-pulse">
-            <AlertTriangle size={80} className="dark:text-white" />
+          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none">
+            <AlertTriangle size={100} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-xl text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 group-hover:bg-red-600 group-hover:text-white group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-red-500/20 transition-all duration-300">
-              <AlertTriangle size={24} className="animate-bounce" />
+            <div className="p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 rounded-2xl text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 group-hover:bg-red-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
+              <AlertTriangle size={24} />
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-full border border-red-100 dark:border-red-900/30">Alerta</span>
           </div>
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wide">Estoque Baixo</p>
-            <p className="text-slate-900 dark:text-white text-2xl font-black mt-1 tracking-tight">{lowStockCount}</p>
+            <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-widest">Estoque Baixo</p>
+            <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">{lowStockCount}</p>
           </div>
-        </button>
+        </motion.button>
       </div>
 
       {/* Recent Orders Table */}
@@ -434,13 +480,13 @@ export const Dashboard: React.FC = () => {
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${order.status === OrderStatus.COMPLETED ? 'bg-green-50 text-green-700 border-green-100' :
                           order.status === OrderStatus.PENDING ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
                             order.status === OrderStatus.CANCELLED ? 'bg-red-50 text-red-700 border-red-100' :
-                              order.status === OrderStatus.WAITING_PAYMENT ? 'bg-orange-50 text-orange-700 border-orange-100' :
+                              order.status === OrderStatus.WAITING_WITHDRAWAL ? 'bg-orange-50 text-orange-700 border-orange-100' :
                                 'bg-blue-50 text-blue-700 border-blue-100'
                           }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${order.status === OrderStatus.COMPLETED ? 'bg-green-500' :
                             order.status === OrderStatus.PENDING ? 'bg-yellow-500' :
                               order.status === OrderStatus.CANCELLED ? 'bg-red-500' :
-                                order.status === OrderStatus.WAITING_PAYMENT ? 'bg-orange-500' : 'bg-blue-500'
+                                order.status === OrderStatus.WAITING_WITHDRAWAL ? 'bg-orange-500' : 'bg-blue-500'
                             }`}></span>
                           {order.status}
                         </span>
@@ -476,12 +522,16 @@ export const Dashboard: React.FC = () => {
         {/* Mobile Card View */}
         <div className="md:hidden flex flex-col gap-3">
           {displayOrders.length > 0 ? (
-            displayOrders.map((order) => (
-              <Link
-                to={`/orders/${order.id}`}
-                key={order.id}
-                className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 p-4 shadow-sm active:scale-[0.99] transition-transform"
-              >
+            displayOrders.map((order) => {
+              const MotionLink = motion(Link);
+              return (
+                <MotionLink
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.97 }}
+                  to={`/orders/${order.id}`}
+                  key={order.id}
+                  className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 p-4 shadow-sm transition-all"
+                >
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex flex-col">
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wide">
@@ -494,7 +544,7 @@ export const Dashboard: React.FC = () => {
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${order.status === OrderStatus.COMPLETED ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-100 dark:border-green-900/30' :
                     order.status === OrderStatus.PENDING ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-100 dark:border-yellow-900/30' :
                       order.status === OrderStatus.CANCELLED ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-100 dark:border-red-900/30' :
-                        order.status === OrderStatus.WAITING_PAYMENT ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-900/30' :
+                        order.status === OrderStatus.WAITING_WITHDRAWAL ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-900/30' :
                           'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-100 dark:border-blue-900/30'
                     }`}>
                     {order.status}
@@ -509,8 +559,9 @@ export const Dashboard: React.FC = () => {
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Valor Total</span>
                   <span className="text-sm font-black text-slate-900 dark:text-white">R$ {order.total.toFixed(2)}</span>
                 </div>
-              </Link>
-            ))
+              </MotionLink>
+            )
+          })
           ) : (
             <div className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 border-dashed p-8 text-center text-slate-400 dark:text-slate-500">
               <p className="font-medium text-sm">Nenhuma ordem recente</p>

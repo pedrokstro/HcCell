@@ -5,7 +5,7 @@ import { BottomSheet } from './BottomSheet';
 
 const CHANGELOG = [
     {
-        version: '2.1.0',
+        version: '2.1.1',
         date: '14 Mar 2026',
         changes: [
             {
@@ -19,8 +19,8 @@ const CHANGELOG = [
                 type: "new"
             },
             {
-                title: "Gestão de OS Redesenhada",
-                description: "Formulário de Ordens de Serviço totalmente modernizado com cantos arredondados (24px) e busca integrada de clientes.",
+                title: "Gestão de OS e PDV",
+                description: "Novo status 'Aguardando Retirada', correção de scroll no PDV mobile e otimização total do layout para celulares.",
                 type: "improvement"
             },
             {

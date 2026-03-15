@@ -30,7 +30,6 @@ export const MobileNav: React.FC = () => {
     };
 
     const navItems = [
-        { label: 'Relatórios', icon: <BarChart3 size={20} />, to: '/reports', color: 'text-blue-500', bg: 'bg-blue-500/10', sub: 'Estatísticas' },
         { label: 'PDV / Vendas', icon: <ShoppingBag size={20} />, to: '/sales', color: 'text-emerald-500', bg: 'bg-emerald-500/10', sub: 'Ponto de Venda' },
         { label: 'Clientes', icon: <Users size={20} />, to: '/clients', color: 'text-indigo-500', bg: 'bg-indigo-500/10', sub: 'Gerenciar Base' },
         { label: 'Estoque', icon: <Package size={20} />, to: '/inventory', color: 'text-amber-500', bg: 'bg-amber-500/10', sub: 'Produtos' },

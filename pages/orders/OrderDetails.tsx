@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import QRCode from 'react-qr-code';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../../store';
@@ -31,16 +31,20 @@ import {
     QrCode,
     Wallet,
     Save,
-    Share2
+    Share2,
+    TrendingUp,
+    XCircle
 } from 'lucide-react';
 import { OrderStatus, ServiceOrder, MovementType, PaymentMethod } from '../../types';
+import { CustomDropdown } from '../../components/CustomDropdown';
+import { BottomSheet } from '../../components/BottomSheet';
 
 const getStatusColor = (status: OrderStatus) => {
     switch (status) {
         case OrderStatus.PENDING: return 'bg-yellow-100 text-yellow-800';
         case OrderStatus.IN_PROGRESS: return 'bg-blue-100 text-blue-800';
         case OrderStatus.COMPLETED: return 'bg-green-100 text-green-800';
-        case OrderStatus.WAITING_PAYMENT: return 'bg-orange-100 text-orange-800';
+        case OrderStatus.WAITING_WITHDRAWAL: return 'bg-orange-100 text-orange-800';
         case OrderStatus.CANCELLED: return 'bg-red-100 text-red-800';
         default: return 'bg-slate-100 text-slate-800';
     }
@@ -63,6 +67,14 @@ export const OrderDetails: React.FC = () => {
     const [serviceNotes, setServiceNotes] = useState('');
     const [isSavingService, setIsSavingService] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+    const statusOptions = [
+        { value: OrderStatus.PENDING, label: 'Pendente', icon: <Clock size={16} className="text-yellow-500" /> },
+        { value: OrderStatus.IN_PROGRESS, label: 'Em Andamento', icon: <TrendingUp size={16} className="text-blue-500" /> },
+        { value: OrderStatus.WAITING_WITHDRAWAL, label: 'Aguard. Retirada', icon: <Clock size={16} className="text-orange-500" /> },
+        { value: OrderStatus.COMPLETED, label: 'Concluído', icon: <CheckCircle size={16} className="text-green-500" /> },
+        { value: OrderStatus.CANCELLED, label: 'Cancelado', icon: <XCircle size={16} className="text-red-500" /> }
+    ];
 
     // Ref for the QR Code (hidden but used for generating SVG)
     const qrRef = useRef<HTMLDivElement>(null);
@@ -90,8 +102,8 @@ export const OrderDetails: React.FC = () => {
             case OrderStatus.COMPLETED:
                 message += `Seu aparelho ${order.deviceModel} está pronto! O serviço foi concluído com sucesso. Valor total: R$ ${total}. Já pode vir retirar?`;
                 break;
-            case OrderStatus.WAITING_PAYMENT:
-                message += `Sobre seu aparelho ${order.deviceModel}: Estamos aguardando confirmação (Pagamento/Peça) para prosseguir!`;
+            case OrderStatus.WAITING_WITHDRAWAL:
+                message += `Sobre seu aparelho ${order.deviceModel}: Ele já está pronto e aguardando retirada na nossa loja!`;
                 break;
             case OrderStatus.IN_PROGRESS:
                 message += `Passando para avisar que já iniciamos o reparo do seu ${order.deviceModel}. Qualquer novidade avisamos!`;
@@ -488,6 +500,137 @@ export const OrderDetails: React.FC = () => {
         setShowCompleteModal(false);
     };
 
+    const renderReceipt = () => {
+        if (!order) return null;
+        return (
+            <div id="receipt-content" className="relative flex min-h-[600px] w-full max-w-[420px] flex-col bg-white text-slate-900 shadow-2xl p-8" style={{ fontFamily: 'Inter, sans-serif' }}>
+                <div className="border-b-2 border-slate-100 pb-6 mb-6">
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="flex flex-col items-start">
+                            <img src="/logo-full.png" alt="HCCELL Logo" className="h-16 w-auto object-contain" />
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Assistência Técnica</span>
+                        </div>
+                        <div className="text-right">
+                            <h2 className="text-lg font-black text-slate-900">RECIBO</h2>
+                            <p className="text-[10px] font-black text-slate-400">OS #{order.displayId || order.id.slice(0, 8)}</p>
+                        </div>
+                    </div>
+                    <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                        <span>Emissão: {new Date().toLocaleString('pt-BR', {
+                            timeZone: 'America/Sao_Paulo',
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }).replace(',', ' -')}</span>
+                        <span>Via do Cliente</span>
+                    </div>
+                </div>
+
+                <div className="space-y-6 flex-1">
+                    {includeClientData && (
+                        <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                            <h4 className="mb-3 text-[9px] font-black uppercase tracking-widest text-slate-400">Dados do Cliente</h4>
+                            <div className="flex justify-between items-start text-xs font-bold">
+                                <div>
+                                    <p className="text-slate-900 text-sm mb-1">{client?.name || 'Cliente Desconhecido'}</p>
+                                    <p className="text-slate-500">CPF: {client?.cpf || '--'}</p>
+                                </div>
+                                <p className="text-slate-500">{client?.phone || '--'}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div>
+                        <h4 className="mb-3 border-b border-slate-100 pb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">Aparelho</h4>
+                        <div className="flex justify-between text-xs font-bold text-slate-900">
+                            <span>{order.deviceModel}</span>
+                            <span className="font-mono text-slate-400">IMEI: {order.serialNumber ? `...${order.serialNumber.slice(-8)}` : 'N/A'}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 className="mb-3 border-b border-slate-100 pb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">Serviços Executados</h4>
+                        {order.servicePerformed && (
+                            <div className="mb-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Descrição Técnica</p>
+                                <p className="text-xs font-medium text-slate-800 leading-relaxed">{order.servicePerformed}</p>
+                            </div>
+                        )}
+                        {includeTechnicalDetails ? (
+                            <>
+                                <table className="w-full text-xs">
+                                    <tbody className="font-bold text-slate-700">
+                                        <tr className="border-b border-slate-50">
+                                            <td className="py-2">Peças e componentes</td>
+                                            <td className="py-2 text-right">R$ {order.priceParts.toFixed(2)}</td>
+                                        </tr>
+                                        {order.discount > 0 && (
+                                            <tr className="border-b border-slate-50 text-green-600">
+                                                <td className="py-2">Desconto aplicado</td>
+                                                <td className="py-2 text-right">- R$ {order.discount.toFixed(2)}</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                    <tfoot className="font-black text-sm">
+                                        <tr>
+                                            <td className="pt-3 uppercase text-slate-500">Total</td>
+                                            <td className="pt-3 text-right text-slate-900">R$ {order.total.toFixed(2)}</td>
+                                        </tr>
+                                        {order.paymentMethod ? (
+                                            <tr>
+                                                <td className="pt-2 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Forma de Pagamento</td>
+                                                <td className="pt-2 text-right text-[10px] uppercase tracking-widest text-slate-600 font-bold">{order.paymentMethod}</td>
+                                            </tr>
+                                        ) : (
+                                            <tr>
+                                                <td className="pt-2 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Status</td>
+                                                <td className="pt-2 text-right text-[10px] uppercase tracking-widest text-slate-600 font-bold">{order.status}</td>
+                                            </tr>
+                                        )}
+                                    </tfoot>
+                                </table>
+                            </>
+                        ) : (
+                            <div className="py-4 text-xs italic text-slate-400">Detalhamento oculto no recibo.</div>
+                        )}
+                        <div className="mt-4 flex items-center justify-between border-t-2 border-slate-900 pt-3">
+                            <span className="text-xs font-black uppercase tracking-widest">TOTAL</span>
+                            <span className="text-xl font-black text-slate-900">R$ {order.total.toFixed(2)}</span>
+                        </div>
+                    </div>
+
+                    {includeWarrantyTerms && (
+                        <div className="mt-8 border-t border-slate-100 bg-slate-50 rounded-2xl p-6">
+                            <div className="mb-4 flex items-center gap-2">
+                                <ShieldCheck className="text-primary" size={16} />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Garantia Limitada (90 Dias)</span>
+                            </div>
+                            <div className="mb-4 grid grid-cols-2 gap-4 text-[9px] font-bold">
+                                <div>
+                                    <span className="block text-slate-400 uppercase mb-1">Início</span>
+                                    <span className="text-slate-700">{new Date(order.createdAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</span>
+                                </div>
+                                <div>
+                                    <span className="block text-slate-400 uppercase mb-1">Término</span>
+                                    <span className="text-slate-900 font-black">{order.warrantyEnd ? new Date(order.warrantyEnd).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : 'N/A'}</span>
+                                </div>
+                            </div>
+                            <p className="text-[8px] font-medium leading-relaxed text-slate-500 text-justify">
+                                Esta garantia cobre exclusivamente defeitos de fabricação das peças substituídas. A garantia será automaticamente anulada em casos de: contato com líquidos, quedas, trincas no vidro, ou violação do selo de garantia.
+                            </p>
+                            <div className="mt-8 flex items-end justify-between border-t border-dashed border-slate-300 pt-4">
+                                <div className="text-[7px] font-bold text-slate-300 uppercase tracking-widest">Gerado via HCCELL System</div>
+                                <div className="text-[10px] font-bold text-slate-300 italic">Assinatura do Técnico</div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     const handlePrint = () => {
         const originalTitle = document.title;
         document.title = `os${order.displayId || order.id.slice(0, 8)}`;
@@ -606,7 +749,7 @@ export const OrderDetails: React.FC = () => {
                         <FileText size={20} />
                         Gerar Recibo
                     </button>
-                    {(order.status === OrderStatus.PENDING || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_PAYMENT) && (
+                    {(order.status === OrderStatus.PENDING || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL) && (
                         <button onClick={handleComplete} className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 font-bold transition-all shadow-xl shadow-green-200">
                             <CheckCircle size={20} />
                             Concluir
@@ -646,7 +789,7 @@ export const OrderDetails: React.FC = () => {
                         </button>
                     </div>
 
-                    {(order.status === OrderStatus.PENDING || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_PAYMENT) && (
+                    {(order.status === OrderStatus.PENDING || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL) && (
                         <button onClick={handleComplete} className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-xl font-bold shadow-lg shadow-green-200">
                             <CheckCircle size={20} />
                             Concluir Serviço
@@ -773,19 +916,13 @@ export const OrderDetails: React.FC = () => {
                             </div>
                             <div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Status & Atualização</p>
-                                <select
-                                    className="w-full sm:w-64 rounded-xl border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-900 text-sm font-black text-slate-900 dark:text-white focus:border-primary focus:ring-primary transition-all cursor-pointer h-12"
-                                    value={order.status}
-                                    onChange={(e) => handleStatusChange(e.target.value as OrderStatus)}
-                                >
-                                    <option value={OrderStatus.PENDING}>{OrderStatus.PENDING}</option>
-                                    <option value={OrderStatus.IN_PROGRESS}>{OrderStatus.IN_PROGRESS}</option>
-                                    <option value={OrderStatus.WAITING_PAYMENT}>{OrderStatus.WAITING_PAYMENT}</option>
-                                    {order.status === OrderStatus.COMPLETED && (
-                                        <option value={OrderStatus.COMPLETED}>{OrderStatus.COMPLETED}</option>
-                                    )}
-                                    <option value={OrderStatus.CANCELLED}>{OrderStatus.CANCELLED}</option>
-                                </select>
+                                <CustomDropdown
+                                    label="ATUALIZAR STATUS"
+                                    options={statusOptions}
+                                    selectedValue={order.status}
+                                    onSelect={(val) => handleStatusChange(val as OrderStatus)}
+                                    className="w-full sm:w-64"
+                                />
                             </div>
 
                             {order.selectedProducts && order.selectedProducts.length > 0 && (
@@ -996,344 +1133,419 @@ export const OrderDetails: React.FC = () => {
 
             {/* Complete Order / Payment Modal */}
             {showCompleteModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                    <div className="w-full max-w-lg transform overflow-hidden rounded-[32px] bg-white dark:bg-surface-dark p-10 text-left shadow-2xl transition-all border border-slate-100 dark:border-neutral-800 animate-in zoom-in-95 duration-300">
-                        <div className="flex items-center justify-between mb-8">
-                            <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Concluir Ordem</h3>
-                            <button onClick={() => setShowCompleteModal(false)} className="rounded-2xl p-2.5 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors text-slate-400">
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <div className="space-y-8">
-                            <div className="rounded-2xl bg-green-50 border border-green-100 p-6 text-sm text-green-800 flex items-start gap-4">
-                                <CheckCircle2 className="shrink-0 mt-0.5" size={24} />
-                                <div>
-                                    <p className="font-bold text-lg mb-1">Finalizar Serviço</p>
-                                    <p className="opacity-90">Selecione a forma de pagamento, se aplicável, para registrar a baixa financeira.</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                {[
-                                    { id: 'Cartão de Crédito', icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50', border: 'hover:border-purple-200' },
-                                    { id: 'Cartão de Débito', icon: CreditCard, color: 'text-blue-600', bg: 'bg-blue-50', border: 'hover:border-blue-200' },
-                                    { id: 'PIX', icon: QrCode, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
-                                    { id: 'Dinheiro', icon: Banknote, color: 'text-green-600', bg: 'bg-green-50', border: 'hover:border-green-200' }
-                                ].map((method) => (
-                                    <button
-                                        key={method.id}
-                                        onClick={() => setSelectedPaymentMethod(method.id as PaymentMethod)}
-                                        className={`flex flex-col items-center justify-center gap-3 rounded-2xl border-2 py-6 px-4 transition-all group relative overflow-hidden ${selectedPaymentMethod === method.id
-                                            ? 'border-primary bg-primary/5 ring-2 ring-primary/20 ring-offset-2'
-                                            : `border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-slate-50 dark:hover:bg-neutral-800 ${method.border}`
-                                            }`}
-                                    >
-                                        <div className={`p-3 rounded-xl ${selectedPaymentMethod === method.id ? 'bg-primary text-white' : `${method.bg} ${method.color}`} transition-colors`}>
-                                            <method.icon size={24} />
-                                        </div>
-                                        <span className={`font-bold text-sm ${selectedPaymentMethod === method.id ? 'text-primary' : 'text-slate-600'}`}>{method.id}</span>
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div className="pt-6 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-end gap-4">
-                                <button onClick={() => setShowCompleteModal(false)} className="rounded-2xl px-8 py-3.5 text-sm font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-neutral-800">Cancelar</button>
-                                <button
-                                    onClick={confirmCompletion}
-                                    disabled={!selectedPaymentMethod}
-                                    className="flex items-center gap-2 rounded-2xl bg-green-600 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-green-200 hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Check size={20} /> Confirmar Pagamento
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Delete Confirmation Modal */}
-            {showDeleteModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                    <div className="w-full max-w-md transform overflow-hidden rounded-[32px] bg-white dark:bg-surface-dark p-8 text-center shadow-2xl transition-all border border-slate-100 dark:border-neutral-800 animate-in zoom-in-95 duration-300">
-                        <div className="mx-auto w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-6">
-                            <Trash2 size={32} className="text-red-600 dark:text-red-400" />
-                        </div>
-                        <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Excluir Ordem?</h3>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
-                            Tem certeza que deseja excluir esta ordem de serviço <span className="font-bold text-slate-900 dark:text-white">#{order.id.slice(0, 8)}</span> permanentemente?
-                            <br /><span className="text-red-500 font-medium">Esta ação não pode ser desfeita.</span>
-                        </p>
-                        <div className="flex items-center justify-center gap-4">
-                            <button
-                                onClick={() => setShowDeleteModal(false)}
-                                className="rounded-2xl px-8 py-3.5 text-sm font-bold text-slate-500 bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={confirmDelete}
-                                disabled={isDeleting}
-                                className="flex items-center gap-2 rounded-2xl bg-red-600 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-red-200 dark:shadow-none hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isDeleting ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                        Excluindo...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Trash2 size={18} />
-                                        Sim, Excluir
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Receipt Modal */}
-            {showReceiptModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300 print:bg-white print:p-0 print:block">
-                    <div className="flex max-h-[95vh] h-auto w-full max-w-5xl flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-2xl transition-all md:h-auto md:flex-row animate-in zoom-in-95 duration-300 print:shadow-none print:border-none print:h-auto print:block">
-                        {/* Settings Sidebar */}
-                        <div className="relative z-10 flex w-full flex-col border-r border-slate-100 bg-slate-50/50 p-6 md:p-8 md:w-1/3 print:hidden">
-                            <div className="mb-6 md:mb-8 flex items-start justify-between">
-                                <div>
-                                    <h3 className="mb-1 text-xl md:text-2xl font-black text-slate-900 tracking-tight">Gerar Recibo</h3>
-                                    <p className="text-sm font-medium text-slate-500">Configuração do documento</p>
-                                </div>
-                                <button onClick={() => setShowReceiptModal(false)} className="rounded-full p-2 hover:bg-slate-200 transition-colors text-slate-400 md:hidden">
+                <>
+                    {/* Desktop Modal */}
+                    <div className="fixed inset-0 z-[100] hidden md:flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                        <div className="w-full max-w-lg transform overflow-hidden rounded-[32px] bg-white dark:bg-surface-dark p-10 text-left shadow-2xl transition-all border border-slate-100 dark:border-neutral-800 animate-in zoom-in-95 duration-300">
+                            <div className="flex items-center justify-between mb-8">
+                                <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Concluir Ordem</h3>
+                                <button onClick={() => setShowCompleteModal(false)} className="rounded-2xl p-2.5 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors text-slate-400">
                                     <X size={24} />
                                 </button>
                             </div>
 
-                            <div className="flex-1 space-y-4 overflow-y-auto pr-1 custom-scrollbar">
-                                <div className="space-y-3">
-                                    <label className="group flex cursor-pointer items-start gap-4 rounded-2xl border border-slate-200 bg-white p-3.5 transition-all hover:border-primary hover:bg-primary/5 active:bg-primary/5 border-dashed">
-                                        <div className="flex h-6 items-center">
-                                            <input
-                                                checked={includeClientData}
-                                                onChange={(e) => setIncludeClientData(e.target.checked)}
-                                                className="size-5 rounded-lg border-slate-300 text-primary focus:ring-primary"
-                                                type="checkbox"
-                                            />
-                                        </div>
-                                        <div>
-                                            <span className="block text-sm font-black text-slate-900 group-hover:text-primary transition-colors">Dados do Cliente</span>
-                                            <span className="text-xs font-medium text-slate-400">Incluir CPF e telefone</span>
-                                        </div>
-                                    </label>
-
-                                    <label className="group flex cursor-pointer items-start gap-4 rounded-2xl border border-slate-200 bg-white p-3.5 transition-all hover:border-primary hover:bg-primary/5 active:bg-primary/5 border-dashed">
-                                        <div className="flex h-6 items-center">
-                                            <input
-                                                checked={includeTechnicalDetails}
-                                                onChange={(e) => setIncludeTechnicalDetails(e.target.checked)}
-                                                className="size-5 rounded-lg border-slate-300 text-primary focus:ring-primary"
-                                                type="checkbox"
-                                            />
-                                        </div>
-                                        <div>
-                                            <span className="block text-sm font-black text-slate-900 group-hover:text-primary transition-colors">Detalhamento Técnico</span>
-                                            <span className="text-xs font-medium text-slate-400">Serviços e mão de obra</span>
-                                        </div>
-                                    </label>
-
-                                    <label className="group flex cursor-pointer items-start gap-4 rounded-2xl border border-slate-200 bg-white p-3.5 transition-all hover:border-primary hover:bg-primary/5 active:bg-primary/5 border-dashed">
-                                        <div className="flex h-6 items-center">
-                                            <input
-                                                checked={includeWarrantyTerms}
-                                                onChange={(e) => setIncludeWarrantyTerms(e.target.checked)}
-                                                className="size-5 rounded-lg border-slate-300 text-primary focus:ring-primary"
-                                                type="checkbox"
-                                            />
-                                        </div>
-                                        <div>
-                                            <span className="block text-sm font-black text-slate-900 group-hover:text-primary transition-colors">Termo de Garantia</span>
-                                            <span className="text-xs font-medium text-slate-400">Cláusulas de 90 dias</span>
-                                        </div>
-                                    </label>
+                            <div className="space-y-8">
+                                <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30 p-6 text-sm text-green-800 dark:text-green-300 flex items-start gap-4">
+                                    <CheckCircle2 className="shrink-0 mt-0.5" size={24} />
+                                    <div>
+                                        <p className="font-bold text-lg mb-1">Finalizar Serviço</p>
+                                        <p className="opacity-90">Selecione a forma de pagamento, se aplicável, para registrar a baixa financeira.</p>
+                                    </div>
                                 </div>
 
-                                <div className="rounded-2xl bg-blue-50 p-4 text-xs text-blue-800 border border-blue-100">
-                                    <div className="flex items-center gap-2 font-black mb-1 text-blue-600">
-                                        <AlertTriangle size={14} />
-                                        Informação
-                                    </div>
-                                    <p className="font-medium opacity-90 leading-relaxed">
-                                        Este documento serve como comprovante de garantia válido até {order.warrantyEnd ? new Date(order.warrantyEnd).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '--/--/----'}.
-                                    </p>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {[
+                                        { id: 'Cartão de Crédito', icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50', border: 'hover:border-purple-200' },
+                                        { id: 'Cartão de Débito', icon: CreditCard, color: 'text-blue-600', bg: 'bg-blue-50', border: 'hover:border-blue-200' },
+                                        { id: 'PIX', icon: QrCode, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
+                                        { id: 'Dinheiro', icon: Banknote, color: 'text-green-600', bg: 'bg-green-50', border: 'hover:border-green-200' }
+                                    ].map((method) => (
+                                        <button
+                                            key={method.id}
+                                            onClick={() => setSelectedPaymentMethod(method.id as PaymentMethod)}
+                                            className={`flex flex-col items-center justify-center gap-3 rounded-2xl border-2 py-6 px-4 transition-all group relative overflow-hidden ${selectedPaymentMethod === method.id
+                                                ? 'border-primary bg-primary/5 ring-2 ring-primary/20 ring-offset-2'
+                                                : `border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-slate-50 dark:hover:bg-neutral-800 ${method.border}`
+                                                }`}
+                                        >
+                                            <div className={`p-3 rounded-xl ${selectedPaymentMethod === method.id ? 'bg-primary text-white' : `${method.bg} ${method.color}`} transition-colors`}>
+                                                <method.icon size={24} />
+                                            </div>
+                                            <span className={`font-bold text-sm ${selectedPaymentMethod === method.id ? 'text-primary' : 'text-slate-600 dark:text-slate-400'}`}>{method.id}</span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="pt-6 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-end gap-4">
+                                    <button onClick={() => setShowCompleteModal(false)} className="rounded-2xl px-8 py-3.5 text-sm font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-neutral-800">Cancelar</button>
+                                    <button
+                                        onClick={confirmCompletion}
+                                        disabled={!selectedPaymentMethod}
+                                        className="flex items-center gap-2 rounded-2xl bg-green-600 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-green-200 dark:shadow-none hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <Check size={20} /> Confirmar Pagamento
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mobile BottomSheet */}
+                    <BottomSheet
+                        isOpen={showCompleteModal}
+                        onClose={() => setShowCompleteModal(false)}
+                        title="CONCLUIR ORDEM"
+                    >
+                        <div className="space-y-6 pt-2">
+                            <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30 p-4 text-sm text-green-800 dark:text-green-300 flex items-start gap-3">
+                                <CheckCircle2 className="shrink-0 mt-0.5 text-green-600" size={20} />
+                                <div>
+                                    <p className="font-bold text-base mb-0.5">Finalizar Serviço</p>
+                                    <p className="opacity-90 leading-snug">Selecione a forma de pagamento abaixo.</p>
                                 </div>
                             </div>
 
-                            <div className="mt-6 md:mt-8 pt-6 md:pt-8 border-t border-slate-200 flex flex-col gap-3">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                {[
+                                    { id: 'Cartão de Crédito', icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50' },
+                                    { id: 'Cartão de Débito', icon: CreditCard, color: 'text-blue-600', bg: 'bg-blue-50' },
+                                    { id: 'PIX', icon: QrCode, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                                    { id: 'Dinheiro', icon: Banknote, color: 'text-green-600', bg: 'bg-green-50' }
+                                ].map((method) => (
                                     <button
-                                        onClick={handlePrint}
-                                        className="flex w-full items-center justify-center gap-3 rounded-2xl bg-primary px-6 py-4 text-sm font-black text-white shadow-xl shadow-primary/20 transition-all hover:bg-primary-dark active:scale-95 active:shadow-none"
+                                        key={method.id}
+                                        onClick={() => setSelectedPaymentMethod(method.id as PaymentMethod)}
+                                        className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 py-5 px-3 transition-all ${selectedPaymentMethod === method.id
+                                            ? 'border-primary bg-primary/5'
+                                            : 'border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm'
+                                            }`}
                                     >
-                                        <Printer size={20} />
-                                        A4 / PDF
+                                        <div className={`p-3 rounded-xl ${selectedPaymentMethod === method.id ? 'bg-primary text-white' : `${method.bg} ${method.color}`} transition-colors`}>
+                                            <method.icon size={20} />
+                                        </div>
+                                        <span className={`font-bold text-xs ${selectedPaymentMethod === method.id ? 'text-primary' : 'text-slate-600 dark:text-slate-400 text-center leading-tight'}`}>{method.id}</span>
                                     </button>
-                                    <button
-                                        onClick={handlePrintThermal}
-                                        className="flex w-full items-center justify-center gap-3 rounded-2xl bg-slate-800 px-6 py-4 text-sm font-black text-white shadow-xl shadow-slate-800/20 transition-all hover:bg-slate-900 active:scale-95 active:shadow-none"
-                                    >
-                                        <Printer size={20} />
-                                        Térmica 80mm
-                                    </button>
-                                </div>
+                                ))}
+                            </div>
+
+                            <div className="pt-4 flex flex-col gap-3">
                                 <button
-                                    onClick={() => setShowReceiptModal(false)}
-                                    className="w-full text-sm font-bold text-slate-400 hover:text-slate-600 py-2 transition-colors"
+                                    onClick={confirmCompletion}
+                                    disabled={!selectedPaymentMethod}
+                                    className="w-full h-14 rounded-2xl bg-green-600 text-sm font-black text-white shadow-xl shadow-green-100 dark:shadow-none hover:bg-green-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2 uppercase tracking-widest"
+                                >
+                                    <Check size={20} /> Confirmar Pagamento
+                                </button>
+                                <button
+                                    onClick={() => setShowCompleteModal(false)}
+                                    className="w-full h-12 rounded-2xl text-sm font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-neutral-800"
                                 >
                                     Cancelar
                                 </button>
                             </div>
                         </div>
+                    </BottomSheet>
+                </>
+            )}
 
-                        {/* Document Preview */}
-                        <div className="hidden md:flex relative w-full flex-col items-center justify-center bg-slate-100 p-8 md:w-2/3 overflow-y-auto print:bg-white print:p-0 print:overflow-visible">
-                            <div className="absolute inset-0 opacity-[0.05] print:hidden" style={{ backgroundImage: 'radial-gradient(#0395a5 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }}></div>
-
-                            <div className="absolute right-6 top-6 z-20 flex gap-1 rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm print:hidden">
-                                <button className="rounded-lg p-2 text-slate-400 hover:bg-slate-50 transition-colors"><ZoomIn size={18} /></button>
-                                <button className="rounded-lg p-2 text-slate-400 hover:bg-slate-50 transition-colors"><ZoomOut size={18} /></button>
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <>
+                    {/* Desktop Modal */}
+                    <div className="fixed inset-0 z-[100] hidden md:flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                        <div className="w-full max-w-md transform overflow-hidden rounded-[32px] bg-white dark:bg-surface-dark p-8 text-center shadow-2xl transition-all border border-slate-100 dark:border-neutral-800 animate-in zoom-in-95 duration-300">
+                            <div className="mx-auto w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-6">
+                                <Trash2 size={32} className="text-red-600 dark:text-red-400" />
                             </div>
-
-                            {/* The Real Document (Receipt) */}
-                            <div id="receipt-content" className="relative flex min-h-[600px] w-full max-w-[420px] flex-col bg-white text-slate-900 shadow-2xl p-8" style={{ fontFamily: 'Inter, sans-serif' }}>
-                                <div className="border-b-2 border-slate-100 pb-6 mb-6">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex flex-col items-start">
-                                            <img src="/logo-full.png" alt="HCCELL Logo" className="h-16 w-auto object-contain" />
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Assistência Técnica</span>
-                                        </div>
-                                        <div className="text-right">
-                                            <h2 className="text-lg font-black text-slate-900">RECIBO</h2>
-                                            <p className="text-[10px] font-black text-slate-400">OS #{order.displayId || order.id.slice(0, 8)}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                                        <span>Emissão: {new Date().toLocaleString('pt-BR', {
-                                            timeZone: 'America/Sao_Paulo',
-                                            day: '2-digit',
-                                            month: '2-digit',
-                                            year: '2-digit',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        }).replace(',', ' -')}</span>
-                                        <span>Via do Cliente</span>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-6 flex-1">
-                                    {includeClientData && (
-                                        <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
-                                            <h4 className="mb-3 text-[9px] font-black uppercase tracking-widest text-slate-400">Dados do Cliente</h4>
-                                            <div className="flex justify-between items-start text-xs font-bold">
-                                                <div>
-                                                    <p className="text-slate-900 text-sm mb-1">{client?.name || 'Cliente Desconhecido'}</p>
-                                                    <p className="text-slate-500">CPF: {client?.cpf || '--'}</p>
-                                                </div>
-                                                <p className="text-slate-500">{client?.phone || '--'}</p>
-                                            </div>
-                                        </div>
+                            <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Excluir Ordem?</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
+                                Tem certeza que deseja excluir esta ordem de serviço <span className="font-bold text-slate-900 dark:text-white">#{order.id.slice(0, 8)}</span> permanentemente?
+                                <br /><span className="text-red-500 font-medium">Esta ação não pode ser desfeita.</span>
+                            </p>
+                            <div className="flex items-center justify-center gap-4">
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="rounded-2xl px-8 py-3.5 text-sm font-bold text-slate-500 bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    disabled={isDeleting}
+                                    className="flex items-center gap-2 rounded-2xl bg-red-600 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-red-200 dark:shadow-none hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isDeleting ? (
+                                        <>
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                            Excluindo...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Trash2 size={18} />
+                                            Sim, Excluir
+                                        </>
                                     )}
-
-                                    <div>
-                                        <h4 className="mb-3 border-b border-slate-100 pb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">Aparelho</h4>
-                                        <div className="flex justify-between text-xs font-bold text-slate-900">
-                                            <span>{order.deviceModel}</span>
-                                            <span className="font-mono text-slate-400">IMEI: {order.serialNumber ? `...${order.serialNumber.slice(-8)}` : 'N/A'}</span>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <h4 className="mb-3 border-b border-slate-100 pb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">Serviços Executados</h4>
-                                        {order.servicePerformed && (
-                                            <div className="mb-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Descrição Técnica</p>
-                                                <p className="text-xs font-medium text-slate-800 leading-relaxed">{order.servicePerformed}</p>
-                                            </div>
-                                        )}
-                                        {includeTechnicalDetails ? (
-                                            <>
-                                                <table className="w-full text-xs">
-                                                    <tbody className="font-bold text-slate-700">
-
-                                                        <tr className="border-b border-slate-50">
-                                                            <td className="py-2">Peças e componentes</td>
-                                                            <td className="py-2 text-right">R$ {order.priceParts.toFixed(2)}</td>
-                                                        </tr>
-                                                        {order.discount > 0 && (
-                                                            <tr className="border-b border-slate-50 text-green-600">
-                                                                <td className="py-2">Desconto aplicado</td>
-                                                                <td className="py-2 text-right">- R$ {order.discount.toFixed(2)}</td>
-                                                            </tr>
-                                                        )}
-                                                    </tbody>
-                                                    <tfoot className="font-black text-sm">
-                                                        <tr>
-                                                            <td className="pt-3 uppercase text-slate-500">Total</td>
-                                                            <td className="pt-3 text-right text-slate-900">R$ {order.total.toFixed(2)}</td>
-                                                        </tr>
-                                                        {order.paymentMethod ? (
-                                                            <tr>
-                                                                <td className="pt-2 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Forma de Pagamento</td>
-                                                                <td className="pt-2 text-right text-[10px] uppercase tracking-widest text-slate-600 font-bold">{order.paymentMethod}</td>
-                                                            </tr>
-                                                        ) : (
-                                                            // Legacy orders or unpaid
-                                                            <tr>
-                                                                <td className="pt-2 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Status</td>
-                                                                <td className="pt-2 text-right text-[10px] uppercase tracking-widest text-slate-600 font-bold">{order.status}</td>
-                                                            </tr>
-                                                        )}
-                                                    </tfoot>
-                                                </table>
-                                            </>
-                                        ) : (
-                                            <div className="py-4 text-xs italic text-slate-400">Detalhamento oculto no recibo.</div>
-                                        )}
-                                        <div className="mt-4 flex items-center justify-between border-t-2 border-slate-900 pt-3">
-                                            <span className="text-xs font-black uppercase tracking-widest">TOTAL</span>
-                                            <span className="text-xl font-black text-slate-900">R$ {order.total.toFixed(2)}</span>
-                                        </div>
-                                    </div>
-
-                                    {includeWarrantyTerms && (
-                                        <div className="mt-8 border-t border-slate-100 bg-slate-50 rounded-2xl p-6">
-                                            <div className="mb-4 flex items-center gap-2">
-                                                <ShieldCheck className="text-primary" size={16} />
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Garantia Limitada (90 Dias)</span>
-                                            </div>
-                                            <div className="mb-4 grid grid-cols-2 gap-4 text-[9px] font-bold">
-                                                <div>
-                                                    <span className="block text-slate-400 uppercase mb-1">Início</span>
-                                                    <span className="text-slate-700">{new Date(order.createdAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="block text-slate-400 uppercase mb-1">Término</span>
-                                                    <span className="text-slate-900 font-black">{order.warrantyEnd ? new Date(order.warrantyEnd).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : 'N/A'}</span>
-                                                </div>
-                                            </div>
-                                            <p className="text-[8px] font-medium leading-relaxed text-slate-500 text-justify">
-                                                Esta garantia cobre exclusivamente defeitos de fabricação das peças substituídas. A garantia será automaticamente anulada em casos de: contato com líquidos, quedas, trincas no vidro, ou violação do selo de garantia.
-                                            </p>
-                                            <div className="mt-8 flex items-end justify-between border-t border-dashed border-slate-300 pt-4">
-                                                <div className="text-[7px] font-bold text-slate-300 uppercase tracking-widest">Gerado via HCCELL System</div>
-                                                <div className="text-[10px] font-bold text-slate-300 italic">Assinatura do Técnico</div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                </button>
                             </div>
                         </div>
                     </div>
-                </div>
+
+                    {/* Mobile BottomSheet */}
+                    <BottomSheet
+                        isOpen={showDeleteModal}
+                        onClose={() => setShowDeleteModal(false)}
+                        title="EXCLUIR ORDEM"
+                    >
+                        <div className="flex flex-col items-center text-center py-4">
+                            <div className="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-6">
+                                <Trash2 size={40} className="text-red-600 dark:text-red-400" />
+                            </div>
+                            <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Excluir Registro?</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-8 px-4">
+                                Tem certeza que deseja excluir permanentemente a ordem <span className="font-bold text-slate-900 dark:text-white">#{order.id.slice(0, 8)}</span>?
+                                <br /><span className="text-red-500 font-medium">Não há como desfazer esta ação.</span>
+                            </p>
+                            
+                            <div className="w-full flex flex-col gap-3">
+                                <button
+                                    onClick={confirmDelete}
+                                    disabled={isDeleting}
+                                    className="w-full h-14 rounded-2xl bg-red-600 text-sm font-black text-white shadow-xl shadow-red-100 dark:shadow-none active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 uppercase tracking-widest"
+                                >
+                                    {isDeleting ? "Excluindo..." : "Sim, Excluir Agora"}
+                                </button>
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="w-full h-12 rounded-2xl text-sm font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-neutral-800"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </BottomSheet>
+                </>
+            )}
+
+            {/* Receipt Modal */}
+            {showReceiptModal && (
+                <>
+                    {/* Desktop Modal Content */}
+                    <div className="fixed inset-0 z-[100] hidden md:flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300 print:bg-white print:p-0 print:block">
+                        <div className="flex max-h-[95vh] h-auto w-full max-w-5xl flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-2xl transition-all md:h-auto md:flex-row animate-in zoom-in-95 duration-300 print:shadow-none print:border-none print:h-auto print:block">
+                            {/* Settings Sidebar (Desktop) */}
+                            <div className="relative z-10 flex w-full flex-col border-r border-slate-100 bg-slate-50/50 p-6 md:p-8 md:w-1/3 print:hidden">
+                                <div className="mb-6 md:mb-8 flex items-start justify-between">
+                                    <div>
+                                        <h3 className="mb-1 text-xl md:text-2xl font-black text-slate-900 tracking-tight">Gerar Recibo</h3>
+                                        <p className="text-sm font-medium text-slate-500">Configuração do documento</p>
+                                    </div>
+                                    <button onClick={() => setShowReceiptModal(false)} className="rounded-full p-2 hover:bg-slate-200 transition-colors text-slate-400">
+                                        <X size={24} />
+                                    </button>
+                                </div>
+
+                                <div className="flex-1 space-y-4 overflow-y-auto pr-1 custom-scrollbar">
+                                    <div className="space-y-3">
+                                        <label className="group flex cursor-pointer items-start gap-4 rounded-2xl border border-slate-200 bg-white p-3.5 transition-all hover:border-primary hover:bg-primary/5 active:bg-primary/5 border-dashed">
+                                            <div className="flex h-6 items-center">
+                                                <input
+                                                    checked={includeClientData}
+                                                    onChange={(e) => setIncludeClientData(e.target.checked)}
+                                                    className="size-5 rounded-lg border-slate-300 text-primary focus:ring-primary"
+                                                    type="checkbox"
+                                                />
+                                            </div>
+                                            <div>
+                                                <span className="block text-sm font-black text-slate-900 group-hover:text-primary transition-colors">Dados do Cliente</span>
+                                                <span className="text-xs font-medium text-slate-400">Incluir CPF e telefone</span>
+                                            </div>
+                                        </label>
+
+                                        <label className="group flex cursor-pointer items-start gap-4 rounded-2xl border border-slate-200 bg-white p-3.5 transition-all hover:border-primary hover:bg-primary/5 active:bg-primary/5 border-dashed">
+                                            <div className="flex h-6 items-center">
+                                                <input
+                                                    checked={includeTechnicalDetails}
+                                                    onChange={(e) => setIncludeTechnicalDetails(e.target.checked)}
+                                                    className="size-5 rounded-lg border-slate-300 text-primary focus:ring-primary"
+                                                    type="checkbox"
+                                                />
+                                            </div>
+                                            <div>
+                                                <span className="block text-sm font-black text-slate-900 group-hover:text-primary transition-colors">Detalhamento Técnico</span>
+                                                <span className="text-xs font-medium text-slate-400">Serviços e mão de obra</span>
+                                            </div>
+                                        </label>
+
+                                        <label className="group flex cursor-pointer items-start gap-4 rounded-2xl border border-slate-200 bg-white p-3.5 transition-all hover:border-primary hover:bg-primary/5 active:bg-primary/5 border-dashed">
+                                            <div className="flex h-6 items-center">
+                                                <input
+                                                    checked={includeWarrantyTerms}
+                                                    onChange={(e) => setIncludeWarrantyTerms(e.target.checked)}
+                                                    className="size-5 rounded-lg border-slate-300 text-primary focus:ring-primary"
+                                                    type="checkbox"
+                                                />
+                                            </div>
+                                            <div>
+                                                <span className="block text-sm font-black text-slate-900 group-hover:text-primary transition-colors">Termo de Garantia</span>
+                                                <span className="text-xs font-medium text-slate-400">Cláusulas de 90 dias</span>
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    <div className="rounded-2xl bg-blue-50 p-4 text-xs text-blue-800 border border-blue-100">
+                                        <div className="flex items-center gap-2 font-black mb-1 text-blue-600">
+                                            <AlertTriangle size={14} />
+                                            Informação
+                                        </div>
+                                        <p className="font-medium opacity-90 leading-relaxed text-[11px]">
+                                            Este documento serve como comprovante de garantia válido até {order.warrantyEnd ? new Date(order.warrantyEnd).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '--/--/----'}.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 md:mt-8 pt-6 md:pt-8 border-t border-slate-200 flex flex-col gap-3">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <button
+                                            onClick={handlePrint}
+                                            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-primary px-6 py-4 text-sm font-black text-white shadow-xl shadow-primary/20 transition-all hover:bg-primary-dark active:scale-95 active:shadow-none"
+                                        >
+                                            <Printer size={20} />
+                                            A4 / PDF
+                                        </button>
+                                        <button
+                                            onClick={handlePrintThermal}
+                                            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-slate-800 px-6 py-4 text-sm font-black text-white shadow-xl shadow-slate-800/20 transition-all hover:bg-slate-900 active:scale-95 active:shadow-none"
+                                        >
+                                            <Printer size={20} />
+                                            Térmica
+                                        </button>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowReceiptModal(false)}
+                                        className="w-full text-sm font-bold text-slate-400 hover:text-slate-600 py-2 transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </div>
+
+                                {/* Preview Area (Desktop) */}
+                                <div className="hidden flex-1 bg-slate-100/50 md:flex flex-col items-center justify-center p-8 overflow-y-auto custom-scrollbar">
+                                    <div className="scale-90 lg:scale-100 transition-all origin-top">
+                                        {renderReceipt()}
+                                    </div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-6 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200">
+                                        Pré-visualização do Documento
+                                    </p>
+                                </div>
+                        </div>
+                    </div>
+
+                    {/* Mobile BottomSheet (Settings only) */}
+                    <BottomSheet
+                        isOpen={showReceiptModal}
+                        onClose={() => setShowReceiptModal(false)}
+                        title="GERAR RECIBO"
+                    >
+                        <div className="space-y-6 pt-2">
+                            <div className="space-y-3">
+                                <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-900 p-4 transition-all">
+                                    <div className="flex items-start gap-3">
+                                        <div className="mt-1 flex h-5 w-5 items-center justify-center rounded-md bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700">
+                                            <input
+                                                checked={includeClientData}
+                                                onChange={(e) => setIncludeClientData(e.target.checked)}
+                                                className="size-4 rounded text-primary focus:ring-primary"
+                                                type="checkbox"
+                                            />
+                                        </div>
+                                        <div>
+                                            <span className="block text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Dados do Cliente</span>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Incluir CPF e telefone</span>
+                                        </div>
+                                    </div>
+                                    {includeClientData && <Check size={16} className="text-primary" />}
+                                </label>
+
+                                <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-900 p-4 transition-all">
+                                    <div className="flex items-start gap-3">
+                                        <div className="mt-1 flex h-5 w-5 items-center justify-center rounded-md bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700">
+                                            <input
+                                                checked={includeTechnicalDetails}
+                                                onChange={(e) => setIncludeTechnicalDetails(e.target.checked)}
+                                                className="size-4 rounded text-primary focus:ring-primary"
+                                                type="checkbox"
+                                            />
+                                        </div>
+                                        <div>
+                                            <span className="block text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Detalhamento Técnico</span>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Serviços e mão de obra</span>
+                                        </div>
+                                    </div>
+                                    {includeTechnicalDetails && <Check size={16} className="text-primary" />}
+                                </label>
+
+                                <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-900 p-4 transition-all">
+                                    <div className="flex items-start gap-3">
+                                        <div className="mt-1 flex h-5 w-5 items-center justify-center rounded-md bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700">
+                                            <input
+                                                checked={includeWarrantyTerms}
+                                                onChange={(e) => setIncludeWarrantyTerms(e.target.checked)}
+                                                className="size-4 rounded text-primary focus:ring-primary"
+                                                type="checkbox"
+                                            />
+                                        </div>
+                                        <div>
+                                            <span className="block text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Termo de Garantia</span>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cláusulas de 90 dias</span>
+                                        </div>
+                                    </div>
+                                    {includeWarrantyTerms && <Check size={16} className="text-primary" />}
+                                </label>
+                            </div>
+
+                            <div className="rounded-2xl bg-blue-50 dark:bg-blue-900/20 p-4 text-xs text-blue-800 dark:text-blue-300 border border-blue-100 dark:border-blue-900/30">
+                                <div className="flex items-center gap-2 font-black mb-1 text-blue-600 dark:text-blue-400 uppercase tracking-wider text-[10px]">
+                                    <AlertTriangle size={14} />
+                                    Informação
+                                </div>
+                                <p className="font-medium leading-relaxed opacity-90">
+                                    A garantia expira em {order.warrantyEnd ? new Date(order.warrantyEnd).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '--/--/----'}.
+                                </p>
+                            </div>
+
+                            <div className="pt-2 flex flex-col gap-3">
+                                <button
+                                    onClick={handlePrint}
+                                    className="w-full h-14 rounded-2xl bg-primary text-sm font-black text-white shadow-xl shadow-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3 uppercase tracking-widest"
+                                >
+                                    <Printer size={20} /> Gerar PDF (A4)
+                                </button>
+                                <button
+                                    onClick={handlePrintThermal}
+                                    className="w-full h-14 rounded-2xl bg-slate-800 text-sm font-black text-white shadow-xl shadow-slate-950/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3 uppercase tracking-widest"
+                                >
+                                    <Printer size={20} /> Térmica 80mm
+                                </button>
+                                <button
+                                    onClick={() => setShowReceiptModal(false)}
+                                    className="w-full h-12 rounded-2xl text-sm font-bold text-slate-400 hover:text-slate-600 py-2 transition-colors uppercase tracking-widest"
+                                >
+                                    Voltar
+                                </button>
+                            </div>
+                        </div>
+                    </BottomSheet>
+
+                    {/* Invisible Ghost Root for printing on mobile */}
+                    <div className="hidden print:block fixed inset-0 bg-white z-[9999]">
+                        <div className="bg-white p-0">
+
+                            {/* The Real Document (Receipt) */}
+                            {renderReceipt()}
+                        </div>
+                    </div>
+                </>
             )}
 
             {/* Hidden QR Code for Label Printing */}

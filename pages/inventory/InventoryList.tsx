@@ -1,14 +1,15 @@
 
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../store';
-import { Search, Download, Plus, MoreVertical, TrendingUp, AlertTriangle, Package, Image as ImageIcon, Filter, DollarSign, Tags } from 'lucide-react';
+import { Search, Download, Plus, Minus, MoreVertical, TrendingUp, AlertTriangle, Package, Image as ImageIcon, Filter, DollarSign, Tags, Edit2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 
 import { CustomDropdown } from '../../components/CustomDropdown';
 
 export const InventoryList: React.FC = () => {
-    const { products, categories } = useApp();
+    const { products, categories, updateProduct, addProductMovement } = useApp();
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [statusFilter, setStatusFilter] = useState('all');
@@ -55,6 +56,30 @@ export const InventoryList: React.FC = () => {
 
         return matchesSearch && matchesCategory && matchesStatus;
     });
+
+    const handleQuantityChange = async (product: any, change: number) => {
+        const newQuantity = Math.max(0, product.quantity + change);
+        if (newQuantity === product.quantity) return;
+
+        try {
+            await updateProduct({
+                ...product,
+                quantity: newQuantity
+            });
+
+            await addProductMovement({
+                productId: product.id,
+                type: change > 0 ? 'Entrada' : 'Saída' as any,
+                quantityChange: Math.abs(change),
+                priceOld: product.priceSale,
+                priceNew: product.priceSale,
+                note: `Ajuste rápido via card (+${change})`
+            });
+        } catch (error) {
+            console.error('Erro ao ajustar estoque:', error);
+            alert('Erro ao ajustar estoque');
+        }
+    };
 
     return (
         <>
@@ -217,11 +242,15 @@ export const InventoryList: React.FC = () => {
                     </div >
                 </div >
 
-                {/* Mobile Card View */}
                 <div className="md:hidden flex flex-col gap-4">
                     {filteredProducts.length > 0 ? (
                         filteredProducts.map((product) => (
-                            <div key={product.id} className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 p-4 shadow-sm flex flex-col gap-3">
+                            <motion.div 
+                                key={product.id}
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 p-4 shadow-sm flex flex-col gap-3"
+                            >
                                 <div className="flex justify-between items-start">
                                     <div className="flex gap-3">
                                         <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400">
@@ -261,7 +290,37 @@ export const InventoryList: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+
+                                {/* Quick Actions Row */}
+                                <div className="flex gap-2 mt-2 pt-3 border-t border-slate-100 dark:border-neutral-800">
+                                    <div className="flex bg-slate-100 dark:bg-neutral-800 rounded-xl p-1 gap-1">
+                                        <button
+                                            onClick={() => handleQuantityChange(product, -1)}
+                                            className="w-10 h-10 flex items-center justify-center bg-white dark:bg-surface-dark text-slate-600 dark:text-slate-400 rounded-lg shadow-sm active:scale-90 transition-all border border-slate-200 dark:border-neutral-700"
+                                            disabled={product.quantity <= 0}
+                                        >
+                                            <Minus size={16} />
+                                        </button>
+                                        <div className="flex flex-col items-center justify-center px-3 min-w-[40px]">
+                                            <span className="text-[10px] font-black text-slate-400 uppercase leading-none mb-0.5">Qtd</span>
+                                            <span className="font-black text-slate-800 dark:text-white leading-none">{product.quantity}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => handleQuantityChange(product, 1)}
+                                            className="w-10 h-10 flex items-center justify-center bg-white dark:bg-surface-dark text-slate-600 dark:text-slate-400 rounded-lg shadow-sm active:scale-90 transition-all border border-slate-200 dark:border-neutral-700"
+                                        >
+                                            <Plus size={16} />
+                                        </button>
+                                    </div>
+                                    <Link
+                                        to={`/inventory/${product.id}/edit`}
+                                        className="flex-1 flex items-center justify-center gap-2 bg-slate-900 dark:bg-primary text-white rounded-xl font-bold text-xs shadow-lg shadow-slate-900/10 active:scale-95 transition-all"
+                                    >
+                                        <Edit2 size={14} />
+                                        Editar
+                                    </Link>
+                                </div>
+                            </motion.div>
                         ))
                     ) : (
                         <div className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 border-dashed p-8 text-center">

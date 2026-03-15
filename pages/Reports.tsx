@@ -195,7 +195,7 @@ export const Reports: React.FC = () => {
         const statusColors: { [key: string]: string } = {
             [OrderStatus.PENDING]: '#EAB308',
             [OrderStatus.IN_PROGRESS]: '#3B82F6',
-            [OrderStatus.WAITING_PAYMENT]: '#F97316',
+            [OrderStatus.WAITING_WITHDRAWAL]: '#F97316',
             [OrderStatus.COMPLETED]: '#22C55E',
             [OrderStatus.CANCELLED]: '#EF4444'
         };
@@ -203,7 +203,7 @@ export const Reports: React.FC = () => {
         const statusLabels: { [key: string]: string } = {
             [OrderStatus.PENDING]: 'Pendente',
             [OrderStatus.IN_PROGRESS]: 'Em Andamento',
-            [OrderStatus.WAITING_PAYMENT]: 'Aguard. Pagto',
+            [OrderStatus.WAITING_WITHDRAWAL]: 'Retirada',
             [OrderStatus.COMPLETED]: 'Concluído',
             [OrderStatus.CANCELLED]: 'Cancelado'
         };

@@ -471,54 +471,65 @@ export const OrderForm: React.FC = () => {
                                 )}
                             </div>
 
-                            <div className="flex flex-col gap-2 mt-2 pt-4 border-t border-slate-100 dark:border-neutral-800">
-                                <span className="text-xs font-bold text-slate-500 uppercase">Ou Adicione Manualmente (Item Avulso)</span>
-                                <div className="flex flex-col lg:flex-row gap-2">
-                                    <input
-                                        className="flex-1 h-10 px-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white min-w-[200px]"
-                                        placeholder="Nome do item..."
-                                        value={manualName}
-                                        onChange={e => setManualName(e.target.value)}
-                                    />
-                                    <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
+                                <div className="flex flex-col gap-3 mt-2 pt-4 border-t border-slate-100 dark:border-neutral-800">
+                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Ou Adicione Manualmente (Item Avulso)</span>
+                                    
+                                    <div className="flex flex-col gap-2">
                                         <input
-                                            className="w-16 h-10 px-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white text-center"
-                                            type="number"
-                                            min="1"
-                                            placeholder="Qtd"
-                                            value={manualQty}
-                                            onChange={e => setManualQty(parseInt(e.target.value) || 1)}
+                                            className="w-full h-11 px-4 rounded-xl bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white transition-all"
+                                            placeholder="Nome do item (ex: Película 3D)..."
+                                            value={manualName}
+                                            onChange={e => setManualName(e.target.value)}
                                         />
-                                        <div className="relative w-32 shrink-0">
-                                            <span className="absolute left-3 top-2.5 text-slate-400 text-xs font-bold">R$</span>
-                                            <input
-                                                className="w-full h-10 pl-8 pr-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white"
-                                                placeholder="Preço"
-                                                value={manualPrice}
-                                                onChange={e => setManualPrice(e.target.value)}
-                                            />
+                                        
+                                        <div className="grid grid-cols-12 gap-2">
+                                            <div className="col-span-2 lg:col-span-1">
+                                                <input
+                                                    className="w-full h-11 px-1 rounded-xl bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white text-center transition-all"
+                                                    type="number"
+                                                    min="1"
+                                                    placeholder="un"
+                                                    value={manualQty}
+                                                    onChange={e => setManualQty(parseInt(e.target.value) || 1)}
+                                                />
+                                            </div>
+                                            
+                                            <div className="col-span-4 lg:col-span-4 relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] font-bold">R$</span>
+                                                <input
+                                                    className="w-full h-11 pl-8 pr-3 rounded-xl bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white transition-all"
+                                                    placeholder="Preço Venda"
+                                                    value={manualPrice}
+                                                    onChange={e => setManualPrice(e.target.value)}
+                                                />
+                                            </div>
+                                            
+                                            <div className="col-span-4 lg:col-span-4 relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] font-bold">R$</span>
+                                                <input
+                                                    className="w-full h-11 pl-8 pr-3 rounded-xl bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white transition-all"
+                                                    placeholder="Custo (Op)"
+                                                    title="Preço de Custo (Opcional)"
+                                                    value={manualCost}
+                                                    onChange={e => setManualCost(e.target.value)}
+                                                />
+                                            </div>
+                                            
+                                            <div className="col-span-2 lg:col-span-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddManualItem}
+                                                    disabled={!manualName || !manualPrice}
+                                                    className="w-full h-11 flex items-center justify-center gap-2 bg-primary text-white rounded-xl hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary/20 active:scale-95"
+                                                >
+                                                    <Plus size={20} strokeWidth={3} />
+                                                    <span className="hidden lg:inline text-xs font-black uppercase tracking-widest">Adicionar</span>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="relative w-28 shrink-0">
-                                            <input
-                                                className="w-full h-10 px-3 rounded-lg bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white"
-                                                placeholder="Custo (Op)"
-                                                title="Preço de Custo (Opcional)"
-                                                value={manualCost}
-                                                onChange={e => setManualCost(e.target.value)}
-                                            />
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={handleAddManualItem}
-                                            disabled={!manualName || !manualPrice}
-                                            className="h-10 px-4 bg-slate-800 dark:bg-neutral-700 text-white rounded-lg hover:bg-slate-700 dark:hover:bg-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
-                                        >
-                                            <Plus size={18} />
-                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
                         {/* Selected Products List */}
                         {selectedProducts.length > 0 && (

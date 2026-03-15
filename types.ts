@@ -46,7 +46,7 @@ export interface ProductMovement {
 export enum OrderStatus {
     PENDING = 'Pendente',
     IN_PROGRESS = 'Em Andamento',
-    WAITING_PAYMENT = 'Aguardando Pagamento',
+    WAITING_WITHDRAWAL = 'Aguardando Retirada',
     COMPLETED = 'Concluído',
     CANCELLED = 'Cancelado'
 }

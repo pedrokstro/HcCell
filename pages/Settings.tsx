@@ -124,11 +124,18 @@ export const Settings: React.FC = () => {
     );
 
     const SubViewHeader = ({ title, onBack }: any) => (
-        <div className="p-4 flex items-center gap-4 border-b border-slate-100 dark:border-neutral-800 sticky top-0 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-md z-10">
-            <button onClick={onBack} className="p-2 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full transition-colors">
+        <div className="p-4 flex items-center border-b border-slate-100 dark:border-neutral-800 sticky top-0 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-md z-10 w-full relative">
+            <button onClick={onBack} className="p-2 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full transition-colors relative z-20">
                 <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
             </button>
-            <h3 className="font-black text-lg text-slate-900 dark:text-white uppercase tracking-tighter">{title}</h3>
+            
+            {/* Mobile Centered Title */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none md:hidden">
+                <h3 className="font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">{title}</h3>
+            </div>
+
+            {/* Desktop Title (Exactly like original) */}
+            <h3 className="hidden md:block font-black text-lg text-slate-900 dark:text-white uppercase tracking-tighter ml-4">{title}</h3>
         </div>
     );
 
@@ -224,7 +231,7 @@ export const Settings: React.FC = () => {
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
-                        className="bg-white dark:bg-surface-dark min-h-[60vh] rounded-[32px] shadow-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden mx-4 sm:mx-0"
+                        className="bg-white dark:bg-surface-dark min-h-[calc(100vh-220px)] md:min-h-[60vh] rounded-[32px] shadow-xl md:shadow-sm border border-slate-200 dark:border-neutral-800 overflow-hidden mx-4 sm:mx-0 flex flex-col"
                     >
                         {/* PROFILE SUBVIEW */}
                         {subView === 'profile' && (
@@ -248,19 +255,19 @@ export const Settings: React.FC = () => {
 
                                     <div className="space-y-4">
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Seu Nome</label>
+                                            <label className="text-[11px] md:text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase ml-1 tracking-wider">Seu Nome Completo</label>
                                             <input 
                                                 type="text" 
-                                                className="w-full h-14 px-4 bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border-none focus:ring-2 focus:ring-primary/20 dark:text-white font-bold text-sm"
+                                                className="w-full h-16 md:h-14 px-5 md:px-4 bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border-none focus:ring-2 focus:ring-primary/20 dark:text-white font-bold text-sm shadow-inner md:shadow-none"
                                                 value={formData.name}
                                                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Seu Email</label>
+                                            <label className="text-[11px] md:text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase ml-1 tracking-wider">Endereço de E-mail</label>
                                             <input 
                                                 type="email" 
-                                                className="w-full h-14 px-4 bg-slate-50/50 dark:bg-neutral-900/10 rounded-2xl border-none text-slate-400 font-bold text-sm disabled:opacity-50"
+                                                className="w-full h-16 md:h-14 px-5 md:px-4 bg-slate-50/50 dark:bg-neutral-900/10 rounded-2xl border-none text-slate-400 font-bold text-sm disabled:opacity-50"
                                                 value={formData.email}
                                                 disabled
                                             />
@@ -270,7 +277,7 @@ export const Settings: React.FC = () => {
                                     <button 
                                         onClick={handleSaveProfile}
                                         disabled={loading}
-                                        className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 active:scale-[0.98] transition-all"
+                                        className="w-full h-16 md:h-14 bg-primary text-white rounded-2xl font-black text-sm shadow-xl md:shadow-none shadow-primary/20 active:scale-[0.98] transition-all"
                                     >
                                         {loading ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
                                     </button>
@@ -294,28 +301,28 @@ export const Settings: React.FC = () => {
 
                                     <div className="space-y-4">
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Nova Senha</label>
+                                            <label className="text-[11px] md:text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase ml-1 tracking-wider">Nova Senha de Acesso</label>
                                             <div className="relative">
                                                 <input 
                                                     type={showPassword ? "text" : "password"}
-                                                    className="w-full h-14 pr-12 px-4 bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border-none focus:ring-2 focus:ring-primary/20 dark:text-white font-bold text-sm"
+                                                    className="w-full h-16 md:h-14 pr-14 px-5 md:px-4 bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border-none focus:ring-2 focus:ring-primary/20 dark:text-white font-bold text-sm shadow-inner md:shadow-none"
                                                     placeholder="••••••••"
                                                     value={passwordData.newPassword}
                                                     onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
                                                 />
                                                 <button 
                                                     onClick={() => setShowPassword(!showPassword)}
-                                                    className="absolute right-4 top-4 text-slate-400"
+                                                    className="absolute right-5 top-5 md:top-4 text-slate-400"
                                                 >
                                                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                                 </button>
                                             </div>
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Confirmar Nova Senha</label>
+                                            <label className="text-[11px] md:text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase ml-1 tracking-wider">Confirmar Nova Senha</label>
                                             <input 
                                                 type={showPassword ? "text" : "password"}
-                                                className="w-full h-14 px-4 bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border-none focus:ring-2 focus:ring-primary/20 dark:text-white font-bold text-sm"
+                                                className="w-full h-16 md:h-14 px-5 md:px-4 bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border-none focus:ring-2 focus:ring-primary/20 dark:text-white font-bold text-sm shadow-inner md:shadow-none"
                                                 placeholder="••••••••"
                                                 value={passwordData.confirmPassword}
                                                 onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
@@ -326,9 +333,9 @@ export const Settings: React.FC = () => {
                                     <button 
                                         onClick={handleUpdatePassword}
                                         disabled={loading || !passwordData.newPassword}
-                                        className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-indigo-600/20 active:scale-[0.98] transition-all"
+                                        className="w-full h-16 md:h-14 bg-indigo-600 text-white rounded-2xl font-black text-sm shadow-xl md:shadow-none shadow-indigo-600/20 active:scale-[0.98] transition-all uppercase tracking-widest"
                                     >
-                                        {loading ? 'ATUALIZANDO...' : 'ATUALIZAR SENHA'}
+                                        {loading ? 'ATUALIZANDO...' : 'ATUALIZAR SENHA AGORA'}
                                     </button>
                                 </div>
                             </>

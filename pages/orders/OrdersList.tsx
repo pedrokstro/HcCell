@@ -1,7 +1,8 @@
 import React from 'react';
 import { useApp } from '../../store';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Search, Plus, FileText, Filter, Calendar, Clock, CheckCircle, AlertTriangle, XCircle, TrendingUp } from 'lucide-react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Plus, FileText, Filter, Calendar, Clock, CheckCircle, AlertTriangle, XCircle, TrendingUp, MessageCircle, Edit2 } from 'lucide-react';
 import { OrderStatus } from '../../types';
 import { CustomDropdown } from '../../components/CustomDropdown';
 import { DatePicker } from '../../components/DatePicker';
@@ -9,6 +10,7 @@ import { DatePicker } from '../../components/DatePicker';
 
 export const OrdersList: React.FC = () => {
     const { orders, clients } = useApp();
+    const navigate = useNavigate();
 
     const getClientName = (id: string) => clients.find(c => c.id === id)?.name || 'Unknown';
 
@@ -18,7 +20,7 @@ export const OrdersList: React.FC = () => {
             case OrderStatus.IN_PROGRESS: return 'bg-blue-100 text-blue-800';
             case OrderStatus.COMPLETED: return 'bg-green-100 text-green-800';
             case OrderStatus.CANCELLED: return 'bg-red-100 text-red-800';
-            case OrderStatus.WAITING_PAYMENT: return 'bg-orange-100 text-orange-800';
+            case OrderStatus.WAITING_WITHDRAWAL: return 'bg-orange-100 text-orange-800';
             default: return 'bg-slate-100 text-slate-800';
         }
     };
@@ -36,7 +38,7 @@ export const OrdersList: React.FC = () => {
         { value: '', label: 'Todos os Status', icon: <Filter size={18} /> },
         { value: OrderStatus.PENDING, label: 'Pendente', icon: <Clock size={18} className="text-yellow-500" /> },
         { value: OrderStatus.IN_PROGRESS, label: 'Em Andamento', icon: <TrendingUp size={18} className="text-blue-500" /> },
-        { value: OrderStatus.WAITING_PAYMENT, label: 'Aguard. Pag.', icon: <Clock size={18} className="text-orange-500" /> },
+        { value: OrderStatus.WAITING_WITHDRAWAL, label: 'Retirada', icon: <Clock size={18} className="text-orange-500" /> },
         { value: OrderStatus.COMPLETED, label: 'Concluído', icon: <CheckCircle size={18} className="text-green-500" /> },
         { value: OrderStatus.CANCELLED, label: 'Cancelado', icon: <XCircle size={18} className="text-red-500" /> }
     ];
@@ -116,6 +118,28 @@ export const OrdersList: React.FC = () => {
 
         return matchesSearch && matchesStatus && matchesDate;
     });
+
+    const handleWhatsApp = (e: React.MouseEvent, order: any) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const client = clients.find(c => c.id === order.clientId);
+        if (!client?.phone) return;
+
+        let message = `Olá ${client.name}, aqui é da HcCell Assistência Técnica. Sobre seu aparelho ${order.deviceModel}: `;
+        const trackingUrl = `${window.location.origin}/#/tracking?id=${order.displayId || order.id.slice(0, 8)}`;
+        
+        if (order.status === OrderStatus.COMPLETED) {
+            message += `está pronto e concluído com sucesso! Valor total: R$ ${order.total.toFixed(2)}.`;
+        } else if (order.status === OrderStatus.WAITING_WITHDRAWAL) {
+            message += `já está aguardando retirada!`;
+        } else {
+            message += `gostaria de falar sobre sua Ordem de Serviço #${order.displayId || order.id.slice(0, 8)}.`;
+        }
+        
+        message += `\n\nAcompanhe aqui: ${trackingUrl}`;
+        const phone = client.phone.replace(/\D/g, '');
+        window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, '_blank');
+    };
 
     return (
         <>
@@ -297,12 +321,16 @@ export const OrdersList: React.FC = () => {
                 {/* Mobile Card View */}
                 <div className="md:hidden flex flex-col gap-4">
                     {filteredOrders.length > 0 ? (
-                        filteredOrders.map(order => (
-                            <Link
-                                to={`/orders/${order.id}`}
-                                key={order.id}
-                                className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 p-4 shadow-sm active:scale-[0.99] transition-transform"
-                            >
+                        filteredOrders.map(order => {
+                            const MotionLink = motion(Link);
+                            return (
+                                <MotionLink
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.97 }}
+                                    to={`/orders/${order.id}`}
+                                    key={order.id}
+                                    className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 p-4 shadow-sm transition-all"
+                                >
                                 <div className="flex justify-between items-start mb-3">
                                     <div>
                                         <span className="text-xs font-mono text-slate-500 dark:text-slate-400 mb-1 block">#{order.displayId || order.id.slice(0, 8)}</span>
@@ -337,8 +365,30 @@ export const OrdersList: React.FC = () => {
                                         R$ {order.total.toFixed(2)}
                                     </span>
                                 </div>
-                            </Link>
-                        ))
+
+                                {/* Quick Actions Row */}
+                                <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-neutral-800">
+                                    <button
+                                        onClick={(e) => handleWhatsApp(e, order)}
+                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-green-100 dark:border-green-900/30"
+                                    >
+                                        <MessageCircle size={14} />
+                                        WhatsApp
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            navigate(`/orders/${order.id}/edit`);
+                                        }}
+                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 dark:bg-neutral-800 text-slate-600 dark:text-slate-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-slate-100 dark:border-neutral-700"
+                                    >
+                                        <Edit2 size={14} />
+                                    </button>
+                                </div>
+                            </MotionLink>
+                        )
+                    })
                     ) : (
                         <div className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 border-dashed p-8 text-center">
                             <div className="flex flex-col items-center justify-center opacity-70">
