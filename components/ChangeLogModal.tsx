@@ -5,6 +5,32 @@ import { BottomSheet } from './BottomSheet';
 
 const CHANGELOG = [
     {
+        version: '2.2.0',
+        date: '15 Mar 2026',
+        changes: [
+            {
+                title: "Experiência Fluida ✨",
+                description: "Novo sistema de animações com Framer Motion. Cards e botões agora respondem ao toque com efeitos táteis e transições elásticas.",
+                type: "new"
+            },
+            {
+                title: "Ações Rápidas no Mobile ⚡",
+                description: "WhatsApp, Edição e Ajuste de Estoque direto nos cards! Menos cliques para suas tarefas mais comuns.",
+                type: "new"
+            },
+            {
+                title: "Recibos & Preview 📄",
+                description: "Nova área de pré-visualização de recibos no Desktop. Configure e visualize o documento antes de imprimir em A4 ou Térmica.",
+                type: "improvement"
+            },
+            {
+                title: "Dashboard mais Limpo",
+                description: "Otimizamos a tela inicial no mobile para focar no que importa, ocultando estatísticas secundárias para agilizar sua visão.",
+                type: "improvement"
+            }
+        ]
+    },
+    {
         version: '2.1.1',
         date: '14 Mar 2026',
         changes: [

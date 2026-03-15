@@ -296,9 +296,22 @@ export const OrdersList: React.FC = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-slate-900 dark:text-white">R$ {order.total.toFixed(2)}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <Link to={`/orders/${order.id}`} className="text-slate-400 dark:text-slate-500 hover:text-primary transition-colors">
-                                                    <FileText size={20} />
-                                                </Link>
+                                                <div className="flex items-center justify-end gap-3">
+                                                    <button
+                                                        onClick={(e) => handleWhatsApp(e, order)}
+                                                        className="size-10 flex items-center justify-center rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-all active:scale-95 border border-green-100 dark:border-green-900/30 shadow-sm"
+                                                        title="Enviar WhatsApp"
+                                                    >
+                                                        <MessageCircle size={18} />
+                                                    </button>
+                                                    <Link 
+                                                        to={`/orders/${order.id}`} 
+                                                        className="size-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-400 dark:text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-neutral-700 transition-all active:scale-95 border border-slate-100 dark:border-neutral-700 shadow-sm"
+                                                        title="Ver Detalhes"
+                                                    >
+                                                        <FileText size={18} />
+                                                    </Link>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
