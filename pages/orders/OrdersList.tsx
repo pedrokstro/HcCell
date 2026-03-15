@@ -243,7 +243,6 @@ export const OrdersList: React.FC = () => {
                         <table className="min-w-full divide-y divide-slate-200 dark:divide-neutral-800">
                             <thead className="bg-slate-50 dark:bg-neutral-900/50">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">ID da OS</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Cliente</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Aparelho & Problema</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Status</th>
@@ -256,9 +255,6 @@ export const OrdersList: React.FC = () => {
                                 {filteredOrders.length > 0 ? (
                                     filteredOrders.map(order => (
                                         <tr key={order.id} className="hover:bg-slate-50 dark:hover:bg-neutral-900/50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="text-sm font-mono text-slate-500 dark:text-slate-400">#{order.displayId || order.id.slice(0, 8)}</span>
-                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
                                                     <div className="size-8 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold mr-3 shrink-0">
@@ -296,13 +292,24 @@ export const OrdersList: React.FC = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-slate-900 dark:text-white">R$ {order.total.toFixed(2)}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <div className="flex items-center justify-end gap-3">
+                                                <div className="flex items-center justify-end gap-2">
                                                     <button
                                                         onClick={(e) => handleWhatsApp(e, order)}
                                                         className="size-10 flex items-center justify-center rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-all active:scale-95 border border-green-100 dark:border-green-900/30 shadow-sm"
-                                                        title="Enviar WhatsApp"
+                                                        title="WhatsApp"
                                                     >
-                                                        <MessageCircle size={18} />
+                                                        <img src="/whatsapp.png" alt="WhatsApp" className="size-6 object-contain" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            navigate(`/orders/${order.id}/edit`);
+                                                        }}
+                                                        className="size-10 flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all active:scale-95 border border-blue-100 dark:border-blue-900/30 shadow-sm"
+                                                        title="Editar Ordem"
+                                                    >
+                                                        <Edit2 size={18} />
                                                     </button>
                                                     <Link 
                                                         to={`/orders/${order.id}`} 
@@ -317,7 +324,7 @@ export const OrdersList: React.FC = () => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={7} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                                        <td colSpan={6} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                                             <div className="flex flex-col items-center justify-center opacity-70">
                                                 <Search size={48} className="mb-4 text-slate-300 dark:text-slate-600" />
                                                 <p className="text-lg font-medium text-slate-600 dark:text-slate-300">Nenhuma ordem encontrada</p>
@@ -383,10 +390,20 @@ export const OrdersList: React.FC = () => {
                                 <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-neutral-800">
                                     <button
                                         onClick={(e) => handleWhatsApp(e, order)}
-                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-green-100 dark:border-green-900/30"
+                                        className="flex-[2] flex items-center justify-center gap-2 py-2.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-green-100 dark:border-green-900/30"
                                     >
-                                        <MessageCircle size={14} />
+                                        <img src="/whatsapp.png" alt="WhatsApp" className="size-5 object-contain" />
                                         WhatsApp
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            navigate(`/orders/${order.id}`);
+                                        }}
+                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-blue-100 dark:border-blue-900/30"
+                                    >
+                                        <FileText size={16} />
                                     </button>
                                     <button
                                         onClick={(e) => {
@@ -396,7 +413,7 @@ export const OrdersList: React.FC = () => {
                                         }}
                                         className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 dark:bg-neutral-800 text-slate-600 dark:text-slate-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-slate-100 dark:border-neutral-700"
                                     >
-                                        <Edit2 size={14} />
+                                        <Edit2 size={16} />
                                     </button>
                                 </div>
                             </MotionLink>
