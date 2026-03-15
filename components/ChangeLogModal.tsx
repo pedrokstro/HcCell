@@ -246,9 +246,9 @@ export const ChangeLogModal: React.FC<ChangeLogModalProps> = ({ isOpen, onClose,
             </div>
 
             {/* Mobile Bottom Sheet */}
-            <BottomSheet 
-                isOpen={isOpen && window.innerWidth < 768} 
-                onClose={onClose} 
+            <BottomSheet
+                isOpen={isOpen && window.innerWidth < 768}
+                onClose={onClose}
                 title={viewHistory ? 'Histórico de Atualizações' : 'Novas Atualizações'}
             >
                 <div className="space-y-6">
