@@ -225,7 +225,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     servicePerformed: o.service_performed,
                     noWarranty: o.no_warranty,
                     deviceImage: o.device_image,
-                    serviceType: o.service_type
+                    serviceType: o.service_type,
+                    executionDate: o.execution_date
                 })));
             }
 
@@ -355,14 +356,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             service_performed: order.servicePerformed,
             no_warranty: order.noWarranty || false,
             device_image: order.deviceImage,
-            service_type: order.serviceType
+            service_type: order.serviceType,
+            execution_date: order.executionDate
         };
 
-        // If newly added as Completed, set warranty
-        if (dbOrder.status === OrderStatus.COMPLETED && !dbOrder.no_warranty && !dbOrder.warranty_end) {
-            const date = new Date();
-            date.setDate(date.getDate() + 90);
-            dbOrder.warranty_end = date.toISOString();
+        // If newly added as Completed, set warranty and execution date
+        if (dbOrder.status === OrderStatus.COMPLETED) {
+            if (!dbOrder.no_warranty && !dbOrder.warranty_end) {
+                const date = new Date();
+                date.setDate(date.getDate() + 90);
+                dbOrder.warranty_end = date.toISOString();
+            }
+            if (!dbOrder.execution_date) {
+                dbOrder.execution_date = new Date().toISOString();
+            }
         }
 
         const { data, error } = await supabase.from('service_orders').insert([dbOrder]).select();
@@ -390,14 +397,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             service_performed: order.servicePerformed,
             no_warranty: order.noWarranty,
             device_image: order.deviceImage,
-            service_type: order.serviceType
+            service_type: order.serviceType,
+            execution_date: order.executionDate
         };
 
-        // Rule: Warranty starts when the order is completed
-        if (order.status === OrderStatus.COMPLETED && !order.noWarranty && !order.warrantyEnd) {
-            const date = new Date();
-            date.setDate(date.getDate() + 90);
-            dbOrder.warranty_end = date.toISOString();
+        // Rule: Warranty and Execution Date starts when the order is completed
+        if (order.status === OrderStatus.COMPLETED) {
+            if (!order.noWarranty && !order.warrantyEnd) {
+                const date = new Date();
+                date.setDate(date.getDate() + 90);
+                dbOrder.warranty_end = date.toISOString();
+            }
+            if (!order.executionDate) {
+                dbOrder.execution_date = new Date().toISOString();
+            }
         }
 
         const { error } = await supabase.from('service_orders').update(dbOrder).eq('id', order.id);

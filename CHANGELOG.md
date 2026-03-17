@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2026-03-17
+
+### 🖥️ Configurações Desktop Premium
+- **Layout de Duas Colunas**: Nova interface para computadores com barra lateral de navegação e card de status do usuário.
+- **Indicador Fluido**: Animação de deslize suave entre as abas de configuração usando LayoutID.
+- **Transições Suaves**: Efeito de fade e slide ao trocar de seção para uma experiência mais profissional.
+
+### 📊 Relatórios & PDFs
+- **Correção de PDF**: Removida a repetição indesejada do resumo financeiro em todas as páginas do relatório impresso.
+- **Cálculo de Margem**: Refinamento na exibição de lucros e custos no dashboard e relatórios.
+
 ## [2.2.0] - 2026-03-15
 
 ### ✨ Experiência Fluida & Micro-Interações

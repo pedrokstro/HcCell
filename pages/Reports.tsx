@@ -324,7 +324,7 @@ export const Reports: React.FC = () => {
         const frameDoc = frame.contentWindow?.document;
         if (!frameDoc) return;
 
-        const title = `Relatório de Vendas - ${dateFilter === 'custom' ? 'Período Personalizado' :
+        const reportTitle = `Relatório de Vendas - ${dateFilter === 'custom' ? 'Período Personalizado' :
             dateFilter === 'today' ? 'Hoje' :
                 dateFilter === 'week' ? 'Últimos 7 dias' :
                     dateFilter === 'month' ? 'Este Mês' : 'Este Ano'}`;
@@ -334,16 +334,16 @@ export const Reports: React.FC = () => {
             const client = clients.find(c => c.id === order.clientId);
             rows += `
                 <tr>
-                    <td>${order.displayId || order.id.slice(0, 8)}</td>
+                    <td style="font-family: monospace; font-weight: bold; color: #64748b;">#${order.displayId || order.id.slice(0, 8)}</td>
                     <td>${new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
-                    <td>${client?.name || 'Desconhecido'}</td>
+                    <td style="font-weight: 500;">${client?.name || 'Desconhecido'}</td>
                     <td>${order.deviceModel}</td>
                     <td>
                         <span class="status-badge ${order.status === 'Concluído' ? 'status-green' : order.status === 'Cancelado' ? 'status-red' : 'status-gray'}">
                             ${order.status}
                         </span>
                     </td>
-                    <td class="right">R$ ${order.total.toFixed(2)}</td>
+                    <td class="right" style="font-weight: bold;">R$ ${order.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                 </tr>
             `;
         });
@@ -358,51 +358,96 @@ export const Reports: React.FC = () => {
             ? `${formatDate(startDate)} até ${formatDate(endDate)}`
             : new Date().toLocaleDateString('pt-BR');
 
+        const logoUrl = window.location.origin + '/hccell-logo.png';
+
         frameDoc.write(`
             <html>
                 <head>
                     <title>Relatório HCCELL</title>
+                    <link rel="preconnect" href="https://fonts.googleapis.com">
+                    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
                     <style>
-                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; }
-                        h1 { margin-bottom: 5px; color: #1e293b; }
-                        p.subtitle { color: #64748b; margin-bottom: 30px; font-size: 14px; }
-                        .metrics { display: flex; gap: 20px; margin-bottom: 40px; }
-                        .metric-card { border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; flex: 1; background: #fff; }
-                        .metric-title { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; margin-bottom: 8px; }
-                        .metric-value { font-size: 24px; font-weight: 900; color: #0f172a; }
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { font-family: 'Inter', sans-serif; padding: 50px; color: #1e293b; background: #fff; line-height: 1.5; }
                         
-                        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-                        th, td { border-bottom: 1px solid #e2e8f0; padding: 12px 8px; text-align: left; }
-                        th { background-color: #f8fafc; font-weight: bold; color: #475569; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+                        header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid #f1f5f9; padding-bottom: 30px; }
+                        .logo-container { display: flex; align-items: center; gap: 15px; }
+                        .logo-img { height: 60px; object-fit: contain; }
+                        .company-info { text-align: right; }
+                        .company-info h2 { font-weight: 900; color: #0f172a; font-size: 20px; text-transform: uppercase; letter-spacing: -0.5px; }
+                        .company-info p { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+                        h1 { font-size: 28px; font-weight: 900; color: #0f172a; margin-bottom: 5px; letter-spacing: -1px; }
+                        .subtitle { font-size: 13px; color: #64748b; margin-bottom: 40px; font-weight: 500; }
+                        .subtitle strong { color: #0f172a; }
+
+                        .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 40px; }
+                        .metric-card { padding: 18px; border-radius: 16px; border: 1px solid #f1f5f9; background: #fff; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
+                        .metric-card.highlight { background: #0f172a; color: #fff; border: none; }
+                        .metric-card.highlight .metric-title { color: #94a3b8; }
+                        .metric-card.highlight .metric-value { color: #fff; }
+                        
+                        .metric-title { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800; margin-bottom: 8px; }
+                        .metric-value { font-size: 20px; font-weight: 900; color: #0f172a; }
+                        .metric-positive { color: #10b981; }
+                        .metric-negative { color: #f43f5e; }
+                        
+                        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; margin-bottom: 30px; }
+                        th { background-color: #f8fafc; font-weight: 800; color: #475569; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; padding: 15px 12px; border-bottom: 2px solid #e2e8f0; text-align: left; }
+                        td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+                        tr:nth-child(even) { background-color: #fcfdfe; }
                         .right { text-align: right; }
                         
-                        .status-badge { padding: 4px 8px; border-radius: 99px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-                        .status-green { background: #dcfce7; color: #166534; }
-                        .status-red { background: #fee2e2; color: #991b1b; }
-                        .status-gray { background: #f1f5f9; color: #475569; }
+                        .status-badge { padding: 4px 10px; border-radius: 8px; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
+                        .status-green { background: #dcfce7; color: #065f46; border: 1px solid #bbf7d0; }
+                        .status-red { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+                        .status-gray { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
 
-                        .footer { margin-top: 50px; text-align: center; color: #94a3b8; font-size: 10px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+                        tfoot td { padding: 15px 12px; border: none; }
+                        .footer-main { margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end; border-top: 2px solid #f1f5f9; padding-top: 30px; }
+                        .footer-info { font-size: 11px; color: #94a3b8; max-width: 300px; }
+                        .signature { text-align: center; width: 220px; }
+                        .signature-line { border-top: 1px solid #cbd5e1; margin-bottom: 8px; width: 100%; }
+                        .signature p { font-size: 11px; font-weight: 700; color: #475569; }
+
+                        @media print {
+                            body { padding: 20px; }
+                            .metric-card { box-shadow: none; border: 1px solid #e2e8f0; }
+                        }
                     </style>
                 </head>
                 <body>
-                    <h1>${title}</h1>
-                    <p class="subtitle">Gerado em ${new Date().toLocaleString('pt-BR')} • Período: ${periodText}</p>
+                    <header>
+                        <div class="logo-container">
+                            <img src="${logoUrl}" class="logo-img" alt="Logo HCCELL">
+                        </div>
+                        <div class="company-info">
+                            <h2>HCCELL ASSISTÊNCIA TÉCNICA</h2>
+                            <p>Gestão de Serviços e Vendas</p>
+                            <p>${new Date().toLocaleDateString('pt-BR')}</p>
+                        </div>
+                    </header>
+
+                    <h1>${reportTitle}</h1>
+                    <p class="subtitle">Impressão realizada em <strong>${new Date().toLocaleString('pt-BR')}</strong> • Período analisado: <strong>${periodText}</strong></p>
                     
                     <div class="metrics">
-                        <div class="metric-card">
-                            <div class="metric-title">Faturamento</div>
+                        <div class="metric-card highlight">
+                            <div class="metric-title" style="color: #60a5fa;">Faturamento Bruto</div>
                             <div class="metric-value">R$ ${metrics.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                         </div>
                         <div class="metric-card">
-                            <div class="metric-title">Custos (Peças)</div>
-                            <div class="metric-value" style="color: #ef4444;">- R$ ${metrics.totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                            <div class="metric-title">Custos de Peças</div>
+                            <div class="metric-value metric-negative">- R$ ${metrics.totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                         </div>
                         <div class="metric-card">
                             <div class="metric-title">Lucro Líquido</div>
-                            <div class="metric-value" style="color: #22c55e;">R$ ${metrics.netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                            <div class="metric-value metric-positive">R$ ${metrics.netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                            <div style="font-size: 10px; font-weight: bold; color: #059669; margin-top: 2px;">Margem: ${metrics.profitMargin.toFixed(1)}%</div>
                         </div>
                         <div class="metric-card">
-                            <div class="metric-title">Concluídas</div>
+                            <div class="metric-title">Ordens Totais</div>
                             <div class="metric-value">${metrics.ordersCount}</div>
                         </div>
                     </div>
@@ -420,25 +465,32 @@ export const Reports: React.FC = () => {
                         </thead>
                         <tbody>
                             ${rows}
+                            <!-- Resumo Final (Não se repete nas páginas) -->
+                            <tr style="break-inside: avoid;">
+                                <td colspan="5" class="right" style="padding-top: 35px; border-bottom: none;"><strong>TOTAL BRUTO DO PERÍODO</strong></td>
+                                <td class="right" style="padding-top: 35px; font-size: 14px; border-bottom: none;"><strong>R$ ${metrics.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
+                            </tr>
+                            <tr style="break-inside: avoid;">
+                                <td colspan="5" class="right" style="color: #64748b; border-bottom: none;">TOTAL CUSTOS (PEÇAS)</td>
+                                <td class="right" style="color: #f43f5e; border-bottom: none;"><strong>- R$ ${metrics.totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
+                            </tr>
+                            <tr style="break-inside: avoid;">
+                                <td colspan="5" class="right" style="padding-top: 15px; font-size: 16px; border-bottom: none;"><strong>LUCRO LÍQUIDO FINAL</strong></td>
+                                <td class="right" style="padding-top: 15px; font-size: 20px; color: #10b981; border-bottom: none;"><strong>R$ ${metrics.netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
+                            </tr>
                         </tbody>
-                        <tfoot>
-                             <tr>
-                                <td colspan="5" class="right" style="padding-top: 10px;"><strong>FATURAMENTO TOTAL</strong></td>
-                                <td class="right" style="padding-top: 10px;"><strong>R$ ${metrics.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
-                             </tr>
-                             <tr>
-                                <td colspan="5" class="right"><strong>CUSTOS TOTAIS (PEÇAS)</strong></td>
-                                <td class="right" style="color: #ef4444;"><strong>- R$ ${metrics.totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
-                             </tr>
-                             <tr>
-                                <td colspan="5" class="right" style="padding-top: 10px; font-size: 14px; border-top: 2px solid #e2e8f0;"><strong>LUCRO LÍQUIDO</strong></td>
-                                <td class="right" style="padding-top: 10px; font-size: 16px; color: #22c55e; border-top: 2px solid #e2e8f0;"><strong>R$ ${metrics.netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
-                             </tr>
-                        </tfoot>
                     </table>
                     
-                    <div class="footer">
-                        HCCELL Assistência Técnica • Sistema de Gestão
+                    <div class="footer-main">
+                        <div class="footer-info">
+                            <p><strong>HCCELL Assistência Técnica</strong></p>
+                            <p>Este documento é um registro gerencial gerado pelo sistema.</p>
+                            <p>RUA EXEMPLO, 123 - CENTRO</p>
+                        </div>
+                        <div class="signature">
+                            <div class="signature-line"></div>
+                            <p>Responsável / Financeiro</p>
+                        </div>
                     </div>
                 </body>
             </html>

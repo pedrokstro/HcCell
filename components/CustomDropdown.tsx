@@ -36,7 +36,22 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [direction, setDirection] = useState<'down' | 'up'>('down');
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Detect space to determine direction
+    useEffect(() => {
+        if (isOpen && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            // If less than 300px below, and more space above, open up
+            if (spaceBelow < 300 && rect.top > spaceBelow) {
+                setDirection('up');
+            } else {
+                setDirection('down');
+            }
+        }
+    }, [isOpen]);
 
     const filteredOptions = searchable 
         ? options.filter(opt => 
@@ -85,9 +100,15 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                 <AnimatePresence>
                     {isOpen && (
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 5 }}
-                            animate={{ opacity: 1, scale: 1, y: 10 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 5 }}
+                            initial={{ 
+                                opacity: 0, 
+                                scale: 0.95, 
+                                y: direction === 'down' ? 5 : -5,
+                                bottom: direction === 'up' ? 'calc(100% + 10px)' : 'auto',
+                                top: direction === 'down' ? 'calc(100% + 10px)' : 'auto'
+                            }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: direction === 'down' ? 5 : -5 }}
                             transition={{ duration: 0.15 }}
                             className="absolute z-50 left-0 right-0 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-2xl p-1 overflow-hidden min-w-[240px]"
                         >
@@ -121,7 +142,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                                 )}
                             </div>
 
-                            <div className="max-h-[320px] overflow-y-auto custom-scrollbar p-1 flex flex-col gap-1">
+                            <div className={`max-h-[260px] overflow-y-auto custom-scrollbar p-1 flex flex-col gap-1`}>
                                 {filteredOptions.length > 0 ? (
                                     filteredOptions.map(option => {
                                     const isSelected = option.value === selectedValue;
@@ -130,7 +151,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                                             key={option.value}
                                             type="button"
                                             onClick={() => handleSelect(option.value)}
-                                            className={`flex items-center justify-between gap-3 w-full px-4 py-3 rounded-xl transition-all text-sm ${isSelected 
+                                            className={`flex items-center justify-between gap-3 w-full px-4 py-2.5 rounded-xl transition-all text-sm ${isSelected 
                                                 ? 'bg-primary/5 text-primary font-bold' 
                                                 : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-neutral-800'}`}
                                         >
@@ -140,10 +161,10 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                                                         {option.icon}
                                                     </div>
                                                 )}
-                                                <div className="flex flex-col">
+                                                <div className="flex flex-col text-left">
                                                     <span>{option.label}</span>
                                                     {option.subLabel && (
-                                                        <span className="text-[10px] text-slate-500 font-medium">
+                                                        <span className="text-[10px] text-slate-500 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
                                                             {option.subLabel}
                                                         </span>
                                                     )}

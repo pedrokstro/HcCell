@@ -239,23 +239,23 @@ export const OrdersList: React.FC = () => {
 
                 {/* Desktop Table View */}
                 <div className="hidden md:block bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 shadow-sm overflow-hidden animate-fade-in-up">
-                    <div className="overflow-x-auto">
+                    <div className="">
                         <table className="min-w-full divide-y divide-slate-200 dark:divide-neutral-800">
                             <thead className="bg-slate-50 dark:bg-neutral-900/50">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Cliente</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Aparelho & Problema</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Status</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Data</th>
-                                    <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Valor</th>
-                                    <th className="px-6 py-4"></th>
+                                    <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Cliente</th>
+                                    <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Aparelho & Problema</th>
+                                    <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Status</th>
+                                    <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Data</th>
+                                    <th className="px-3 py-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Valor</th>
+                                    <th className="px-3 py-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Ações</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white dark:bg-surface-dark divide-y divide-slate-200 dark:divide-neutral-800">
                                 {filteredOrders.length > 0 ? (
                                     filteredOrders.map(order => (
                                         <tr key={order.id} className="hover:bg-slate-50 dark:hover:bg-neutral-900/50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-3 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
                                                     <div className="size-8 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold mr-3 shrink-0">
                                                         {getClientName(order.clientId).substring(0, 2).toUpperCase()}
@@ -263,42 +263,38 @@ export const OrdersList: React.FC = () => {
                                                     <span className="text-sm font-medium text-slate-900 dark:text-white">{getClientName(order.clientId)}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 min-w-[200px]">
+                                            <td className="px-3 py-4">
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                                    <span className="text-sm font-medium text-slate-900 dark:text-white line-clamp-1">
                                                         {order.serviceType === 'VENDA_DIRETA' ? 'Venda de Produto' : order.deviceModel}
                                                     </span>
-                                                    <span className="text-xs text-slate-500 dark:text-slate-500 truncate max-w-[200px]" title={order.serviceType === 'VENDA_DIRETA' ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ')) : order.issueDescription}>
+                                                    <span className="text-xs text-slate-500 dark:text-slate-500 line-clamp-1" title={order.serviceType === 'VENDA_DIRETA' ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ')) : order.issueDescription}>
                                                         {order.serviceType === 'VENDA_DIRETA'
                                                             ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ') || 'Produtos Diversos')
                                                             : order.issueDescription}
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-3 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                                                     {order.status}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                                                {new Date(order.createdAt).toLocaleString('pt-BR', {
-                                                    timeZone: 'America/Sao_Paulo',
-                                                    day: '2-digit',
-                                                    month: '2-digit',
-                                                    year: '2-digit',
-                                                    hour: '2-digit',
-                                                    minute: '2-digit'
-                                                }).replace(',', ' -')}
+                                            <td className="px-3 py-4 whitespace-nowrap text-[11px] leading-tight text-slate-500 dark:text-slate-400">
+                                                <div className="flex flex-col">
+                                                    <span>{new Date(order.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
+                                                    <span className="opacity-60 mt-0.5">{new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-slate-900 dark:text-white">R$ {order.total.toFixed(2)}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <div className="flex items-center justify-end gap-2">
+                                            <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-bold text-slate-900 dark:text-white">R$ {order.total.toFixed(2)}</td>
+                                            <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex items-center justify-end gap-1.5">
                                                     <button
                                                         onClick={(e) => handleWhatsApp(e, order)}
-                                                        className="size-10 flex items-center justify-center rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-all active:scale-95 border border-green-100 dark:border-green-900/30 shadow-sm"
+                                                        className="size-9 flex items-center justify-center rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-all active:scale-95 border border-green-100 dark:border-green-900/30 shadow-sm"
                                                         title="WhatsApp"
                                                     >
-                                                        <img src="/whatsapp.png" alt="WhatsApp" className="size-6 object-contain" />
+                                                        <img src="/whatsapp.png" alt="WhatsApp" className="size-5 object-contain" />
                                                     </button>
                                                     <button
                                                         onClick={(e) => {
@@ -306,17 +302,17 @@ export const OrdersList: React.FC = () => {
                                                             e.stopPropagation();
                                                             navigate(`/orders/${order.id}/edit`);
                                                         }}
-                                                        className="size-10 flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all active:scale-95 border border-blue-100 dark:border-blue-900/30 shadow-sm"
+                                                        className="size-9 flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all active:scale-95 border border-blue-100 dark:border-blue-900/30 shadow-sm"
                                                         title="Editar Ordem"
                                                     >
-                                                        <Edit2 size={18} />
+                                                        <Edit2 size={16} />
                                                     </button>
                                                     <Link 
                                                         to={`/orders/${order.id}`} 
-                                                        className="size-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-400 dark:text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-neutral-700 transition-all active:scale-95 border border-slate-100 dark:border-neutral-700 shadow-sm"
+                                                        className="size-9 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-400 dark:text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-neutral-700 transition-all active:scale-95 border border-slate-100 dark:border-neutral-700 shadow-sm"
                                                         title="Ver Detalhes"
                                                     >
-                                                        <FileText size={18} />
+                                                        <FileText size={16} />
                                                     </Link>
                                                 </div>
                                             </td>

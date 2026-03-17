@@ -720,10 +720,18 @@ export const OrderDetails: React.FC = () => {
                             {order.status}
                         </span>
                     </div>
-                    <p className="text-slate-500 dark:text-slate-400 flex items-center gap-2 text-sm font-medium">
-                        <Clock size={14} className="text-primary" />
-                        Criada em {new Date(order.createdAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} às {new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium">
+                        <p className="text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                            <Clock size={14} className="text-primary" />
+                            Criada em {new Date(order.createdAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} às {new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}
+                        </p>
+                        {(order.status === OrderStatus.COMPLETED || order.status.toUpperCase() === 'CONCLUÍDO') && (
+                            <p className="text-emerald-600 dark:text-emerald-500 font-bold flex items-center gap-2">
+                                <CheckCircle2 size={14} />
+                                Concluída em {new Date(order.executionDate || order.createdAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} às {new Date(order.executionDate || order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}
+                            </p>
+                        )}
+                    </div>
                 </div>
                 {/* Desktop Action Buttons */}
                 <div className="hidden sm:flex flex-wrap gap-2">
@@ -879,8 +887,8 @@ export const OrderDetails: React.FC = () => {
                     </div>
 
                     {/* Problem & Execution */}
-                    <div className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex items-center gap-3">
+                    <div className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800">
+                        <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex items-center gap-3 rounded-t-3xl">
                             <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400">
                                 <Wrench size={18} />
                             </div>
@@ -922,6 +930,7 @@ export const OrderDetails: React.FC = () => {
                                     selectedValue={order.status}
                                     onSelect={(val) => handleStatusChange(val as OrderStatus)}
                                     className="w-full sm:w-64"
+                                    searchable={false}
                                 />
                             </div>
 
@@ -1407,22 +1416,22 @@ export const OrderDetails: React.FC = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <button
                                             onClick={handlePrint}
-                                            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-primary px-6 py-4 text-sm font-black text-white shadow-xl shadow-primary/20 transition-all hover:bg-primary-dark active:scale-95 active:shadow-none"
+                                            className="flex w-full items-center justify-center gap-3 rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-dark active:scale-95 active:shadow-none"
                                         >
-                                            <Printer size={20} />
-                                            A4 / PDF
+                                            <Printer size={18} />
+                                            Imprimir A4
                                         </button>
                                         <button
                                             onClick={handlePrintThermal}
-                                            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-slate-800 px-6 py-4 text-sm font-black text-white shadow-xl shadow-slate-800/20 transition-all hover:bg-slate-900 active:scale-95 active:shadow-none"
+                                            className="flex w-full items-center justify-center gap-3 rounded-xl bg-slate-900 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-900/10 transition-all hover:bg-black active:scale-95 active:shadow-none"
                                         >
-                                            <Printer size={20} />
-                                            Térmica
+                                            <Printer size={18} />
+                                            Cupom Térmico
                                         </button>
                                     </div>
                                     <button
                                         onClick={() => setShowReceiptModal(false)}
-                                        className="w-full text-sm font-bold text-slate-400 hover:text-slate-600 py-2 transition-colors"
+                                        className="w-full text-sm font-bold text-red-500 hover:text-red-700 py-2 transition-colors"
                                     >
                                         Cancelar
                                     </button>
@@ -1517,19 +1526,19 @@ export const OrderDetails: React.FC = () => {
                             <div className="pt-2 flex flex-col gap-3">
                                 <button
                                     onClick={handlePrint}
-                                    className="w-full h-14 rounded-2xl bg-primary text-sm font-black text-white shadow-xl shadow-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3 uppercase tracking-widest"
+                                    className="w-full h-12 rounded-xl bg-primary text-sm font-bold text-white shadow-lg shadow-primary/10 active:scale-[0.98] transition-all flex items-center justify-center gap-3 uppercase tracking-wider"
                                 >
-                                    <Printer size={20} /> Gerar PDF (A4)
+                                    <Printer size={18} /> Gerar PDF (A4)
                                 </button>
                                 <button
                                     onClick={handlePrintThermal}
-                                    className="w-full h-14 rounded-2xl bg-slate-800 text-sm font-black text-white shadow-xl shadow-slate-950/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3 uppercase tracking-widest"
+                                    className="w-full h-12 rounded-xl bg-slate-900 text-sm font-bold text-white shadow-lg shadow-slate-950/10 active:scale-[0.98] transition-all flex items-center justify-center gap-3 uppercase tracking-wider"
                                 >
-                                    <Printer size={20} /> Térmica 80mm
+                                    <Printer size={18} /> Cupom Térmico
                                 </button>
                                 <button
                                     onClick={() => setShowReceiptModal(false)}
-                                    className="w-full h-12 rounded-2xl text-sm font-bold text-slate-400 hover:text-slate-600 py-2 transition-colors uppercase tracking-widest"
+                                    className="w-full h-12 rounded-xl text-sm font-bold text-red-500 hover:text-red-700 py-2 transition-colors uppercase tracking-widest"
                                 >
                                     Voltar
                                 </button>

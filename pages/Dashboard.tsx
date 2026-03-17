@@ -101,7 +101,12 @@ export const Dashboard: React.FC = () => {
     const getStatData = () => {
       switch (selectedStat) {
         case 'sales':
-          return ordersInDateData.filter(o => o.status === 'Concluído').map(o => ({ label: o.deviceModel, value: `R$ ${o.total.toFixed(2)}`, sub: new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' -') }));
+          return ordersInDateData.filter(o => o.status === 'Concluído').map(o => ({ 
+            id: o.id,
+            label: o.deviceModel, 
+            value: `R$ ${o.total.toFixed(2)}`, 
+            sub: new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' -') 
+          }));
         case 'awaiting':
           // Show ALL active orders regardless of date filter
           return orders.filter(o => o.status === OrderStatus.PENDING || o.status === OrderStatus.IN_PROGRESS || o.status === OrderStatus.WAITING_WITHDRAWAL)
@@ -110,6 +115,7 @@ export const Dashboard: React.FC = () => {
               const dateStr = new Date(o.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
               const timeStr = new Date(o.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
               return {
+                id: o.id,
                 label: o.deviceModel,
                 value: o.status,
                 sub: `${client?.name || 'Cliente não encontrado'} • ${dateStr} às ${timeStr}`
@@ -120,6 +126,9 @@ export const Dashboard: React.FC = () => {
             .map(o => {
               const client = clients.find(c => c.id === o.clientId);
               return {
+                id: o.id,
+                label: o.deviceModel,
+                value: 'Concluído',
                 sub: `${client?.name || 'Cliente'} • ${new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' -')}`
               };
             });
@@ -131,6 +140,7 @@ export const Dashboard: React.FC = () => {
               return acc + (cost * item.quantity);
             }, 0);
             return {
+              id: order.id,
               label: order.deviceModel,
               value: `R$ ${orderCost.toFixed(2)}`,
               sub: `OS #${order.id.slice(0, 8)}`
@@ -179,21 +189,29 @@ export const Dashboard: React.FC = () => {
               
               <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
                 <div className="flex flex-col gap-4">
-                  {data.length > 0 ? data.map((item, idx) => (
-                    <motion.div 
-                      key={idx}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-neutral-900/50 border border-slate-100 dark:border-neutral-800 hover:border-primary/30 transition-all hover:shadow-md"
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{item.label}</span>
-                        <span className="text-xs text-slate-500 font-medium">{item.sub}</span>
-                      </div>
-                      <span className={`text-base font-black ${selectedStat === 'lowStock' ? 'text-red-600' : 'text-primary'}`}>{item.value}</span>
-                    </motion.div>
-                  )) : (
+                  {data.length > 0 ? data.map((item, idx) => {
+                    const MotionLink = motion(Link);
+                    return (
+                      <MotionLink 
+                        key={idx}
+                        to={item.id ? `/orders/${item.id}` : '#'}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className={`flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-neutral-900/50 border border-slate-100 dark:border-neutral-800 hover:border-primary/30 transition-all hover:shadow-md ${item.id ? 'cursor-pointer' : ''}`}
+                        onClick={() => setSelectedStat(null)}
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{item.label}</span>
+                          <span className="text-xs text-slate-500 font-medium">{item.sub}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-base font-black ${selectedStat === 'lowStock' ? 'text-red-600' : 'text-primary'}`}>{item.value}</span>
+                          {item.id && <ChevronRight size={14} className="text-slate-300" />}
+                        </div>
+                      </MotionLink>
+                    )
+                  }) : (
                     <div className="text-center py-12">
                       <div className="w-16 h-16 bg-slate-50 dark:bg-neutral-900 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-neutral-800">
                         <Search size={24} className="text-slate-300" />
@@ -313,21 +331,28 @@ export const Dashboard: React.FC = () => {
 
 
 
-      {/* Stats Grid */}
-      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 mb-2 md:mb-0"
+      >
         {/* Sales */}
         <motion.button
-          whileHover={{ y: -5, scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 20 }}
+          whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => setSelectedStat('sales')}
-          className="text-left bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-4 hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none">
+          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
             <DollarSign size={100} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
             <div className="p-2 sm:p-3 bg-green-50 dark:bg-green-900/20 rounded-2xl text-green-600 dark:text-green-400 border border-green-100 dark:border-green-900/30 group-hover:bg-green-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
-              <DollarSign size={24} />
+              <DollarSign size={24} className="animate-pulse" />
             </div>
             {dateFilter === 'today' && <span className="text-[10px] font-black uppercase tracking-widest text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full border border-green-100 dark:border-green-900/30">Hoje</span>}
           </div>
@@ -341,17 +366,20 @@ export const Dashboard: React.FC = () => {
 
         {/* Costs */}
         <motion.button
-          whileHover={{ y: -5, scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
+          whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => setSelectedStat('costs')}
-          className="text-left bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-4 hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none">
+          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
             <TrendingDown size={100} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
             <div className="p-2 sm:p-3 bg-purple-50 dark:bg-purple-900/20 rounded-2xl text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/30 group-hover:bg-purple-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
-              <TrendingDown size={24} />
+              <TrendingDown size={24} className="animate-bounce" style={{ animationDuration: '3s' }} />
             </div>
           </div>
           <div className="relative z-10">
@@ -364,17 +392,20 @@ export const Dashboard: React.FC = () => {
 
         {/* Awaiting */}
         <motion.button
-          whileHover={{ y: -5, scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3, type: "spring", stiffness: 200, damping: 20 }}
+          whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => setSelectedStat('awaiting')}
-          className="text-left bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-4 hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none">
+          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 animate-spin-slow dark:opacity-20 pointer-events-none">
             <Clock size={100} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
             <div className="p-2 sm:p-3 bg-orange-50 dark:bg-orange-900/20 rounded-2xl text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/30 group-hover:bg-orange-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
-              <Clock size={24} />
+              <Clock size={24} className="animate-spin-slow" />
             </div>
           </div>
           <div className="relative z-10">
@@ -385,17 +416,20 @@ export const Dashboard: React.FC = () => {
 
         {/* Completed */}
         <motion.button
-          whileHover={{ y: -5, scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4, type: "spring", stiffness: 200, damping: 20 }}
+          whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => setSelectedStat('completed')}
-          className="text-left bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-4 hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none">
+          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
             <CheckCircle size={100} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
             <div className="p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/20 rounded-2xl text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30 group-hover:bg-blue-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
-              <CheckCircle size={24} />
+              <CheckCircle size={24} className="animate-pulse" />
             </div>
           </div>
           <div className="relative z-10">
@@ -406,17 +440,20 @@ export const Dashboard: React.FC = () => {
 
         {/* Low Inventory (Global) */}
         <motion.button
-          whileHover={{ y: -5, scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 20 }}
+          whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => setSelectedStat('lowStock')}
-          className="text-left bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-4 hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden col-span-2 md:col-span-1"
+          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden col-span-2 md:col-span-1"
         >
-          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none">
+          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
             <AlertTriangle size={100} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
             <div className="p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 rounded-2xl text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 group-hover:bg-red-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
-              <AlertTriangle size={24} />
+              <AlertTriangle size={24} className="animate-pulse" />
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-full border border-red-100 dark:border-red-900/30">Alerta</span>
           </div>
@@ -425,7 +462,7 @@ export const Dashboard: React.FC = () => {
             <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">{lowStockCount}</p>
           </div>
         </motion.button>
-      </div>
+      </motion.div>
 
       {/* Recent Orders Table */}
       <div className="flex flex-col gap-4 animate-fade-in-up" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>

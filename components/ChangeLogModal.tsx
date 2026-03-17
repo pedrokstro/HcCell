@@ -5,6 +5,27 @@ import { BottomSheet } from './BottomSheet';
 
 const CHANGELOG = [
     {
+        version: '2.3.0',
+        date: '17 Mar 2026',
+        changes: [
+            {
+                title: "Configurações Desktop Pro 🖥️",
+                description: "Nova interface premium para computadores com barra lateral, indicador fluido e transições suaves entre abas.",
+                type: "new"
+            },
+            {
+                title: "Relatórios & PDFs 📊",
+                description: "Corrigimos a repetição do resumo financeiro em todas as páginas do PDF. Impressão de relatórios agora impecável.",
+                type: "improvement"
+            },
+            {
+                title: "LayoutID System ✨",
+                description: "Navegação visualmente conectada com indicadores que deslizam suavemente para a posição selecionada.",
+                type: "new"
+            }
+        ]
+    },
+    {
         version: '2.2.0',
         date: '15 Mar 2026',
         changes: [
