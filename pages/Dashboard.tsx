@@ -347,8 +347,8 @@ export const Dashboard: React.FC = () => {
           onClick={() => setSelectedStat('sales')}
           className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
-            <DollarSign size={100} className="dark:text-white" />
+          <div className="absolute right-[0%] top-[5%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
+            <DollarSign size={80} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
             <div className="p-2 sm:p-3 bg-green-50 dark:bg-green-900/20 rounded-2xl text-green-600 dark:text-green-400 border border-green-100 dark:border-green-900/30 group-hover:bg-green-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
@@ -374,8 +374,8 @@ export const Dashboard: React.FC = () => {
           onClick={() => setSelectedStat('costs')}
           className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
-            <TrendingDown size={100} className="dark:text-white" />
+          <div className="absolute right-[0%] top-[5%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
+            <TrendingDown size={80} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
             <div className="p-2 sm:p-3 bg-purple-50 dark:bg-purple-900/20 rounded-2xl text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/30 group-hover:bg-purple-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
@@ -400,8 +400,8 @@ export const Dashboard: React.FC = () => {
           onClick={() => setSelectedStat('awaiting')}
           className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 animate-spin-slow dark:opacity-20 pointer-events-none">
-            <Clock size={100} className="dark:text-white" />
+          <div className="absolute right-[0%] top-[5%] p-3 opacity-10 animate-spin-slow dark:opacity-20 pointer-events-none">
+            <Clock size={80} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
             <div className="p-2 sm:p-3 bg-orange-50 dark:bg-orange-900/20 rounded-2xl text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/30 group-hover:bg-orange-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
@@ -424,8 +424,8 @@ export const Dashboard: React.FC = () => {
           onClick={() => setSelectedStat('completed')}
           className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden"
         >
-          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
-            <CheckCircle size={100} className="dark:text-white" />
+          <div className="absolute right-[0%] top-[5%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
+            <CheckCircle size={80} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
             <div className="p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/20 rounded-2xl text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30 group-hover:bg-blue-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
@@ -448,8 +448,8 @@ export const Dashboard: React.FC = () => {
           onClick={() => setSelectedStat('lowStock')}
           className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden col-span-2 md:col-span-1"
         >
-          <div className="absolute right-[-10%] top-[-10%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
-            <AlertTriangle size={100} className="dark:text-white" />
+          <div className="absolute right-[0%] top-[5%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
+            <AlertTriangle size={80} className="dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
             <div className="p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 rounded-2xl text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 group-hover:bg-red-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
