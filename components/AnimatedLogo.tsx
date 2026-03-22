@@ -26,28 +26,28 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ size = 'md', classNa
                 className={`w-full h-auto relative z-10 ${darkClasses}`}
             />
 
-            {/* Engrenagem Grande - Gira no sentido horário */}
+            {/* Engrenagem Pequena - Agora em Cima */}
             <img
-                src="/gear-big.png"
+                src="/engrenagem-pequena.png"
                 alt=""
                 className={`absolute z-20 animate-spin-slow ${darkClasses}`}
                 style={{
-                    top: '45%',
-                    left: '2%',
-                    width: '22%',
+                    top: '32%',
+                    left: '18%',
+                    width: '18%',
                     transformOrigin: 'center center'
                 }}
             />
-
-            {/* Engrenagem Pequena com Chave - Gira no sentido anti-horário */}
+ 
+            {/* Engrenagem Grande (com Chave) - Agora em Baixo */}
             <img
-                src="/gear-small.png"
+                src="/engrenagem-grande.png"
                 alt=""
                 className={`absolute z-20 animate-spin-slow-reverse ${darkClasses}`}
                 style={{
-                    top: '35%',
-                    left: '18%',
-                    width: '18%',
+                    top: '50%',
+                    left: '2%',
+                    width: '24%',
                     transformOrigin: 'center center'
                 }}
             />

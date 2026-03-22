@@ -17,6 +17,7 @@ import { OrderForm } from './pages/orders/OrderForm';
 import { Reports } from './pages/Reports';
 import { SalesPoint } from './pages/sales/SalesPoint';
 import { Settings } from './pages/Settings';
+import { LogoStudio } from './pages/LogoStudio';
 import { ToastProvider } from './components/Toast';
 import { UpdateNotification } from './components/UpdateNotification';
 
@@ -75,6 +76,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/sales" element={<ProtectedRoute><SalesPoint /></ProtectedRoute>} />
 
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+      <Route path="/logo-studio" element={<LogoStudio />} />
     </Routes>
   );
 }
