@@ -5,6 +5,27 @@ import { BottomSheet } from './BottomSheet';
 
 const CHANGELOG = [
     {
+        version: '2.4.0',
+        date: '10 Abr 2026',
+        changes: [
+            {
+                title: "Pagamentos Híbridos Premium 💳💰",
+                description: "Agora você pode dividir o pagamento de uma Ordem de Serviço em várias formas! Receba R$50 no Pix e o restante Cartão de Crédito sem problemas.",
+                type: "new"
+            },
+            {
+                title: "Detalhes de Parcelamento",
+                description: "Pagamentos em Cartão de Crédito agora passam a exibir a quebra de valor (ex: 2x de R$ 70,00) em recibos, telas e modais, refinado com um novo dropdown premium.",
+                type: "improvement"
+            },
+            {
+                title: "Histórico de Ordens Turbo 🚀",
+                description: "Novos botões de ação super rápidos na tabela para chamar seu cliente no WhatsApp, editar ou visualizar em um clique! Agora com Avatar do cliente, OS ID e selos de status de pagamento.",
+                type: "new"
+            }
+        ]
+    },
+    {
         version: '2.3.0',
         date: '17 Mar 2026',
         changes: [

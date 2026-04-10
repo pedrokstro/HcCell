@@ -254,13 +254,16 @@ export const OrdersList: React.FC = () => {
                             <tbody className="bg-white dark:bg-surface-dark divide-y divide-slate-200 dark:divide-neutral-800">
                                 {filteredOrders.length > 0 ? (
                                     filteredOrders.map(order => (
-                                        <tr key={order.id} className="hover:bg-slate-50 dark:hover:bg-neutral-900/50 transition-colors">
+                                        <tr key={order.id} onClick={() => navigate(`/orders/${order.id}`)} className="hover:bg-slate-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer group">
                                             <td className="px-3 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
-                                                    <div className="size-8 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold mr-3 shrink-0">
+                                                    <div className="size-8 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold mr-3 shrink-0 shadow-sm border border-blue-200 dark:border-blue-900/30">
                                                         {getClientName(order.clientId).substring(0, 2).toUpperCase()}
                                                     </div>
-                                                    <span className="text-sm font-medium text-slate-900 dark:text-white">{getClientName(order.clientId)}</span>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-bold text-slate-900 dark:text-white">{getClientName(order.clientId)}</span>
+                                                        <span className="text-[9px] font-mono font-bold text-slate-400 bg-slate-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded-md mt-1 w-fit">#{order.displayId || order.id.slice(0, 8)}</span>
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-3 py-4">
@@ -286,7 +289,16 @@ export const OrdersList: React.FC = () => {
                                                     <span className="opacity-60 mt-0.5">{new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-bold text-slate-900 dark:text-white">R$ {order.total.toFixed(2)}</td>
+                                            <td className="px-3 py-4 whitespace-nowrap text-right">
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className="text-sm font-bold text-slate-900 dark:text-white">R$ {order.total.toFixed(2)}</span>
+                                                    {order.status === OrderStatus.COMPLETED && (order.paymentMethod || (order.payments && order.payments.length > 0)) && (
+                                                        <span className="text-[9px] font-black uppercase text-green-600 bg-green-50 px-1.5 py-0.5 rounded flex items-center gap-1 border border-green-100">
+                                                            💰 Pago
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <button
@@ -309,6 +321,7 @@ export const OrdersList: React.FC = () => {
                                                     </button>
                                                     <Link 
                                                         to={`/orders/${order.id}`} 
+                                                        onClick={(e) => e.stopPropagation()}
                                                         className="size-9 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-400 dark:text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-neutral-700 transition-all active:scale-95 border border-slate-100 dark:border-neutral-700 shadow-sm"
                                                         title="Ver Detalhes"
                                                     >

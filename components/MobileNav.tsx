@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate, Link } from 'react-router-dom';
+import { NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
     LayoutDashboard, 
     ClipboardList, 
@@ -21,6 +22,7 @@ import { useApp } from '../store';
 export const MobileNav: React.FC = () => {
     const { darkMode, toggleTheme, logout } = useApp();
     const navigate = useNavigate();
+    const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const handleLogout = () => {
@@ -113,82 +115,74 @@ export const MobileNav: React.FC = () => {
             </div>
 
             <nav
-                className="fixed bottom-4 left-4 right-4 z-50 md:hidden animate-in slide-in-from-bottom-5 duration-500"
+                className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[420px] z-[50] md:hidden animate-in slide-in-from-bottom-8 duration-700 fade-in"
                 style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
-                <div className="flex items-stretch justify-around h-[72px] bg-white/95 dark:bg-neutral-800/95 backdrop-blur-xl rounded-[32px] shadow-2xl shadow-black/10 dark:shadow-black/30 border border-slate-200 dark:border-white/10 px-2 overflow-hidden">
+                <div className="relative flex items-center justify-between h-[76px] bg-white/70 dark:bg-[#1a2c2e]/60 backdrop-blur-2xl rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-white/50 dark:border-white/10 px-2 py-2 overflow-visible">
                     
-                    {/* Item: Início */}
-                    <NavLink
-                        to="/dashboard"
-                        className={({ isActive }) => `
-                            flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all
-                            ${isActive ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}
-                        `}
-                    >
-                        {({ isActive }) => (
+                    {[
+                        { id: 'dashboard', to: '/dashboard', icon: LayoutDashboard, label: 'Início' },
+                        { id: 'orders', to: '/orders', icon: ClipboardList, label: 'Ordens' },
+                        { id: 'new', to: '/orders/new', icon: Plus, isFab: true },
+                        { id: 'reports', to: '/reports', icon: BarChart3, label: 'Estat.' },
+                        { id: 'more', action: () => setIsMenuOpen(!isMenuOpen), icon: MoreHorizontal, label: 'Mais', isButton: true }
+                    ].map((item) => {
+                        const isActive = item.id === 'more' ? isMenuOpen : 
+                                         item.id === 'new' ? false : // FAB does not have normal active state
+                                         location.pathname.startsWith(item.to!);
+
+                        const content = (
                             <>
-                                <LayoutDashboard size={24} strokeWidth={isActive ? 2.5 : 2} />
-                                <span className="text-[10px] font-bold">Início</span>
+                                {isActive && !item.isFab && (
+                                    <motion.div
+                                        layoutId="liquidBubble"
+                                        className="absolute inset-0 bg-white/80 dark:bg-black/40 rounded-full shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.4)] backdrop-blur-md"
+                                        transition={{ type: "spring", bounce: 0.35, duration: 0.7 }}
+                                    />
+                                )}
+                                <div className={`relative z-10 flex flex-col items-center justify-center gap-1 transition-colors duration-300 ${isActive && !item.isFab ? 'text-primary dark:text-primary-light' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+                                    <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive && !item.isFab ? 'drop-shadow-sm' : ''} />
+                                    <span className="text-[10px] font-bold tracking-tight">{item.label}</span>
+                                </div>
                             </>
-                        )}
-                    </NavLink>
+                        );
 
-                    {/* Item: Transações (Ordens) */}
-                    <NavLink
-                        to="/orders"
-                        className={({ isActive }) => `
-                            flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all
-                            ${isActive ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}
-                        `}
-                    >
-                        {({ isActive }) => (
-                            <>
-                                <ClipboardList size={24} strokeWidth={isActive ? 2.5 : 2} />
-                                <span className="text-[10px] font-bold">Ordens</span>
-                            </>
-                        )}
-                    </NavLink>
+                        if (item.isFab) {
+                            return (
+                                <Link
+                                    key={item.id}
+                                    to={item.to!}
+                                    className="relative z-10 flex flex-col items-center justify-center min-w-[64px]"
+                                >
+                                    <div className="flex items-center justify-center w-[52px] h-[52px] bg-primary text-white rounded-full shadow-[0_0_20px_rgba(4,157,174,0.4)] hover:shadow-[0_0_25px_rgba(4,157,174,0.6)] active:scale-90 transition-all hover:brightness-110">
+                                        <Plus size={28} strokeWidth={3} />
+                                    </div>
+                                </Link>
+                            );
+                        }
 
-                    {/* FAB: Novo (Center) */}
-                    <div className="flex items-center justify-center mx-1">
-                        <Link
-                            to="/orders/new"
-                            className="flex items-center justify-center w-[54px] h-[54px] bg-primary text-white rounded-[22px] shadow-lg shadow-primary/30 active:scale-90 transition-all hover:brightness-110"
-                            title="Nova OS"
-                        >
-                            <Plus size={32} strokeWidth={3} />
-                        </Link>
-                    </div>
+                        if (item.isButton) {
+                            return (
+                                <button
+                                    key={item.id}
+                                    onClick={item.action}
+                                    className="relative flex flex-col items-center justify-center min-w-[64px] h-full rounded-full transition-all"
+                                >
+                                    {content}
+                                </button>
+                            );
+                        }
 
-
-                    {/* Item: Relatórios */}
-                    <NavLink
-                        to="/reports"
-                        className={({ isActive }) => `
-                            flex flex-col items-center justify-center gap-1 min-w-[60px] transition-all
-                            ${isActive ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}
-                        `}
-                    >
-                        {({ isActive }) => (
-                            <>
-                                <BarChart3 size={24} strokeWidth={isActive ? 2.5 : 2} />
-                                <span className="text-[10px] font-bold">Relatórios</span>
-                            </>
-                        )}
-                    </NavLink>
-
-                    {/* Item: Mais */}
-                    <button
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className={`
-                            flex flex-col items-center justify-center gap-1 min-w-[60px] transition-all
-                            ${isMenuOpen ? 'text-primary' : 'text-slate-400 dark:text-slate-500'}
-                        `}
-                    >
-                        <MoreHorizontal size={24} strokeWidth={isMenuOpen ? 2.5 : 2} />
-                        <span className="text-[10px] font-bold">Mais</span>
-                    </button>
+                        return (
+                            <Link
+                                key={item.id}
+                                to={item.to!}
+                                className="relative flex flex-col items-center justify-center min-w-[64px] h-full rounded-full transition-all"
+                            >
+                                {content}
+                            </Link>
+                        );
+                    })}
                     
                 </div>
             </nav>

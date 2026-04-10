@@ -51,6 +51,12 @@ export enum OrderStatus {
     CANCELLED = 'Cancelado'
 }
 
+export interface PaymentEntry {
+    method: PaymentMethod;
+    amount: number;
+    installments?: number;
+}
+
 export interface ServiceOrder {
     id: string;
     clientId?: string | null;
@@ -73,10 +79,11 @@ export interface ServiceOrder {
     internalNotes?: string;
     selectedProducts?: { productId: string; quantity: number; price: number; cost?: number; name: string }[];
     paymentMethod?: PaymentMethod;
+    payments?: PaymentEntry[]; // Hybrid payments
     servicePerformed?: string;
 }
 
-export type PaymentMethod = 'Cartão de Crédito' | 'Cartão de Débito' | 'PIX' | 'Dinheiro';
+export type PaymentMethod = 'Cartão de Crédito' | 'Cartão de Débito' | 'PIX' | 'Dinheiro' | 'Múltiplo';
 
 export interface User {
     id: string;

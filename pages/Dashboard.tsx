@@ -3,13 +3,14 @@ import { useApp } from '../store';
 import { OrderStatus } from '../types';
 import { Search, Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Eye, Printer, ChevronRight, ChevronLeft, TrendingDown, EyeOff, Calendar, Filter, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { DatePicker } from '../components/DatePicker';
 
 
 export const Dashboard: React.FC = () => {
   const { orders, products, clients } = useApp();
+  const navigate = useNavigate();
   const [selectedStat, setSelectedStat] = React.useState<'sales' | 'awaiting' | 'completed' | 'lowStock' | 'costs' | null>(null);
   const [isDateSheetOpen, setIsDateSheetOpen] = React.useState(false);
 
@@ -489,8 +490,30 @@ export const Dashboard: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-neutral-800">
                 {displayOrders.length > 0 ? (
-                  displayOrders.map((order) => (
-                    <tr key={order.id} className="group hover:bg-slate-50 dark:hover:bg-neutral-900/50 transition-colors">
+                  displayOrders.map((order) => {
+                    const client = clients.find(c => c.id === order.clientId);
+                    const clientName = client?.name || 'Cliente';
+                    
+                    const handleWhatsApp = (e: React.MouseEvent) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!client?.phone) return;
+                      let message = `Olá ${clientName}, aqui é da HcCell Assistência Técnica. Sobre seu aparelho ${order.deviceModel}: `;
+                      const trackingUrl = `${window.location.origin}/#/tracking?id=${order.displayId || order.id.slice(0, 8)}`;
+                      if (order.status === OrderStatus.COMPLETED) {
+                        message += `está pronto e concluído com sucesso! Valor total: R$ ${order.total.toFixed(2)}.`;
+                      } else if (order.status === OrderStatus.WAITING_WITHDRAWAL) {
+                        message += `já está aguardando retirada!`;
+                      } else {
+                        message += `gostaria de falar sobre sua Ordem de Serviço #${order.displayId || order.id.slice(0, 8)}.`;
+                      }
+                      message += `\n\nAcompanhe aqui: ${trackingUrl}`;
+                      const phone = client.phone.replace(/\D/g, '');
+                      window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, '_blank');
+                    };
+
+                    return (
+                    <tr key={order.id} onClick={() => navigate(`/orders/${order.id}`)} className="group hover:bg-slate-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer">
                       <td className="py-4 px-6 text-sm text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap">
                         <div className="flex flex-col">
                           <span className="font-bold text-slate-800 dark:text-slate-200">
@@ -501,16 +524,24 @@ export const Dashboard: React.FC = () => {
                           </span>
                         </div>
                       </td>
-                      <td className="py-4 px-6 min-w-[200px]">
-                        <div className="flex flex-col">
-                          <span className="text-sm text-slate-900 dark:text-white font-bold">
-                            {order.serviceType === 'VENDA_DIRETA' ? 'Venda de Produto' : order.deviceModel}
-                          </span>
-                          <span className="text-xs text-slate-500 dark:text-slate-500 truncate max-w-[200px]" title={order.serviceType === 'VENDA_DIRETA' ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ')) : order.issueDescription}>
-                            {order.serviceType === 'VENDA_DIRETA'
-                              ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ') || 'Produtos Diversos')
-                              : order.issueDescription}
-                          </span>
+                      <td className="py-4 px-6 min-w-[250px]">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm font-black shrink-0 shadow-sm border border-blue-200 dark:border-blue-900/30">
+                            {clientName.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-slate-900 dark:text-white font-bold leading-none">
+                                {clientName}
+                              </span>
+                              <span className="text-[9px] font-mono font-bold text-slate-400 bg-slate-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded-md">#{order.displayId || order.id.slice(0, 8)}</span>
+                            </div>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[250px] mt-1" title={order.serviceType === 'VENDA_DIRETA' ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ')) : order.issueDescription}>
+                              <strong className="font-semibold text-slate-700 dark:text-slate-300">{order.serviceType === 'VENDA_DIRETA' ? 'Venda de Produto' : order.deviceModel}</strong> • {order.serviceType === 'VENDA_DIRETA'
+                                ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ') || 'Produtos Diversos')
+                                : order.issueDescription}
+                            </span>
+                          </div>
                         </div>
                       </td>
                       <td className="py-4 px-6 whitespace-nowrap">
@@ -528,18 +559,44 @@ export const Dashboard: React.FC = () => {
                           {order.status}
                         </span>
                       </td>
-                      <td className="py-4 px-6 text-right whitespace-nowrap text-sm font-bold text-slate-900 dark:text-white">
-                        R$ {order.total.toFixed(2)}
+                      <td className="py-4 px-6 text-right whitespace-nowrap">
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-sm font-bold text-slate-900 dark:text-white">R$ {order.total.toFixed(2)}</span>
+                          {order.status === OrderStatus.COMPLETED && (order.paymentMethod || (order.payments && order.payments.length > 0)) && (
+                            <span className="text-[9px] font-black uppercase text-green-600 bg-green-50 px-1.5 py-0.5 rounded flex items-center gap-1 border border-green-100">
+                               💰 Pago
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-4 px-6 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                          <Link to={`/orders/${order.id}`} className="text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors" title="Ver Detalhes">
-                            <Eye size={18} />
-                          </Link>
+                        <div className="flex items-center justify-end gap-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <button
+                                onClick={handleWhatsApp}
+                                className="size-8 flex items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-all hover:scale-105 border border-green-100 dark:border-green-900/30 shadow-sm"
+                                title="WhatsApp"
+                            >
+                                <img src="/whatsapp.png" alt="WhatsApp" className="size-4 object-contain" />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    navigate(`/orders/${order.id}/edit`);
+                                }}
+                                className="size-8 flex items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all hover:scale-105 border border-blue-100 dark:border-blue-900/30 shadow-sm"
+                                title="Editar Ordem"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                            </button>
+                            <Link to={`/orders/${order.id}`} onClick={(e) => e.stopPropagation()} className="size-8 flex items-center justify-center rounded-lg bg-slate-50 dark:bg-neutral-800 text-slate-400 dark:text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-neutral-700 transition-all hover:scale-105 border border-slate-100 dark:border-neutral-700 shadow-sm" title="Ver Detalhes">
+                              <Eye size={16} />
+                            </Link>
                         </div>
                       </td>
                     </tr>
-                  ))
+                  )
+                  })
                 ) : (
                   <tr>
                     <td colSpan={5} className="py-12 text-center">

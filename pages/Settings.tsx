@@ -1,10 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { useApp } from '../store';
-import { 
-    User, Mail, Phone, BadgeCheck, Save, Upload, X, Lock, 
-    Bell, Trash2, Eye, EyeOff, Shield, Info, FileText, 
-    Palette, LogOut, Sun, Moon, ChevronRight, Camera,
-    ArrowLeft, History
+import {
+    User, Mail, Phone, BadgeCheck, Shield, Palette, Bell,
+    FileText, LogOut, Camera, History, Eye, EyeOff, Sun, Moon,
+    Info, ChevronRight, ArrowLeft, Upload
 } from 'lucide-react';
 import { APP_VERSION, APP_NAME } from '../constants';
 import { ChangeLogModal } from '../components/ChangeLogModal';
@@ -17,20 +16,20 @@ export const Settings: React.FC = () => {
     const { user, darkMode, toggleTheme, logout } = useApp();
     const { showToast } = useToast();
     const navigate = useNavigate();
-    const [subView, setSubView] = useState<string | null>(null);
+    const [subView, setSubView] = useState<string>('profile');
     const [profileImage, setProfileImage] = useState(user.avatarUrl);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
     const [showChangelog, setShowChangelog] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Form state
     const [formData, setFormData] = useState({
         name: user.name,
         email: user.email,
+        phone: '',
+        bio: ''
     });
 
-    // Password State
     const [passwordData, setPasswordData] = useState({
         newPassword: '',
         confirmPassword: ''
@@ -78,7 +77,6 @@ export const Settings: React.FC = () => {
             });
             showToast('Perfil atualizado!', 'success');
             setImageFile(null);
-            setSubView(null);
         } catch (error: any) {
             showToast(error.message || 'Erro ao salvar.', 'error');
         } finally {
@@ -97,7 +95,6 @@ export const Settings: React.FC = () => {
             if (error) throw error;
             showToast('Senha atualizada!', 'success');
             setPasswordData({ newPassword: '', confirmPassword: '' });
-            setSubView(null);
         } catch (error: any) {
             showToast(error.message || 'Erro ao atualizar senha.', 'error');
         } finally {
@@ -105,8 +102,273 @@ export const Settings: React.FC = () => {
         }
     };
 
+    // ─── Sidebar menu items ───
+    const sidebarItems = [
+        { id: 'profile', icon: <User size={20} />, label: 'Perfil' },
+        { id: 'account', icon: <Shield size={20} />, label: 'Conta' },
+        { id: 'appearance', icon: <Palette size={20} />, label: 'Aparência' },
+        { id: 'notifications', icon: <Bell size={20} />, label: 'Notificações' },
+    ];
+
+    // ─── Content titles ───
+    const contentTitles: Record<string, { title: string; subtitle: string }> = {
+        profile: { title: 'Informações de Perfil', subtitle: 'Gerencie seu perfil público e detalhes pessoais.' },
+        account: { title: 'Segurança da Conta', subtitle: 'Atualize sua senha e mantenha sua conta segura.' },
+        appearance: { title: 'Aparência', subtitle: 'Personalize sua experiência visual.' },
+        notifications: { title: 'Notificações', subtitle: 'Gerencie suas preferências de notificação.' },
+        about: { title: 'Sobre', subtitle: `${APP_NAME} v${APP_VERSION}` },
+    };
+
+    const currentTitle = contentTitles[subView] || contentTitles.profile;
+
+    // ─── RENDER: Profile ───
+    const renderProfile = () => (
+        <>
+            {/* Avatar Section */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <div className="relative group">
+                    <div className="size-20 rounded-full overflow-hidden bg-gray-100 ring-4 ring-gray-50 dark:ring-neutral-900 shadow-sm">
+                        <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: `url(${profileImage})` }} />
+                    </div>
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="absolute bottom-0 right-0 p-1.5 bg-primary text-white rounded-full shadow-lg hover:bg-primary/90 transition-colors border-2 border-white dark:border-surface-dark"
+                    >
+                        <Camera size={14} />
+                    </button>
+                </div>
+                <div className="flex flex-col gap-2">
+                    <h4 className="text-sm font-medium text-slate-900 dark:text-white">Foto de Perfil</h4>
+                    <div className="flex gap-3">
+                        <button onClick={() => fileInputRef.current?.click()} className="px-3 py-1.5 text-xs font-semibold text-white bg-primary rounded-md hover:bg-primary/90 transition-colors">
+                            Enviar Nova
+                        </button>
+                        <button onClick={() => { setProfileImage(user.avatarUrl); setImageFile(null); }} className="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-gray-100 dark:bg-gray-800 dark:text-slate-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                            Remover
+                        </button>
+                    </div>
+                    <p className="text-xs text-slate-500">JPG, GIF ou PNG. Máx 1MB.</p>
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+            </div>
+
+            {/* Form Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* First Name */}
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-900 dark:text-white">Nome</label>
+                    <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <User size={18} />
+                        </span>
+                        <input
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-slate-900 dark:text-white pl-10 focus:border-primary focus:ring-primary shadow-sm text-sm py-2.5"
+                            placeholder="Seu primeiro nome"
+                            value={formData.name.split(' ')[0] || ''}
+                            onChange={e => {
+                                const parts = formData.name.split(' ');
+                                parts[0] = e.target.value;
+                                setFormData({ ...formData, name: parts.join(' ') });
+                            }}
+                        />
+                    </div>
+                </div>
+                {/* Last Name */}
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-900 dark:text-white">Sobrenome</label>
+                    <input
+                        className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary shadow-sm text-sm py-2.5 px-3"
+                        placeholder="Seu sobrenome"
+                        value={formData.name.split(' ').slice(1).join(' ')}
+                        onChange={e => {
+                            const first = formData.name.split(' ')[0] || '';
+                            setFormData({ ...formData, name: first + ' ' + e.target.value });
+                        }}
+                    />
+                </div>
+                {/* Email */}
+                <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium text-slate-900 dark:text-white">Endereço de E-mail</label>
+                    <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <Mail size={18} />
+                        </span>
+                        <input
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-slate-900 dark:text-white pl-10 focus:border-primary focus:ring-primary shadow-sm text-sm py-2.5"
+                            value={formData.email}
+                            disabled
+                        />
+                    </div>
+                    <p className="text-xs text-slate-500">Este e-mail será usado para notificações e redefinição de senha.</p>
+                </div>
+                {/* Phone */}
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-900 dark:text-white">Telefone</label>
+                    <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <Phone size={18} />
+                        </span>
+                        <input
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-slate-900 dark:text-white pl-10 focus:border-primary focus:ring-primary shadow-sm text-sm py-2.5"
+                            placeholder="+55 (00) 00000-0000"
+                            value={formData.phone}
+                            onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                        />
+                    </div>
+                </div>
+                {/* Role (Read Only) */}
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-900 dark:text-white">Cargo</label>
+                    <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <BadgeCheck size={18} />
+                        </span>
+                        <input
+                            className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 text-slate-500 dark:text-slate-400 pl-10 cursor-not-allowed text-sm py-2.5"
+                            disabled
+                            value={user.role}
+                        />
+                    </div>
+                </div>
+                {/* Bio */}
+                <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium text-slate-900 dark:text-white">Bio / Observações</label>
+                    <textarea
+                        className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary shadow-sm text-sm py-2.5 px-3"
+                        placeholder="Escreva uma breve descrição sobre você..."
+                        rows={4}
+                        value={formData.bio}
+                        onChange={e => setFormData({ ...formData, bio: e.target.value })}
+                    />
+                </div>
+            </div>
+        </>
+    );
+
+    // ─── RENDER: Account/Security ───
+    const renderAccount = () => (
+        <div className="grid grid-cols-1 gap-6 max-w-lg">
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-900 dark:text-white">Nova Senha</label>
+                <div className="relative">
+                    <input
+                        className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-slate-900 dark:text-white pr-10 focus:border-primary focus:ring-primary shadow-sm text-sm py-2.5 px-3"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={passwordData.newPassword}
+                        onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                    />
+                    <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                </div>
+            </div>
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-900 dark:text-white">Confirmar Nova Senha</label>
+                <input
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-slate-900 dark:text-white focus:border-primary focus:ring-primary shadow-sm text-sm py-2.5 px-3"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={passwordData.confirmPassword}
+                    onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                />
+            </div>
+        </div>
+    );
+
+    // ─── RENDER: Appearance ───
+    const renderAppearance = () => (
+        <div className="space-y-6 max-w-lg">
+            <div className="space-y-3">
+                <h4 className="text-sm font-medium text-slate-900 dark:text-white">Tema</h4>
+                <div className="grid grid-cols-2 gap-4">
+                    <button
+                        onClick={() => darkMode && toggleTheme()}
+                        className={`flex items-center justify-center gap-2 py-4 rounded-lg border-2 transition-all text-sm font-medium ${!darkMode ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 dark:border-gray-700 text-slate-500 hover:border-gray-300'}`}
+                    >
+                        <Sun size={18} /> Modo Claro
+                    </button>
+                    <button
+                        onClick={() => !darkMode && toggleTheme()}
+                        className={`flex items-center justify-center gap-2 py-4 rounded-lg border-2 transition-all text-sm font-medium ${darkMode ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 dark:border-gray-700 text-slate-500 hover:border-gray-300'}`}
+                    >
+                        <Moon size={18} /> Modo Escuro
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
+    // ─── RENDER: Notifications ───
+    const renderNotifications = () => (
+        <div className="space-y-2 max-w-lg">
+            <div className="flex items-center justify-between py-4">
+                <div>
+                    <h4 className="text-sm font-medium text-slate-900 dark:text-white">Alertas por E-mail</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">Receba alertas de novas ordens de serviço.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" defaultChecked />
+                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white" />
+                </label>
+            </div>
+            <div className="border-t border-gray-100 dark:border-gray-800" />
+            <div className="flex items-center justify-between py-4">
+                <div>
+                    <h4 className="text-sm font-medium text-slate-900 dark:text-white">Relatórios Semanais</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">Resumo semanal de atividades por e-mail.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" />
+                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white" />
+                </label>
+            </div>
+        </div>
+    );
+
+    // ─── RENDER: About ───
+    const renderAbout = () => (
+        <div className="flex flex-col items-center text-center py-8">
+            <div className="size-20 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
+                <FileText size={36} className="text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{APP_NAME}</h2>
+            <p className="text-sm font-medium text-primary mt-1">Versão {APP_VERSION}</p>
+            <button
+                onClick={() => setShowChangelog(true)}
+                className="mt-6 flex items-center gap-2 px-5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-sm font-medium"
+            >
+                <History size={16} /> Notas da Versão
+            </button>
+        </div>
+    );
+
+    // ─── RENDER: Content switch ───
+    const renderContent = () => {
+        switch (subView) {
+            case 'profile': return renderProfile();
+            case 'account': return renderAccount();
+            case 'appearance': return renderAppearance();
+            case 'notifications': return renderNotifications();
+            case 'about': return renderAbout();
+            default: return renderProfile();
+        }
+    };
+
+    // ─── Save handler for footer ───
+    const handleSave = () => {
+        if (subView === 'account') {
+            handleUpdatePassword();
+        } else {
+            handleSaveProfile();
+        }
+    };
+
+    const showFooter = subView === 'profile' || subView === 'account';
+
+    // ─── MOBILE: Menu Row ───
     const MenuRow = ({ icon, color, title, sub, onClick, danger = false }: any) => (
-        <button 
+        <button
             onClick={onClick}
             className="flex items-center justify-between w-full p-4 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors active:scale-[0.99]"
         >
@@ -123,318 +385,110 @@ export const Settings: React.FC = () => {
         </button>
     );
 
-    const SubViewHeader = ({ title, onBack }: any) => (
-        <div className="p-4 flex items-center border-b border-slate-100 dark:border-neutral-800 sticky top-0 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-md z-10 w-full relative">
-            <button onClick={onBack} className="p-2 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full transition-colors relative z-20">
-                <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
-            </button>
-            
-            {/* Mobile Centered Title */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none md:hidden">
-                <h3 className="font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">{title}</h3>
-            </div>
-
-            {/* Desktop Title (Exactly like original) */}
-            <h3 className="hidden md:block font-black text-lg text-slate-900 dark:text-white uppercase tracking-tighter ml-4">{title}</h3>
-        </div>
-    );
-    const renderProfile = () => (
-        <div className="p-6 space-y-6">
-            <div className="flex flex-col items-center gap-4 py-4">
-                <div className="relative group">
-                    <div className="size-24 rounded-full overflow-hidden bg-slate-100 dark:bg-neutral-800 ring-2 ring-primary">
-                        <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: `url(${profileImage})` }}></div>
-                    </div>
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full text-white"
-                    >
-                        <Upload size={20} />
-                    </button>
-                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-                </div>
-            </div>
-
-            <div className="space-y-4">
-                <div className="space-y-1">
-                    <label className="text-[11px] md:text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase ml-1 tracking-wider">Seu Nome Completo</label>
-                    <input
-                        type="text"
-                        className="w-full h-16 md:h-14 px-5 md:px-4 bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border-none focus:ring-2 focus:ring-primary/20 dark:text-white font-bold text-sm shadow-inner md:shadow-none"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-                </div>
-                <div className="space-y-1">
-                    <label className="text-[11px] md:text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase ml-1 tracking-wider">Endereço de E-mail</label>
-                    <input
-                        type="email"
-                        className="w-full h-16 md:h-14 px-5 md:px-4 bg-slate-50/50 dark:bg-neutral-900/10 rounded-2xl border-none text-slate-400 font-bold text-sm disabled:opacity-50"
-                        value={formData.email}
-                        disabled
-                    />
-                </div>
-            </div>
-
-            <button
-                onClick={handleSaveProfile}
-                disabled={loading}
-                className="w-full h-16 md:h-14 bg-primary text-white rounded-2xl font-black text-sm shadow-xl md:shadow-none shadow-primary/20 active:scale-[0.98] transition-all"
-            >
-                {loading ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
-            </button>
-        </div>
-    );
-
-    const renderSecurity = () => (
-        <div className="p-6 space-y-6">
-            <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
-                <h4 className="text-sm font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
-                    <Shield size={16} /> Senha da Conta
-                </h4>
-                <p className="text-xs text-indigo-600 dark:text-indigo-400/80 mt-1 leading-relaxed">
-                    Recomendamos trocar sua senha periodicamente para manter seu acesso seguro.
-                </p>
-            </div>
-
-            <div className="space-y-4">
-                <div className="space-y-1">
-                    <label className="text-[11px] md:text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase ml-1 tracking-wider">Nova Senha de Acesso</label>
-                    <div className="relative">
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            className="w-full h-16 md:h-14 pr-14 px-5 md:px-4 bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border-none focus:ring-2 focus:ring-primary/20 dark:text-white font-bold text-sm shadow-inner md:shadow-none"
-                            placeholder="••••••••"
-                            value={passwordData.newPassword}
-                            onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                        />
-                        <button
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-5 top-5 md:top-4 text-slate-400"
-                        >
-                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </button>
-                    </div>
-                </div>
-                <div className="space-y-1">
-                    <label className="text-[11px] md:text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase ml-1 tracking-wider">Confirmar Nova Senha</label>
-                    <input
-                        type={showPassword ? "text" : "password"}
-                        className="w-full h-16 md:h-14 px-5 md:px-4 bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border-none focus:ring-2 focus:ring-primary/20 dark:text-white font-bold text-sm shadow-inner md:shadow-none"
-                        placeholder="••••••••"
-                        value={passwordData.confirmPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                    />
-                </div>
-            </div>
-
-            <button
-                onClick={handleUpdatePassword}
-                disabled={loading || !passwordData.newPassword}
-                className="w-full h-16 md:h-14 bg-indigo-600 text-white rounded-2xl font-black text-sm shadow-xl md:shadow-none shadow-indigo-600/20 active:scale-[0.98] transition-all uppercase tracking-widest"
-            >
-                {loading ? 'ATUALIZANDO...' : 'ATUALIZAR SENHA AGORA'}
-            </button>
-        </div>
-    );
-
-    const renderAppearance = () => (
-        <div className="p-6 space-y-6">
-            <div className="p-1.5 bg-slate-100 dark:bg-neutral-900 rounded-[28px] flex gap-1">
-                <button
-                    onClick={() => darkMode && toggleTheme()}
-                    className={`flex-1 py-4 rounded-[22px] font-bold text-sm flex items-center justify-center gap-2 transition-all ${!darkMode ? 'bg-white text-slate-900 shadow-md' : 'text-slate-500 hover:text-white'}`}
-                >
-                    <Sun size={18} /> Modo Claro
-                </button>
-                <button
-                    onClick={() => !darkMode && toggleTheme()}
-                    className={`flex-1 py-4 rounded-[22px] font-bold text-sm flex items-center justify-center gap-2 transition-all ${darkMode ? 'bg-neutral-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
-                >
-                    <Moon size={18} /> Modo Escuro
-                </button>
-            </div>
-
-            <div className="bg-slate-50 dark:bg-neutral-900/50 p-5 rounded-3xl border border-slate-100 dark:border-neutral-800">
-                <h4 className="text-sm font-black uppercase text-slate-400 mb-3 tracking-widest">Preview de Cores</h4>
-                <div className="grid grid-cols-4 gap-3">
-                    <div className="h-10 rounded-xl bg-primary"></div>
-                    <div className="h-10 rounded-xl bg-blue-500"></div>
-                    <div className="h-10 rounded-xl bg-emerald-500"></div>
-                    <div className="h-10 rounded-xl bg-amber-500"></div>
-                </div>
-                <p className="text-[10px] text-slate-400 mt-4 leading-relaxed font-medium">
-                    As cores do sistema se adaptam automaticamente ao seu tema escolhido para garantir melhor legibilidade.
-                </p>
-            </div>
-        </div>
-    );
-
-    const renderNotifications = () => (
-        <div className="p-6 space-y-4">
-            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border border-slate-100 dark:border-neutral-800">
-                <div className="flex flex-col">
-                    <span className="font-bold text-sm text-slate-800 dark:text-white">Alertas por Email</span>
-                    <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Novas Ordens</span>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-slate-200 dark:bg-neutral-700 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-                </label>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border border-slate-100 dark:border-neutral-800">
-                <div className="flex flex-col">
-                    <span className="font-bold text-sm text-slate-800 dark:text-white">Relatórios Semanais</span>
-                    <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Estatísticas</span>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" />
-                    <div className="w-11 h-6 bg-slate-200 dark:bg-neutral-700 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-                </label>
-            </div>
-        </div>
-    );
-
-    const renderAbout = () => (
-        <div className="p-8 flex flex-col items-center text-center">
-            <div className="size-24 bg-primary/10 rounded-3xl flex items-center justify-center mb-6 shadow-sm border-2 border-primary/20">
-                <FileText size={48} className="text-primary" />
-            </div>
-            <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter mb-1 uppercase">{APP_NAME}</h2>
-            <p className="text-sm font-black text-primary uppercase tracking-[0.3em] bg-primary/10 px-3 py-1 rounded-full mb-8">v{APP_VERSION}</p>
-
-            <button
-                onClick={() => setShowChangelog(true)}
-                className="w-full flex items-center justify-center gap-3 p-5 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-sm shadow-xl shadow-slate-900/20 active:scale-95 transition-all"
-            >
-                <History size={18} /> NOTAS DA VERSÃO
-            </button>
-
-            <div className="mt-12 p-4 border border-red-100 dark:border-red-900/30 rounded-2xl w-full">
-                <h4 className="text-xs font-black text-red-500 uppercase tracking-widest mb-2">Zona de Risco</h4>
-                <button className="w-full py-3 text-red-600 dark:text-red-400 font-bold text-xs bg-red-50 dark:bg-red-900/10 rounded-xl hover:bg-red-100 transition-colors">
-                    SOLICITAR EXCLUSÃO DE CONTA
-                </button>
-            </div>
-        </div>
-    );
-
-    const renderSubViewContent = () => {
-        switch (subView || 'profile') {
-            case 'profile': return renderProfile();
-            case 'security': return renderSecurity();
-            case 'appearance': return renderAppearance();
-            case 'notifications': return renderNotifications();
-            case 'about': return renderAbout();
-            default: return renderProfile();
-        }
-    };
-
     return (
-        <div className="max-w-2xl md:max-w-screen-xl mx-auto min-h-screen pb-24 md:pb-12 animate-fade-in px-4">
-            {/* DESKTOP REFINED VIEW */}
-            <div className="hidden md:grid md:grid-cols-[300px,1fr] md:gap-8 pt-8 items-start">
-                <aside className="space-y-6 sticky top-8">
-                    {/* Desktop Profile Card */}
-                    <div className="bg-white dark:bg-surface-dark p-6 rounded-[32px] border border-slate-200 dark:border-neutral-800 shadow-sm text-center">
-                        <div className="relative inline-block mb-4">
-                            <div className="size-20 rounded-full overflow-hidden bg-slate-100 dark:bg-neutral-800 ring-4 ring-white dark:ring-neutral-900 shadow-lg border-2 border-primary/20 mx-auto">
-                                <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: `url(${user.avatarUrl})` }}></div>
+        <div className="max-w-2xl md:max-w-[1400px] mx-auto min-h-screen pb-24 md:pb-12 animate-fade-in px-4">
+
+            {/* ═══════ DESKTOP VIEW ═══════ */}
+            <div className="hidden md:block py-8">
+                <div className="flex flex-col lg:flex-row gap-8 min-h-[600px]">
+                    {/* Sidebar */}
+                    <aside className="w-full lg:w-64 shrink-0">
+                        <div className="sticky top-24">
+                            <div className="px-3 py-2">
+                                <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
+                                    Configurações
+                                </h2>
+                                <div className="space-y-1">
+                                    {sidebarItems.map(item => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => setSubView(item.id)}
+                                            className={`flex items-center gap-3 w-full rounded-lg px-4 py-2.5 transition-all ${subView === item.id
+                                                    ? 'bg-primary/10 text-primary'
+                                                    : 'text-slate-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                                                }`}
+                                        >
+                                            <span className={subView === item.id ? 'text-primary' : ''}>{item.icon}</span>
+                                            <span className="text-sm font-medium">{item.label}</span>
+                                        </button>
+                                    ))}
+                                    <div className="my-2 border-t border-gray-200 dark:border-gray-800 mx-4" />
+                                    <button
+                                        onClick={() => setSubView('about')}
+                                        className={`flex items-center gap-3 w-full rounded-lg px-4 py-2.5 transition-all ${subView === 'about'
+                                                ? 'bg-primary/10 text-primary'
+                                                : 'text-slate-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                                            }`}
+                                    >
+                                        <FileText size={20} />
+                                        <span className="text-sm font-medium">Atualizações</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-1">{user.name}</h2>
-                        <span className="text-[10px] font-black uppercase text-primary tracking-widest bg-primary/10 px-2 py-0.5 rounded-full inline-block mb-3">{user.role}</span>
-                        <p className="text-xs font-bold text-slate-400 dark:text-slate-500 truncate px-2">{user.email}</p>
-                    </div>
+                    </aside>
 
-                    {/* Desktop Navigation */}
-                    <nav className="bg-white dark:bg-surface-dark rounded-[32px] border border-slate-200 dark:border-neutral-800 shadow-sm overflow-hidden p-2">
-                        {[
-                            { id: 'profile', icon: <User size={18} />, title: "Perfil", color: "text-blue-500" },
-                            { id: 'security', icon: <Shield size={18} />, title: "Segurança", color: "text-indigo-500" },
-                            { id: 'appearance', icon: <Palette size={18} />, title: "Aparência", color: "text-amber-500" },
-                            { id: 'notifications', icon: <Bell size={18} />, title: "Notificações", color: "text-purple-500" },
-                            { id: 'about', icon: <Info size={18} />, title: "Sobre", color: "text-slate-500" },
-                        ].map((item) => (
-                            <button
-                                key={item.id}
-                                onClick={() => setSubView(item.id)}
-                                className={`flex items-center gap-3 w-full p-3.5 rounded-2xl transition-all duration-200 group relative ${subView === item.id || (!subView && item.id === 'profile') ? 'bg-primary text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-neutral-800'}`}
-                            >
-                                {(subView === item.id || (!subView && item.id === 'profile')) && (
-                                    <motion.div 
-                                        layoutId="active-nav"
-                                        className="absolute inset-0 bg-primary rounded-2xl -z-10"
-                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                    />
-                                )}
-                                <div className={`${subView === item.id || (!subView && item.id === 'profile') ? 'text-white' : item.color} transition-colors z-10`}>{item.icon}</div>
-                                <span className="font-bold text-sm uppercase tracking-tight z-10">{item.title}</span>
-                                <ChevronRight size={14} className={`ml-auto opacity-40 group-hover:translate-x-0.5 transition-transform z-10 ${subView === item.id || (!subView && item.id === 'profile') ? 'block' : 'hidden'}`} />
-                            </button>
-                        ))}
+                    {/* Main Content Card */}
+                    <main className="flex-1">
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-surface-dark shadow-sm">
+                            {/* Header */}
+                            <div className="p-6 pb-0">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-2xl font-bold leading-tight tracking-[-0.015em] text-slate-900 dark:text-white">
+                                            {currentTitle.title}
+                                        </h3>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                            {currentTitle.subtitle}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="mt-6 border-b border-gray-100 dark:border-gray-800" />
+                            </div>
 
-                        <div className="h-px bg-slate-100 dark:bg-neutral-800 my-2 mx-2"></div>
+                            {/* Body */}
+                            <div className="p-6 space-y-8">
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={subView}
+                                        initial={{ opacity: 0, y: 8 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -8 }}
+                                        transition={{ duration: 0.2 }}
+                                    >
+                                        {renderContent()}
+                                    </motion.div>
+                                </AnimatePresence>
+                            </div>
 
-                        <button
-                            onClick={() => { logout(); navigate('/'); }}
-                            className="flex items-center gap-3 w-full p-3.5 rounded-2xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all font-bold text-sm uppercase tracking-tight"
-                        >
-                            <LogOut size={18} />
-                            <span>Sair</span>
-                        </button>
-                    </nav>
-
-                    <div className="text-center opacity-30 pt-2">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{APP_NAME} © 2026</p>
-                    </div>
-                </aside>
-
-                <main className="bg-white dark:bg-surface-dark rounded-[32px] border border-slate-200 dark:border-neutral-800 shadow-sm min-h-[660px] flex flex-col overflow-hidden relative">
-                    <div className="p-8 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-800/30 flex items-center justify-between">
-                        <div>
-                            <span className="text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-1 block">Configurações</span>
-                            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
-                                {subView === 'profile' || !subView ? 'Meu Perfil' :
-                                 subView === 'security' ? 'Segurança da Conta' :
-                                 subView === 'appearance' ? 'Aparência do Sistema' :
-                                 subView === 'notifications' ? 'Ajustes de Notificação' :
-                                 'Sobre o HcCell'}
-                            </h3>
+                            {/* Footer Actions */}
+                            {showFooter && (
+                                <div className="px-6 py-4 bg-gray-50 dark:bg-white/5 border-t border-gray-200 dark:border-gray-800 rounded-b-xl flex justify-end gap-3">
+                                    <button
+                                        className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={loading}
+                                        className="px-4 py-2 text-sm font-bold text-white bg-primary rounded-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-md transition-colors"
+                                    >
+                                        {loading ? 'Salvando...' : 'Salvar Alterações'}
+                                    </button>
+                                </div>
+                            )}
                         </div>
-                        <div className="size-12 rounded-2xl bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400">
-                             {subView === 'profile' || !subView ? <User size={20} /> :
-                              subView === 'security' ? <Shield size={20} /> :
-                              subView === 'appearance' ? <Palette size={20} /> :
-                              subView === 'notifications' ? <Bell size={20} /> :
-                              <Info size={20} />}
-                        </div>
-                    </div>
-                    <div className="flex-1 overflow-y-auto max-h-[calc(100vh-180px)] custom-scrollbar">
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={subView || 'profile'}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                transition={{ duration: 0.2, ease: "easeOut" }}
-                            >
-                                {renderSubViewContent()}
-                            </motion.div>
-                        </AnimatePresence>
-                    </div>
-
-                    {/* Decorative element for premium feel */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
-                </main>
+                    </main>
+                </div>
             </div>
 
-            {/* MOBILE VIEW (Identical to original) */}
+            {/* ═══════ MOBILE VIEW ═══════ */}
             <div className="md:hidden">
                 <AnimatePresence mode="wait">
-                    {!subView ? (
+                    {!subView || subView === 'menu' ? (
                         <motion.div
-                            key="main"
+                            key="mobile-main"
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
@@ -442,12 +496,12 @@ export const Settings: React.FC = () => {
                         >
                             <div className="flex flex-col items-center pt-8 pb-4">
                                 <div className="relative mb-4 group">
-                                    <div className="size-28 rounded-full overflow-hidden bg-slate-100 dark:bg-neutral-800 ring-4 ring-white dark:ring-neutral-900 shadow-xl border-4 border-primary/20 transition-transform group-hover:scale-105 duration-300">
-                                        <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: `url(${user.avatarUrl})` }}></div>
+                                    <div className="size-28 rounded-full overflow-hidden bg-slate-100 dark:bg-neutral-800 ring-4 ring-white dark:ring-neutral-900 shadow-xl border-4 border-primary/20">
+                                        <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: `url(${user.avatarUrl})` }} />
                                     </div>
                                     <button
                                         onClick={() => setSubView('profile')}
-                                        className="absolute bottom-0 right-0 p-2.5 bg-primary text-white rounded-full shadow-lg border-2 border-white dark:border-neutral-900 transition-transform active:scale-90"
+                                        className="absolute bottom-0 right-0 p-2.5 bg-primary text-white rounded-full shadow-lg border-2 border-white dark:border-neutral-900"
                                     >
                                         <Camera size={16} />
                                     </button>
@@ -460,10 +514,10 @@ export const Settings: React.FC = () => {
 
                             <div className="bg-white dark:bg-surface-dark rounded-[32px] shadow-sm border border-slate-200 dark:border-neutral-800 overflow-hidden divide-y divide-slate-100 dark:divide-neutral-800/50 mx-4 sm:mx-0">
                                 <MenuRow icon={<User size={20} />} color="bg-blue-500" title="Informações Pessoais" sub="Nome, Email, Foto e Perfil" onClick={() => setSubView('profile')} />
-                                <MenuRow icon={<Shield size={20} />} color="bg-indigo-500" title="Segurança e Acesso" sub="Alterar senha e proteção de conta" onClick={() => setSubView('security')} />
+                                <MenuRow icon={<Shield size={20} />} color="bg-indigo-500" title="Segurança e Acesso" sub="Alterar senha e proteção" onClick={() => setSubView('account')} />
                                 <MenuRow icon={<Palette size={20} />} color="bg-amber-500" title="Aparência" sub="Interface, Tema e Cores" onClick={() => setSubView('appearance')} />
                                 <MenuRow icon={<Bell size={20} />} color="bg-purple-500" title="Notificações" sub="Sons, Alertas e WhatsApp" onClick={() => setSubView('notifications')} />
-                                <MenuRow icon={<Info size={20} />} color="bg-slate-500" title="Sobre o Sistema" sub={`Versão ${APP_VERSION} e Novidades`} onClick={() => setSubView('about')} />
+                                <MenuRow icon={<Info size={20} />} color="bg-slate-500" title="Sobre o Sistema" sub={`Versão ${APP_VERSION}`} onClick={() => setSubView('about')} />
                                 <MenuRow icon={<LogOut size={20} />} color="bg-red-500" title="Encerrar Sessão" sub="Sair de todos os dispositivos" onClick={() => { logout(); navigate('/'); }} danger />
                             </div>
 
@@ -473,17 +527,35 @@ export const Settings: React.FC = () => {
                         </motion.div>
                     ) : (
                         <motion.div
-                            key="subkey"
+                            key="mobile-sub"
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 20 }}
-                            className="bg-white dark:bg-surface-dark min-h-[calc(100vh-220px)] md:min-h-[60vh] rounded-[32px] shadow-xl md:shadow-sm border border-slate-200 dark:border-neutral-800 overflow-hidden mx-4 sm:mx-0 flex flex-col"
+                            className="bg-white dark:bg-surface-dark min-h-[calc(100vh-220px)] rounded-[32px] shadow-xl border border-slate-200 dark:border-neutral-800 overflow-hidden mx-4 sm:mx-0 flex flex-col"
                         >
-                            <SubViewHeader
-                                title={subView === 'profile' ? 'Perfil' : subView === 'security' ? 'Segurança' : subView === 'appearance' ? 'Aparência' : subView === 'notifications' ? 'Notificações' : 'Sobre'}
-                                onBack={() => setSubView(null)}
-                            />
-                            {renderSubViewContent()}
+                            {/* Mobile SubView Header */}
+                            <div className="p-4 flex items-center border-b border-slate-100 dark:border-neutral-800 sticky top-0 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-md z-10 relative">
+                                <button onClick={() => setSubView('menu')} className="p-2 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full transition-colors relative z-20">
+                                    <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
+                                </button>
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <h3 className="font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">{currentTitle.title.split(' ')[0]}</h3>
+                                </div>
+                            </div>
+                            <div className="p-6 space-y-6">
+                                {renderContent()}
+                            </div>
+                            {showFooter && (
+                                <div className="p-6 pt-0">
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={loading}
+                                        className="w-full h-14 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 active:scale-[0.98] transition-all"
+                                    >
+                                        {loading ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
+                                    </button>
+                                </div>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>

@@ -35,7 +35,7 @@ import {
     TrendingUp,
     XCircle
 } from 'lucide-react';
-import { OrderStatus, ServiceOrder, MovementType, PaymentMethod } from '../../types';
+import { OrderStatus, ServiceOrder, MovementType, PaymentMethod, PaymentEntry } from '../../types';
 import { CustomDropdown } from '../../components/CustomDropdown';
 import { BottomSheet } from '../../components/BottomSheet';
 
@@ -63,7 +63,11 @@ export const OrderDetails: React.FC = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [selectedWarrantyDays, setSelectedWarrantyDays] = useState(90);
     const [showCompleteModal, setShowCompleteModal] = useState(false);
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | ''>('');
+    const [payments, setPayments] = useState<PaymentEntry[]>([]);
+    const [currentPaymentMethod, setCurrentPaymentMethod] = useState<PaymentMethod | ''>('');
+    const [currentPaymentAmount, setCurrentPaymentAmount] = useState<string>('');
+    const [currentInstallments, setCurrentInstallments] = useState<number>(1);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | ''>(''); // fallback
     const [serviceNotes, setServiceNotes] = useState('');
     const [isSavingService, setIsSavingService] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -401,7 +405,7 @@ export const OrderDetails: React.FC = () => {
     };
 
 
-    const handleStatusChange = async (newStatus: OrderStatus, paymentMethod?: PaymentMethod) => {
+    const handleStatusChange = async (newStatus: OrderStatus, paymentMethodStr?: PaymentMethod, newPayments?: PaymentEntry[]) => {
         try {
             // Logic to return stock if cancelled
             if (newStatus === OrderStatus.CANCELLED && order.status !== OrderStatus.CANCELLED) {
@@ -449,9 +453,8 @@ export const OrderDetails: React.FC = () => {
             }
 
             const updatedOrder = { ...order, status: newStatus };
-            if (paymentMethod) {
-                updatedOrder.paymentMethod = paymentMethod;
-            }
+            if (paymentMethodStr) updatedOrder.paymentMethod = paymentMethodStr;
+            if (newPayments && newPayments.length > 0) updatedOrder.payments = newPayments;
             await updateOrder(updatedOrder);
             showToast('Status atualizado com sucesso!', 'success');
         } catch (error) {
@@ -492,11 +495,86 @@ export const OrderDetails: React.FC = () => {
         }
     };
 
-    const handleComplete = () => setShowCompleteModal(true);
+    const handleComplete = () => {
+        setPayments([]);
+        setCurrentPaymentMethod('');
+        setCurrentPaymentAmount(order.total > 0 ? order.total.toFixed(2) : '');
+        setCurrentInstallments(1);
+        setSelectedPaymentMethod('');
+        setShowCompleteModal(true);
+    };
+
+    const handleAddPayment = () => {
+        if (!currentPaymentMethod || !currentPaymentAmount) return;
+        const amt = parseFloat(currentPaymentAmount);
+        if (isNaN(amt) || amt <= 0) return;
+        
+        const newPayment: PaymentEntry = {
+            method: currentPaymentMethod as PaymentMethod,
+            amount: amt,
+            installments: currentPaymentMethod === 'Cartão de Crédito' ? currentInstallments : 1
+        };
+        
+        const newPayments = [...payments, newPayment];
+        setPayments(newPayments);
+        setCurrentPaymentMethod('');
+        setCurrentInstallments(1);
+        
+        const totalPaid = newPayments.reduce((acc, p) => acc + p.amount, 0);
+        const remaining = Math.max(0, order.total - totalPaid);
+        if (remaining > 0) {
+            setCurrentPaymentAmount(remaining.toFixed(2));
+        } else {
+            setCurrentPaymentAmount('');
+        }
+    };
+
+    const handleRemovePayment = (index: number) => {
+        const removedAmount = payments[index].amount;
+        const newPayments = payments.filter((_, i) => i !== index);
+        setPayments(newPayments);
+        
+        const totalPaid = newPayments.reduce((acc, p) => acc + p.amount, 0);
+        const remaining = Math.max(0, order.total - totalPaid);
+        setCurrentPaymentAmount(remaining > 0 ? remaining.toFixed(2) : '');
+    };
 
     const confirmCompletion = async () => {
-        if (!selectedPaymentMethod) return;
-        await handleStatusChange(OrderStatus.COMPLETED, selectedPaymentMethod as PaymentMethod);
+        let finalPayments = [...payments];
+        if (currentPaymentMethod && currentPaymentAmount) {
+            const amt = parseFloat(currentPaymentAmount);
+            if (!isNaN(amt) && amt > 0) {
+                finalPayments.push({
+                    method: currentPaymentMethod as PaymentMethod,
+                    amount: amt,
+                    installments: currentPaymentMethod === 'Cartão de Crédito' ? currentInstallments : 1
+                });
+            }
+        }
+        
+        if (finalPayments.length === 0) {
+            // fallback if using the old simple select without amount
+            if (selectedPaymentMethod) {
+               finalPayments.push({
+                   method: selectedPaymentMethod as PaymentMethod,
+                   amount: order.total,
+                   installments: selectedPaymentMethod === 'Cartão de Crédito' ? currentInstallments : 1
+               });
+            } else {
+                showToast('Adicione pelo menos uma forma de pagamento.', 'error');
+                return;
+            }
+        }
+
+        const totalPaid = finalPayments.reduce((acc, p) => acc + p.amount, 0);
+        if (Math.abs(totalPaid - order.total) > 0.01) {
+            showToast('O valor pago deve ser igual ao total da ordem.', 'error');
+            return;
+        }
+
+        const paymentMethodStr = finalPayments.length === 1 ? finalPayments[0].method : 'Múltiplo';
+
+        await handleStatusChange(OrderStatus.COMPLETED, paymentMethodStr as PaymentMethod, finalPayments);
         setShowCompleteModal(false);
     };
 
@@ -578,7 +656,24 @@ export const OrderDetails: React.FC = () => {
                                             <td className="pt-3 uppercase text-slate-500">Total</td>
                                             <td className="pt-3 text-right text-slate-900">R$ {order.total.toFixed(2)}</td>
                                         </tr>
-                                        {order.paymentMethod ? (
+                                        {order.payments && order.payments.length > 0 ? (
+                                            <>
+                                                <tr>
+                                                    <td colSpan={2} className="pt-2 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Formas de Pagamento</td>
+                                                </tr>
+                                                {order.payments.map((p, idx) => (
+                                                    <tr key={idx}>
+                                                        <td className="pt-1 text-[10px] uppercase tracking-widest text-slate-600 font-bold pl-2 flex items-center gap-1">
+                                                            <span className="text-[8px] text-slate-300">•</span> {p.method}
+                                                            {p.method === 'Cartão de Crédito' && p.installments && p.installments > 1 && (
+                                                                <span className="text-[9px] text-slate-400 ml-1">({p.installments}x de R$ {(p.amount / p.installments).toFixed(2)})</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="pt-1 text-right text-[10px] text-slate-600 font-bold">R$ {p.amount.toFixed(2)}</td>
+                                                    </tr>
+                                                ))}
+                                            </>
+                                        ) : order.paymentMethod ? (
                                             <tr>
                                                 <td className="pt-2 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Forma de Pagamento</td>
                                                 <td className="pt-2 text-right text-[10px] uppercase tracking-widest text-slate-600 font-bold">{order.paymentMethod}</td>
@@ -988,12 +1083,27 @@ export const OrderDetails: React.FC = () => {
                                     </div>
                                 ) : null;
                             })()}
-                            {order.paymentMethod && (
+                            {order.payments && order.payments.length > 0 ? (
+                                <div className="pt-2 border-t border-slate-50 dark:border-neutral-800 space-y-2">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Pagamentos</span>
+                                    {order.payments.map((p, idx) => (
+                                        <div key={idx} className="flex justify-between items-center bg-slate-50 dark:bg-neutral-900 rounded-lg p-2 px-3">
+                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                                {p.method}
+                                                {p.method === 'Cartão de Crédito' && p.installments && p.installments > 1 && (
+                                                    <span className="ml-1 text-[10px] font-medium text-slate-400">({p.installments}x de R$ {(p.amount / p.installments).toFixed(2)})</span>
+                                                )}
+                                            </span>
+                                            <span className="text-xs font-black text-slate-900 dark:text-white">R$ {p.amount.toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : order.paymentMethod ? (
                                 <div className="flex justify-between items-center py-2 border-b border-slate-50 dark:border-neutral-800">
                                     <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Pagamento</span>
                                     <span className="font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-xs uppercase tracking-wide">{order.paymentMethod}</span>
                                 </div>
-                            )}
+                            ) : null}
                             <div className="flex justify-between items-center pt-4">
                                 <span className="text-xs font-black text-slate-900 dark:text-white uppercase">Total</span>
                                 <span className="text-3xl font-black text-primary">R$ {order.total.toFixed(2)}</span>
@@ -1145,7 +1255,7 @@ export const OrderDetails: React.FC = () => {
                 <>
                     {/* Desktop Modal */}
                     <div className="fixed inset-0 z-[100] hidden md:flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                        <div className="w-full max-w-lg transform overflow-hidden rounded-[32px] bg-white dark:bg-surface-dark p-10 text-left shadow-2xl transition-all border border-slate-100 dark:border-neutral-800 animate-in zoom-in-95 duration-300">
+                        <div className="w-full max-w-2xl transform rounded-[32px] bg-white dark:bg-surface-dark p-10 text-left shadow-2xl transition-all border border-slate-100 dark:border-neutral-800 animate-in zoom-in-95 duration-300">
                             <div className="flex items-center justify-between mb-8">
                                 <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Concluir Ordem</h3>
                                 <button onClick={() => setShowCompleteModal(false)} className="rounded-2xl p-2.5 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors text-slate-400">
@@ -1153,46 +1263,113 @@ export const OrderDetails: React.FC = () => {
                                 </button>
                             </div>
 
-                            <div className="space-y-8">
+                            <div className="space-y-6">
                                 <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30 p-6 text-sm text-green-800 dark:text-green-300 flex items-start gap-4">
                                     <CheckCircle2 className="shrink-0 mt-0.5" size={24} />
-                                    <div>
-                                        <p className="font-bold text-lg mb-1">Finalizar Serviço</p>
-                                        <p className="opacity-90">Selecione a forma de pagamento, se aplicável, para registrar a baixa financeira.</p>
+                                    <div className="flex-1 flex justify-between items-center">
+                                        <div>
+                                            <p className="font-bold text-lg mb-1">Finalizar Serviço</p>
+                                            <p className="opacity-90">Total da ordem: <span className="font-bold">R$ {order.total.toFixed(2)}</span></p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-xs uppercase tracking-widest opacity-80">Falta pagar</p>
+                                            <p className="text-xl font-black">R$ {Math.max(0, order.total - payments.reduce((acc, p) => acc + p.amount, 0)).toFixed(2)}</p>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    {[
-                                        { id: 'Cartão de Crédito', icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50', border: 'hover:border-purple-200' },
-                                        { id: 'Cartão de Débito', icon: CreditCard, color: 'text-blue-600', bg: 'bg-blue-50', border: 'hover:border-blue-200' },
-                                        { id: 'PIX', icon: QrCode, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
-                                        { id: 'Dinheiro', icon: Banknote, color: 'text-green-600', bg: 'bg-green-50', border: 'hover:border-green-200' }
-                                    ].map((method) => (
-                                        <button
-                                            key={method.id}
-                                            onClick={() => setSelectedPaymentMethod(method.id as PaymentMethod)}
-                                            className={`flex flex-col items-center justify-center gap-3 rounded-2xl border-2 py-6 px-4 transition-all group relative overflow-hidden ${selectedPaymentMethod === method.id
-                                                ? 'border-primary bg-primary/5 ring-2 ring-primary/20 ring-offset-2'
-                                                : `border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-slate-50 dark:hover:bg-neutral-800 ${method.border}`
-                                                }`}
-                                        >
-                                            <div className={`p-3 rounded-xl ${selectedPaymentMethod === method.id ? 'bg-primary text-white' : `${method.bg} ${method.color}`} transition-colors`}>
-                                                <method.icon size={24} />
+                                {payments.length > 0 && (
+                                    <div className="space-y-2 mb-4">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pagamentos Adicionados</p>
+                                        {payments.map((p, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-neutral-900 rounded-xl border border-slate-100 dark:border-neutral-800">
+                                                <div>
+                                                    <span className="font-bold text-slate-800 dark:text-slate-200">{p.method}</span>
+                                                    {p.method === 'Cartão de Crédito' && p.installments && p.installments > 1 && (
+                                                        <span className="ml-2 text-xs text-slate-500">({p.installments}x de R$ {(p.amount / p.installments).toFixed(2)})</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="font-bold text-primary">R$ {p.amount.toFixed(2)}</span>
+                                                    <button onClick={() => handleRemovePayment(idx)} className="text-red-500 hover:text-red-700 p-1">
+                                                        <X size={16} />
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <span className={`font-bold text-sm ${selectedPaymentMethod === method.id ? 'text-primary' : 'text-slate-600 dark:text-slate-400'}`}>{method.id}</span>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Adicionar Pagamento</p>
+                                    <div className="grid grid-cols-4 gap-2 mb-4">
+                                        {[
+                                            { id: 'Cartão de Crédito', icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50', border: 'hover:border-purple-200' },
+                                            { id: 'Cartão de Débito', icon: CreditCard, color: 'text-blue-600', bg: 'bg-blue-50', border: 'hover:border-blue-200' },
+                                            { id: 'PIX', icon: QrCode, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
+                                            { id: 'Dinheiro', icon: Banknote, color: 'text-green-600', bg: 'bg-green-50', border: 'hover:border-green-200' }
+                                        ].map((method) => (
+                                            <button
+                                                key={method.id}
+                                                onClick={() => {
+                                                    setCurrentPaymentMethod(method.id as PaymentMethod);
+                                                    setSelectedPaymentMethod(method.id as PaymentMethod);
+                                                }}
+                                                className={`flex flex-col items-center justify-center gap-2 rounded-xl border py-4 px-2 transition-all group relative overflow-hidden ${currentPaymentMethod === method.id
+                                                    ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                                    : `border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 hover:bg-slate-50 dark:hover:bg-neutral-800 ${method.border}`
+                                                    }`}
+                                            >
+                                                <div className={`p-2 rounded-xl ${currentPaymentMethod === method.id ? 'bg-primary text-white' : `${method.bg} ${method.color}`} transition-colors`}>
+                                                    <method.icon size={20} />
+                                                </div>
+                                                <span className={`font-bold text-xs text-center leading-tight ${currentPaymentMethod === method.id ? 'text-primary' : 'text-slate-600 dark:text-slate-400'}`}>{method.id}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="flex items-end gap-3">
+                                        <div className="flex-1">
+                                            <label className="text-xs font-bold text-slate-500 mb-1 block">Valor (R$)</label>
+                                            <input
+                                                type="number"
+                                                value={currentPaymentAmount}
+                                                onChange={(e) => setCurrentPaymentAmount(e.target.value)}
+                                                className="w-full rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-3 text-sm font-bold text-slate-900 dark:text-white"
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                        {currentPaymentMethod === 'Cartão de Crédito' && (
+                                            <div className="w-1/3">
+                                                <label className="text-xs font-bold text-slate-500 mb-1 block">Parcelas</label>
+                                                <CustomDropdown
+                                                    label="Parcelas"
+                                                    options={[...Array(12)].map((_, i) => ({ value: String(i + 1), label: `${i + 1}x` }))}
+                                                    selectedValue={String(currentInstallments)}
+                                                    onSelect={(val) => setCurrentInstallments(Number(val))}
+                                                    searchable={false}
+                                                    fullWidth
+                                                />
+                                            </div>
+                                        )}
+                                        <button
+                                            onClick={handleAddPayment}
+                                            disabled={!currentPaymentMethod || !currentPaymentAmount || parseFloat(currentPaymentAmount) <= 0}
+                                            className="h-[46px] px-6 rounded-xl bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-slate-300 font-bold text-sm hover:bg-slate-200 transition-colors disabled:opacity-50"
+                                        >
+                                            Adicionar
                                         </button>
-                                    ))}
+                                    </div>
                                 </div>
 
                                 <div className="pt-6 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-end gap-4">
                                     <button onClick={() => setShowCompleteModal(false)} className="rounded-2xl px-8 py-3.5 text-sm font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-neutral-800">Cancelar</button>
                                     <button
                                         onClick={confirmCompletion}
-                                        disabled={!selectedPaymentMethod}
+                                        disabled={(payments.length === 0 && (!currentPaymentMethod || !currentPaymentAmount))}
                                         className="flex items-center gap-2 rounded-2xl bg-green-600 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-green-200 dark:shadow-none hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <Check size={20} /> Confirmar Pagamento
+                                        <Check size={20} /> Finalizar Ordem
                                     </button>
                                 </div>
                             </div>
@@ -1205,45 +1382,107 @@ export const OrderDetails: React.FC = () => {
                         onClose={() => setShowCompleteModal(false)}
                         title="CONCLUIR ORDEM"
                     >
-                        <div className="space-y-6 pt-2">
-                            <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30 p-4 text-sm text-green-800 dark:text-green-300 flex items-start gap-3">
-                                <CheckCircle2 className="shrink-0 mt-0.5 text-green-600" size={20} />
+                        <div className="space-y-4 pt-2 pb-4">
+                            <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30 p-4 text-sm text-green-800 dark:text-green-300 flex items-start justify-between gap-3">
                                 <div>
-                                    <p className="font-bold text-base mb-0.5">Finalizar Serviço</p>
-                                    <p className="opacity-90 leading-snug">Selecione a forma de pagamento abaixo.</p>
+                                    <p className="font-bold text-base mb-0.5 flex items-center gap-2">
+                                        <CheckCircle2 className="text-green-600" size={18} />
+                                        Finalizar Serviço
+                                    </p>
+                                    <p className="opacity-90 leading-snug text-xs mt-1">Total: R$ {order.total.toFixed(2)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] uppercase tracking-widest opacity-80">Falta pagar</p>
+                                    <p className="text-lg font-black text-green-700 dark:text-green-400">R$ {Math.max(0, order.total - payments.reduce((acc, p) => acc + p.amount, 0)).toFixed(2)}</p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                {[
-                                    { id: 'Cartão de Crédito', icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50' },
-                                    { id: 'Cartão de Débito', icon: CreditCard, color: 'text-blue-600', bg: 'bg-blue-50' },
-                                    { id: 'PIX', icon: QrCode, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                                    { id: 'Dinheiro', icon: Banknote, color: 'text-green-600', bg: 'bg-green-50' }
-                                ].map((method) => (
-                                    <button
-                                        key={method.id}
-                                        onClick={() => setSelectedPaymentMethod(method.id as PaymentMethod)}
-                                        className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 py-5 px-3 transition-all ${selectedPaymentMethod === method.id
-                                            ? 'border-primary bg-primary/5'
-                                            : 'border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm'
-                                            }`}
-                                    >
-                                        <div className={`p-3 rounded-xl ${selectedPaymentMethod === method.id ? 'bg-primary text-white' : `${method.bg} ${method.color}`} transition-colors`}>
-                                            <method.icon size={20} />
+                            {payments.length > 0 && (
+                                <div className="space-y-2">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pagamentos</p>
+                                    {payments.map((p, idx) => (
+                                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-neutral-900 rounded-xl border border-slate-100 dark:border-neutral-800">
+                                            <div>
+                                                <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{p.method} {p.installments && p.installments > 1 ? `(${p.installments}x de R$ ${(p.amount / p.installments).toFixed(2)})` : ''}</span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-black text-primary text-sm">R$ {p.amount.toFixed(2)}</span>
+                                                <button onClick={() => handleRemovePayment(idx)} className="text-red-500 hover:text-red-700 p-1">
+                                                    <X size={16} />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <span className={`font-bold text-xs ${selectedPaymentMethod === method.id ? 'text-primary' : 'text-slate-600 dark:text-slate-400 text-center leading-tight'}`}>{method.id}</span>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 mt-2">Deseja adicionar pagamento?</p>
+                                <div className="grid grid-cols-4 gap-2 mb-3">
+                                    {[
+                                        { id: 'Cartão de Crédito', icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50' },
+                                        { id: 'Cartão de Débito', icon: CreditCard, color: 'text-blue-600', bg: 'bg-blue-50' },
+                                        { id: 'PIX', icon: QrCode, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                                        { id: 'Dinheiro', icon: Banknote, color: 'text-green-600', bg: 'bg-green-50' }
+                                    ].map((method) => (
+                                        <button
+                                            key={method.id}
+                                            onClick={() => {
+                                                setCurrentPaymentMethod(method.id as PaymentMethod);
+                                                setSelectedPaymentMethod(method.id as PaymentMethod);
+                                            }}
+                                            className={`flex flex-col items-center justify-center gap-1 rounded-xl border py-3 px-1 transition-all ${currentPaymentMethod === method.id
+                                                ? 'border-primary bg-primary/5'
+                                                : 'border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm'
+                                                }`}
+                                        >
+                                            <div className={`p-2 rounded-xl ${currentPaymentMethod === method.id ? 'bg-primary text-white' : `${method.bg} ${method.color}`} transition-colors`}>
+                                                <method.icon size={18} />
+                                            </div>
+                                            <span className={`font-bold text-[10px] text-center leading-tight ${currentPaymentMethod === method.id ? 'text-primary' : 'text-slate-600 dark:text-slate-400'}`}>{method.id === 'Cartão de Crédito' ? 'Crédito' : method.id === 'Cartão de Débito' ? 'Débito' : method.id}</span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="flex items-end gap-2">
+                                    <div className="flex-1">
+                                        <input
+                                            type="number"
+                                            value={currentPaymentAmount}
+                                            onChange={(e) => setCurrentPaymentAmount(e.target.value)}
+                                            className="w-full rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-3 text-sm font-bold text-slate-900 dark:text-white"
+                                            placeholder="R$ 0.00"
+                                        />
+                                    </div>
+                                    {currentPaymentMethod === 'Cartão de Crédito' && (
+                                        <div className="w-[120px]">
+                                            <CustomDropdown
+                                                label="Parcelas"
+                                                options={[...Array(12)].map((_, i) => ({ value: String(i + 1), label: `${i + 1}x` }))}
+                                                selectedValue={String(currentInstallments)}
+                                                onSelect={(val) => setCurrentInstallments(Number(val))}
+                                                searchable={false}
+                                                fullWidth
+                                            />
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={handleAddPayment}
+                                        disabled={!currentPaymentMethod || !currentPaymentAmount || parseFloat(currentPaymentAmount) <= 0}
+                                        className="h-[46px] px-4 rounded-xl bg-primary/10 text-primary font-bold text-sm hover:bg-primary/20 transition-colors disabled:opacity-50"
+                                    >
+                                        Add
                                     </button>
-                                ))}
+                                </div>
                             </div>
 
                             <div className="pt-4 flex flex-col gap-3">
                                 <button
                                     onClick={confirmCompletion}
-                                    disabled={!selectedPaymentMethod}
-                                    className="w-full h-14 rounded-2xl bg-green-600 text-sm font-black text-white shadow-xl shadow-green-100 dark:shadow-none hover:bg-green-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2 uppercase tracking-widest"
+                                    disabled={(payments.length === 0 && (!currentPaymentMethod || !currentPaymentAmount))}
+                                    className="w-full h-14 rounded-2xl bg-green-600 text-[13px] font-black text-white shadow-xl shadow-green-100 dark:shadow-none hover:bg-green-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2 uppercase tracking-widest"
                                 >
-                                    <Check size={20} /> Confirmar Pagamento
+                                    <Check size={20} /> Finalizar Ordem
                                 </button>
                                 <button
                                     onClick={() => setShowCompleteModal(false)}
