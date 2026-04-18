@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../store';
 import {
     User, Mail, Phone, BadgeCheck, Shield, Palette, Bell,
@@ -12,14 +12,16 @@ import { useToast } from '../components/Toast';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { Skeleton } from '../components/Skeleton';
+
 export const Settings: React.FC = () => {
-    const { user, darkMode, toggleTheme, logout } = useApp();
+    const { user, darkMode, toggleTheme, logout, loading: dataLoading } = useApp();
     const { showToast } = useToast();
     const navigate = useNavigate();
     const [subView, setSubView] = useState<string>('profile');
     const [profileImage, setProfileImage] = useState(user.avatarUrl);
     const [imageFile, setImageFile] = useState<File | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [showChangelog, setShowChangelog] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,6 +37,18 @@ export const Settings: React.FC = () => {
         confirmPassword: ''
     });
     const [showPassword, setShowPassword] = useState(false);
+
+    // Sync form data when user profile loads
+    useEffect(() => {
+        if (user) {
+            setFormData(prev => ({
+                ...prev,
+                name: user.name,
+                email: user.email
+            }));
+            setProfileImage(user.avatarUrl);
+        }
+    }, [user]);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -55,7 +69,7 @@ export const Settings: React.FC = () => {
     };
 
     const handleSaveProfile = async () => {
-        setLoading(true);
+        setIsSaving(true);
         try {
             let avatarUrl = user.avatarUrl;
             if (imageFile) {
@@ -80,7 +94,7 @@ export const Settings: React.FC = () => {
         } catch (error: any) {
             showToast(error.message || 'Erro ao salvar.', 'error');
         } finally {
-            setLoading(false);
+            setIsSaving(false);
         }
     };
 
@@ -89,7 +103,7 @@ export const Settings: React.FC = () => {
             showToast('As senhas não coincidem ou estão vazias.', 'error');
             return;
         }
-        setLoading(true);
+        setIsSaving(true);
         try {
             const { error } = await supabase.auth.updateUser({ password: passwordData.newPassword });
             if (error) throw error;
@@ -98,7 +112,7 @@ export const Settings: React.FC = () => {
         } catch (error: any) {
             showToast(error.message || 'Erro ao atualizar senha.', 'error');
         } finally {
-            setLoading(false);
+            setIsSaving(false);
         }
     };
 
@@ -120,6 +134,46 @@ export const Settings: React.FC = () => {
     };
 
     const currentTitle = contentTitles[subView] || contentTitles.profile;
+
+    // ─── RENDER: Profile Skeleton ───
+    const renderProfileSkeleton = () => (
+        <div className="space-y-6 animate-in fade-in duration-500">
+            {/* Header Skeleton */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-6 pb-6 border-b border-slate-100 dark:border-white/5">
+                <Skeleton className="w-24 h-24 rounded-full" />
+                <div className="space-y-3 flex-1">
+                    <Skeleton className="h-8 w-48" />
+                    <Skeleton className="h-4 w-32" />
+                </div>
+            </div>
+
+            {/* Profile Form Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-12 w-full" />
+                </div>
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-12 w-full" />
+                </div>
+            </div>
+
+            {/* Permissions Preview Skeleton */}
+            <div className="mt-8 p-6 bg-slate-50 dark:bg-white/5 rounded-2xl space-y-4">
+                <Skeleton className="h-6 w-40" />
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                        <Skeleton key={i} className="h-8 w-full" />
+                    ))}
+                </div>
+            </div>
+
+            <div className="flex justify-end pt-6">
+                <Skeleton className="h-12 w-32 rounded-xl" />
+            </div>
+        </div>
+    );
 
     // ─── RENDER: Profile ───
     const renderProfile = () => (
@@ -345,6 +399,8 @@ export const Settings: React.FC = () => {
 
     // ─── RENDER: Content switch ───
     const renderContent = () => {
+        if (dataLoading) return renderProfileSkeleton();
+
         switch (subView) {
             case 'profile': return renderProfile();
             case 'account': return renderAccount();
@@ -364,7 +420,7 @@ export const Settings: React.FC = () => {
         }
     };
 
-    const showFooter = subView === 'profile' || subView === 'account';
+    const showFooter = !dataLoading && (subView === 'profile' || subView === 'account');
 
     // ─── MOBILE: Menu Row ───
     const MenuRow = ({ icon, color, title, sub, onClick, danger = false }: any) => (
@@ -430,7 +486,7 @@ export const Settings: React.FC = () => {
 
                     {/* Main Content Card */}
                     <main className="flex-1">
-                        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-surface-dark shadow-sm">
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-surface-dark shadow-sm overflow-hidden">
                             {/* Header */}
                             <div className="p-6 pb-0">
                                 <div className="flex items-center justify-between">
@@ -450,7 +506,7 @@ export const Settings: React.FC = () => {
                             <div className="p-6 space-y-8">
                                 <AnimatePresence mode="wait">
                                     <motion.div
-                                        key={subView}
+                                        key={subView + '-' + dataLoading}
                                         initial={{ opacity: 0, y: 8 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -8 }}
@@ -465,16 +521,17 @@ export const Settings: React.FC = () => {
                             {showFooter && (
                                 <div className="px-6 py-4 bg-gray-50 dark:bg-white/5 border-t border-gray-200 dark:border-gray-800 rounded-b-xl flex justify-end gap-3">
                                     <button
+                                        onClick={() => navigate(-1)}
                                         className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
                                     >
                                         Cancelar
                                     </button>
                                     <button
                                         onClick={handleSave}
-                                        disabled={loading}
+                                        disabled={isSaving}
                                         className="px-4 py-2 text-sm font-bold text-white bg-primary rounded-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-md transition-colors"
                                     >
-                                        {loading ? 'Salvando...' : 'Salvar Alterações'}
+                                        {isSaving ? 'Salvando...' : 'Salvar Alterações'}
                                     </button>
                                 </div>
                             )}
@@ -506,9 +563,11 @@ export const Settings: React.FC = () => {
                                         <Camera size={16} />
                                     </button>
                                 </div>
-                                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{user.name}</h2>
+                                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                                    {dataLoading ? <Skeleton className="h-8 w-32 mx-auto rounded" /> : user.name}
+                                </h2>
                                 <p className="text-sm font-bold text-slate-400 dark:text-slate-500 flex items-center gap-2">
-                                    {user.email} • <span className="opacity-70 uppercase text-[10px] tracking-widest">{user.role}</span>
+                                    {dataLoading ? <Skeleton className="h-4 w-48 rounded" /> : user.email} • <span className="opacity-70 uppercase text-[10px] tracking-widest">{user.role}</span>
                                 </p>
                             </div>
 
@@ -549,10 +608,10 @@ export const Settings: React.FC = () => {
                                 <div className="p-6 pt-0">
                                     <button
                                         onClick={handleSave}
-                                        disabled={loading}
+                                        disabled={isSaving}
                                         className="w-full h-14 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 active:scale-[0.98] transition-all"
                                     >
-                                        {loading ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
+                                        {isSaving ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
                                     </button>
                                 </div>
                             )}

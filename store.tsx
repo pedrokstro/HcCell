@@ -9,6 +9,7 @@ interface AppContextType {
     categories: Category[];
     user: User;
     loading: boolean;
+    authChecked: boolean;
     productMovements: ProductMovement[];
     addClient: (client: Partial<Client>) => Promise<void>;
     updateClient: (client: Client) => Promise<void>;
@@ -42,7 +43,9 @@ const DEFAULT_USER: User = {
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState<User>(DEFAULT_USER);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    // authChecked: true once we know if user is logged in or not (fast check)
+    const [authChecked, setAuthChecked] = useState(false);
 
     // Dark Mode State
     const [darkMode, setDarkMode] = useState(() => {
@@ -86,33 +89,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [orders, setOrders] = useState<ServiceOrder[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [productMovements, setProductMovements] = useState<ProductMovement[]>([]);
+    const lastFetchRef = React.useRef<number>(0);
 
     useEffect(() => {
-        // Check active session
+        // Quickly check if there is an active session, then mark auth as resolved
         supabase.auth.getSession().then(({ data: { session } }) => {
             setIsAuthenticated(!!session);
+            setAuthChecked(true); // Auth resolved - stop blocking the UI
             if (session?.user) {
-                // Pass the session user metadata directly to ensure we have the latest data
                 fetchUserProfile(session.user);
                 fetchAllData();
-            } else {
-                setLoading(false);
             }
         });
 
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        // Listen for auth changes (tab focus, token refresh, sign-in/out)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             setIsAuthenticated(!!session);
             if (session?.user) {
                 fetchUserProfile(session.user);
-                fetchAllData();
+                
+                // Only re-fetch if signed in fresh OR if 30s have passed since last fetch
+                const now = Date.now();
+                if (event === 'SIGNED_IN' || lastFetchRef.current === 0 || now - lastFetchRef.current > 30000) {
+                    fetchAllData();
+                }
             } else {
                 setClients([]);
                 setProducts([]);
                 setOrders([]);
                 setCategories([]);
                 setUser(DEFAULT_USER);
-                setLoading(false);
             }
         });
 
@@ -169,8 +175,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     };
 
-    const fetchAllData = async () => {
+    const fetchAllData = async (isBackground = false) => {
         setLoading(true);
+        lastFetchRef.current = Date.now();
         try {
             const [clientsRes, productsRes, ordersRes, categoriesRes, productMovementsRes] = await Promise.all([
                 supabase.from('clients').select('*').order('created_at', { ascending: false }),
@@ -378,7 +385,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         if (error) throw error;
         if (data) {
-            fetchAllData();
+            fetchAllData(true);
         }
     };
 
@@ -419,7 +426,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const { error } = await supabase.from('service_orders').update(dbOrder).eq('id', order.id);
         if (error) throw error;
         // Reload to sync
-        fetchAllData();
+        fetchAllData(true);
     };
 
     const deleteOrder = async (id: string) => {
@@ -457,7 +464,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (error) throw error;
 
         // Reload all data to ensure products match DB and order is gone
-        fetchAllData();
+        fetchAllData(true);
     };
 
     const addProductMovement = async (movement: Partial<ProductMovement>) => {
@@ -474,7 +481,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         const { error } = await supabase.from('product_movements').insert([dbMovement]);
         if (error) throw error;
-        fetchAllData();
+        fetchAllData(true);
     };
 
     return (
@@ -485,7 +492,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             addOrder, updateOrder, deleteOrder,
             isAuthenticated, login, logout,
             darkMode, toggleTheme,
-            isSidebarCollapsed, toggleSidebar
+            isSidebarCollapsed, toggleSidebar,
+            authChecked
         }}>
             {children}
         </AppContext.Provider>

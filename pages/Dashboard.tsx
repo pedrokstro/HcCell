@@ -8,8 +8,10 @@ import { CustomDropdown } from '../components/CustomDropdown';
 import { DatePicker } from '../components/DatePicker';
 
 
+import { Skeleton } from '../components/Skeleton';
+
 export const Dashboard: React.FC = () => {
-  const { orders, products, clients } = useApp();
+  const { orders, products, clients, loading } = useApp();
   const navigate = useNavigate();
   const [selectedStat, setSelectedStat] = React.useState<'sales' | 'awaiting' | 'completed' | 'lowStock' | 'costs' | null>(null);
   const [isDateSheetOpen, setIsDateSheetOpen] = React.useState(false);
@@ -336,7 +338,7 @@ export const Dashboard: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 mb-2 md:mb-0"
+        className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-2 md:mb-0"
       >
         {/* Sales */}
         <motion.button
@@ -359,9 +361,13 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="relative z-10">
             <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-widest">Faturamento {dateFilter === 'today' ? 'do Dia' : ''}</p>
-            <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">
-              {showValues ? `R$ ${totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ ----'}
-            </p>
+            {loading ? (
+              <Skeleton className="h-8 w-24 mt-1" />
+            ) : (
+              <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">
+                {showValues ? `R$ ${totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ ----'}
+              </p>
+            )}
           </div>
         </motion.button>
 
@@ -385,9 +391,13 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="relative z-10">
             <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-widest">Custos (Peças)</p>
-            <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">
-              {showValues ? `R$ ${totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ ----'}
-            </p>
+            {loading ? (
+              <Skeleton className="h-8 w-24 mt-1" />
+            ) : (
+              <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">
+                {showValues ? `R$ ${totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ ----'}
+              </p>
+            )}
           </div>
         </motion.button>
 
@@ -411,7 +421,11 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="relative z-10">
             <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-widest">Em Aberto</p>
-            <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">{pendingCount}</p>
+            {loading ? (
+              <Skeleton className="h-8 w-12 mt-1" />
+            ) : (
+              <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">{pendingCount}</p>
+            )}
           </div>
         </motion.button>
 
@@ -435,32 +449,11 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="relative z-10">
             <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-widest">Concluídos</p>
-            <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">{completedCount}</p>
-          </div>
-        </motion.button>
-
-        {/* Low Inventory (Global) */}
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 20 }}
-          whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setSelectedStat('lowStock')}
-          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden col-span-2 md:col-span-1"
-        >
-          <div className="absolute right-[0%] top-[5%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
-            <AlertTriangle size={80} className="dark:text-white" />
-          </div>
-          <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 rounded-2xl text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 group-hover:bg-red-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
-              <AlertTriangle size={24} className="animate-pulse" />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-full border border-red-100 dark:border-red-900/30">Alerta</span>
-          </div>
-          <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-widest">Estoque Baixo</p>
-            <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">{lowStockCount}</p>
+            {loading ? (
+              <Skeleton className="h-8 w-12 mt-1" />
+            ) : (
+              <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">{completedCount}</p>
+            )}
           </div>
         </motion.button>
       </motion.div>
@@ -489,7 +482,22 @@ export const Dashboard: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-neutral-800">
-                {displayOrders.length > 0 ? (
+                {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-b border-slate-50 dark:border-white/5 animate-pulse">
+                    <td className="p-4 sm:p-5"><Skeleton className="h-6 w-16" /></td>
+                    <td className="p-4 sm:p-5">
+                      <div className="flex flex-col gap-1">
+                        <Skeleton className="h-5 w-32" />
+                        <Skeleton className="h-4 w-24" />
+                      </div>
+                    </td>
+                    <td className="hidden sm:table-cell p-4 sm:p-5"><Skeleton className="h-5 w-24" /></td>
+                    <td className="p-4 sm:p-5"><Skeleton className="h-8 w-24 rounded-full" /></td>
+                    <td className="p-4 sm:p-5 text-right"><Skeleton className="h-6 w-12 ml-auto" /></td>
+                  </tr>
+                ))
+              ) : displayOrders.length > 0 ? (
                   displayOrders.map((order) => {
                     const client = clients.find(c => c.id === order.clientId);
                     const clientName = client?.name || 'Cliente';

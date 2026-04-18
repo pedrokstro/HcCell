@@ -37,9 +37,12 @@ const LoadingScreen: React.FC = () => (
 );
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, loading } = useApp();
+  const { isAuthenticated, authChecked } = useApp();
 
-  if (loading) {
+  // Show the full-screen loader ONLY while we don't yet know if the user is signed in.
+  // This is a very fast check (< 1s). Once authChecked=true, we let pages render
+  // and use their own skeleton components while data loads in the background.
+  if (!authChecked) {
     return <LoadingScreen />;
   }
 
