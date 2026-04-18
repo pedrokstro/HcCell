@@ -1,12 +1,13 @@
-import React from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useApp } from '../../store';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, FileText, Filter, Calendar, Clock, CheckCircle, AlertTriangle, XCircle, TrendingUp, MessageCircle, Edit2 } from 'lucide-react';
+import { Search, Plus, FileText, Filter, Calendar, Clock, CheckCircle, AlertTriangle, XCircle, TrendingUp, MessageCircle, Edit2, ChevronLeft, ChevronRight, ArrowUp } from 'lucide-react';
 import { OrderStatus } from '../../types';
 import { CustomDropdown } from '../../components/CustomDropdown';
 import { DatePicker } from '../../components/DatePicker';
 
+const ITEMS_PER_PAGE = 20;
 
 export const OrdersList: React.FC = () => {
     const { orders, clients } = useApp();
@@ -31,8 +32,20 @@ export const OrdersList: React.FC = () => {
     const [dateFilter, setDateFilter] = React.useState<string>('');
     const [startDate, setStartDate] = React.useState<string>('');
     const [endDate, setEndDate] = React.useState<string>('');
-    const [isStatusSheetOpen, setIsStatusSheetOpen] = React.useState(false);
-    const [isDateSheetOpen, setIsDateSheetOpen] = React.useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [showScrollTop, setShowScrollTop] = useState(false);
+
+    // Reset to page 1 when filters change
+    useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter, dateFilter, startDate, endDate]);
+
+    // Show scroll-to-top button after scrolling 400px
+    useEffect(() => {
+        const onScroll = () => setShowScrollTop(window.scrollY > 400);
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
+
+    const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
     const statusOptions = [
         { value: '', label: 'Todos os Status', icon: <Filter size={18} /> },
@@ -51,21 +64,14 @@ export const OrdersList: React.FC = () => {
         { value: 'custom', label: 'Personalizado', icon: <Search size={18} /> }
     ];
 
-    const currentStatusLabel = statusOptions.find(o => o.value === statusFilter)?.label || 'Status';
-    const currentDateLabel = dateOptions.find(o => o.value === dateFilter)?.label || 'Data';
-
-
-    // Função auxiliar para criar data no horário local a partir de string YYYY-MM-DD
     const parseLocalDate = (dateStr: string): Date => {
         const [year, month, day] = dateStr.split('-').map(Number);
         return new Date(year, month - 1, day);
     };
 
-    // Função para calcular datas baseado no filtro selecionado
     const getDateRange = (filter: string): { start: Date | null; end: Date | null } => {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
         switch (filter) {
             case 'today':
                 return { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
@@ -85,39 +91,51 @@ export const OrdersList: React.FC = () => {
         }
     };
 
-    const filteredOrders = orders.filter(order => {
-        const client = clients.find(c => c.id === order.clientId);
-        const clientName = (client?.name || 'Unknown').toLowerCase();
-        const clientCpf = (client?.cpf || '').toLowerCase();
-        const clientPhone = (client?.phone || '').toLowerCase();
-        const displayId = (order.displayId || order.id).toLowerCase();
-        const device = order.deviceModel.toLowerCase();
-        const query = searchQuery.toLowerCase();
+    // ✅ Filtro + ordenação mais recente primeiro
+    const filteredOrders = orders
+        .filter(order => {
+            const client = clients.find(c => c.id === order.clientId);
+            const clientName = (client?.name || 'Unknown').toLowerCase();
+            const clientCpf = (client?.cpf || '').toLowerCase();
+            const clientPhone = (client?.phone || '').toLowerCase();
+            const displayId = (order.displayId || order.id).toLowerCase();
+            const device = order.deviceModel.toLowerCase();
+            const query = searchQuery.toLowerCase();
 
-        const matchesSearch = clientName.includes(query) ||
-            clientCpf.includes(query) ||
-            clientPhone.includes(query) ||
-            displayId.includes(query) ||
-            device.includes(query);
+            const matchesSearch = clientName.includes(query) ||
+                clientCpf.includes(query) ||
+                clientPhone.includes(query) ||
+                displayId.includes(query) ||
+                device.includes(query);
 
-        const matchesStatus = statusFilter ? order.status === statusFilter : true;
+            const matchesStatus = statusFilter ? order.status === statusFilter : true;
 
-        // Filtro por data
-        let matchesDate = true;
-        if (dateFilter) {
-            const { start, end } = getDateRange(dateFilter);
-            const orderDate = new Date(order.createdAt);
-            if (start && end) {
-                matchesDate = orderDate >= start && orderDate < end;
-            } else if (start) {
-                matchesDate = orderDate >= start;
-            } else if (end) {
-                matchesDate = orderDate < end;
+            let matchesDate = true;
+            if (dateFilter) {
+                const { start, end } = getDateRange(dateFilter);
+                const orderDate = new Date(order.createdAt);
+                if (start && end) {
+                    matchesDate = orderDate >= start && orderDate < end;
+                } else if (start) {
+                    matchesDate = orderDate >= start;
+                } else if (end) {
+                    matchesDate = orderDate < end;
+                }
             }
-        }
 
-        return matchesSearch && matchesStatus && matchesDate;
-    });
+            return matchesSearch && matchesStatus && matchesDate;
+        })
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    // ✅ Paginação
+    const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ITEMS_PER_PAGE));
+    const safeCurrentPage = Math.min(currentPage, totalPages);
+    const paginatedOrders = filteredOrders.slice(
+        (safeCurrentPage - 1) * ITEMS_PER_PAGE,
+        safeCurrentPage * ITEMS_PER_PAGE
+    );
+    const rangeStart = filteredOrders.length === 0 ? 0 : (safeCurrentPage - 1) * ITEMS_PER_PAGE + 1;
+    const rangeEnd = Math.min(safeCurrentPage * ITEMS_PER_PAGE, filteredOrders.length);
 
     const handleWhatsApp = (e: React.MouseEvent, order: any) => {
         e.preventDefault();
@@ -141,8 +159,90 @@ export const OrdersList: React.FC = () => {
         window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, '_blank');
     };
 
+    // ✅ Componente de Paginação
+    const PaginationControls = () => {
+        const getPageNumbers = () => {
+            if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+            const pages: (number | '...')[] = [];
+            if (safeCurrentPage <= 4) {
+                pages.push(1, 2, 3, 4, 5, '...', totalPages);
+            } else if (safeCurrentPage >= totalPages - 3) {
+                pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+            } else {
+                pages.push(1, '...', safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1, '...', totalPages);
+            }
+            return pages;
+        };
+
+        return (
+            <div className="flex items-center justify-between gap-2 pt-4 border-t border-slate-100 dark:border-neutral-800 flex-wrap">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {filteredOrders.length === 0 ? 'Nenhuma ordem encontrada' : (
+                        <>Exibindo <span className="font-semibold text-slate-700 dark:text-slate-300">{rangeStart}–{rangeEnd}</span> de <span className="font-semibold text-slate-700 dark:text-slate-300">{filteredOrders.length}</span> ordens</>
+                    )}
+                </p>
+                {totalPages > 1 && (
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); scrollToTop(); }}
+                            disabled={safeCurrentPage === 1}
+                            className="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            title="Página Anterior"
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+
+                        {getPageNumbers().map((page, idx) =>
+                            page === '...' ? (
+                                <span key={`ellipsis-${idx}`} className="w-8 text-center text-slate-400 text-xs select-none">…</span>
+                            ) : (
+                                <button
+                                    key={page}
+                                    onClick={() => { setCurrentPage(page as number); scrollToTop(); }}
+                                    className={`size-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${
+                                        safeCurrentPage === page
+                                            ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                                            : 'border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-neutral-800'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            )
+                        )}
+
+                        <button
+                            onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); scrollToTop(); }}
+                            disabled={safeCurrentPage === totalPages}
+                            className="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            title="Próxima Página"
+                        >
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
         <>
+            {/* ✅ Scroll to Top FAB */}
+            <AnimatePresence>
+                {showScrollTop && (
+                    <motion.button
+                        initial={{ opacity: 0, scale: 0.7, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.7, y: 10 }}
+                        transition={{ type: 'spring', bounce: 0.4, duration: 0.4 }}
+                        onClick={scrollToTop}
+                        className="fixed bottom-28 right-5 z-40 size-12 flex items-center justify-center rounded-full bg-primary text-white shadow-xl shadow-primary/30 hover:brightness-110 active:scale-90 transition-all md:bottom-8 md:right-8"
+                        title="Voltar ao topo"
+                    >
+                        <ArrowUp size={20} />
+                    </motion.button>
+                )}
+            </AnimatePresence>
+
             <div className="max-w-[1200px] mx-auto flex flex-col gap-6 animate-fade-in">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
@@ -156,7 +256,7 @@ export const OrdersList: React.FC = () => {
                 </div>
 
                 <div className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 p-4 shadow-sm flex flex-col gap-4">
-                    {/* Linha 1: Busca */}
+                    {/* Busca */}
                     <div className="relative w-full">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <Search size={20} className="text-slate-400" />
@@ -170,7 +270,7 @@ export const OrdersList: React.FC = () => {
                         />
                     </div>
 
-                    {/* Filtros de Status e Data */}
+                    {/* Filtros */}
                     <div className="flex flex-col sm:flex-row gap-4">
                         <CustomDropdown
                             label="FILTRAR POR STATUS"
@@ -180,177 +280,167 @@ export const OrdersList: React.FC = () => {
                             icon={<Filter size={18} />}
                             className="w-full sm:w-64"
                         />
-
                         <CustomDropdown
                             label="FILTRAR POR PERÍODO"
                             options={dateOptions}
                             selectedValue={dateFilter}
                             onSelect={(val) => {
                                 setDateFilter(val);
-                                if (val !== 'custom') {
-                                    setStartDate('');
-                                    setEndDate('');
-                                }
+                                if (val !== 'custom') { setStartDate(''); setEndDate(''); }
                             }}
                             icon={<Calendar size={18} />}
                             className="w-full sm:w-64"
                         />
                     </div>
 
-                        {dateFilter === 'custom' && (
-                            <div className="flex flex-col sm:flex-row items-center gap-2 animate-fade-in w-full sm:w-auto">
-                                <div className="w-full sm:w-48">
-                                    <DatePicker 
-                                        value={startDate} 
-                                        onChange={setStartDate} 
-                                        placeholder="De"
-                                    />
-                                </div>
-                                <span className="text-slate-400 text-[10px] uppercase font-bold px-1">até</span>
-                                <div className="w-full sm:w-48">
-                                    <DatePicker 
-                                        value={endDate} 
-                                        onChange={setEndDate} 
-                                        placeholder="Até"
-                                    />
-                                </div>
+                    {dateFilter === 'custom' && (
+                        <div className="flex flex-col sm:flex-row items-center gap-2 animate-fade-in w-full sm:w-auto">
+                            <div className="w-full sm:w-48">
+                                <DatePicker value={startDate} onChange={setStartDate} placeholder="De" />
                             </div>
-                        )}
-
-                        {(statusFilter || dateFilter || searchQuery) && (
-                            <button
-                                onClick={() => {
-                                    setSearchQuery('');
-                                    setStatusFilter('');
-                                    setDateFilter('');
-                                    setStartDate('');
-                                    setEndDate('');
-                                }}
-                                className="text-sm text-primary hover:text-primary-dark font-medium transition-colors whitespace-nowrap self-start sm:self-center px-1"
-                            >
-                                Limpar filtros
-                            </button>
-                        )}
-
-                        <div className="text-sm text-slate-500 dark:text-slate-400 mt-2 px-1">
-                            Exibindo <span className="font-semibold text-slate-700 dark:text-slate-300">{filteredOrders.length}</span> de <span className="font-semibold text-slate-700 dark:text-slate-300">{orders.length}</span> ordens
+                            <span className="text-slate-400 text-[10px] uppercase font-bold px-1">até</span>
+                            <div className="w-full sm:w-48">
+                                <DatePicker value={endDate} onChange={setEndDate} placeholder="Até" />
+                            </div>
                         </div>
+                    )}
+
+                    {(statusFilter || dateFilter || searchQuery) && (
+                        <button
+                            onClick={() => { setSearchQuery(''); setStatusFilter(''); setDateFilter(''); setStartDate(''); setEndDate(''); }}
+                            className="text-sm text-primary hover:text-primary-dark font-medium transition-colors whitespace-nowrap self-start sm:self-center px-1"
+                        >
+                            Limpar filtros
+                        </button>
+                    )}
+
+                    {/* ✅ Contador atualizado */}
+                    <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400 px-1 flex-wrap gap-1">
+                        <span>
+                            {filteredOrders.length === 0 ? 'Nenhuma ordem encontrada' : (
+                                <>Exibindo <span className="font-semibold text-slate-700 dark:text-slate-300">{rangeStart}–{rangeEnd}</span> de <span className="font-semibold text-slate-700 dark:text-slate-300">{filteredOrders.length}</span> ordens</>
+                            )}
+                        </span>
+                        {totalPages > 1 && (
+                            <span className="text-xs bg-slate-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full font-medium">
+                                Página {safeCurrentPage} de {totalPages}
+                            </span>
+                        )}
                     </div>
+                </div>
 
                 {/* Desktop Table View */}
                 <div className="hidden md:block bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 shadow-sm overflow-hidden animate-fade-in-up">
-                    <div className="">
-                        <table className="min-w-full divide-y divide-slate-200 dark:divide-neutral-800">
-                            <thead className="bg-slate-50 dark:bg-neutral-900/50">
-                                <tr>
-                                    <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Cliente</th>
-                                    <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Aparelho & Problema</th>
-                                    <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Status</th>
-                                    <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Data</th>
-                                    <th className="px-3 py-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Valor</th>
-                                    <th className="px-3 py-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white dark:bg-surface-dark divide-y divide-slate-200 dark:divide-neutral-800">
-                                {filteredOrders.length > 0 ? (
-                                    filteredOrders.map(order => (
-                                        <tr key={order.id} onClick={() => navigate(`/orders/${order.id}`)} className="hover:bg-slate-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer group">
-                                            <td className="px-3 py-4 whitespace-nowrap">
-                                                <div className="flex items-center">
-                                                    <div className="size-8 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold mr-3 shrink-0 shadow-sm border border-blue-200 dark:border-blue-900/30">
-                                                        {getClientName(order.clientId).substring(0, 2).toUpperCase()}
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-bold text-slate-900 dark:text-white">{getClientName(order.clientId)}</span>
-                                                        <span className="text-[9px] font-mono font-bold text-slate-400 bg-slate-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded-md mt-1 w-fit">#{order.displayId || order.id.slice(0, 8)}</span>
-                                                    </div>
+                    <table className="min-w-full divide-y divide-slate-200 dark:divide-neutral-800">
+                        <thead className="bg-slate-50 dark:bg-neutral-900/50">
+                            <tr>
+                                <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Cliente</th>
+                                <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Aparelho & Problema</th>
+                                <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Status</th>
+                                <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Data</th>
+                                <th className="px-3 py-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Valor</th>
+                                <th className="px-3 py-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-surface-dark divide-y divide-slate-200 dark:divide-neutral-800">
+                            {paginatedOrders.length > 0 ? (
+                                paginatedOrders.map(order => (
+                                    <tr key={order.id} onClick={() => navigate(`/orders/${order.id}`)} className="hover:bg-slate-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer group">
+                                        <td className="px-3 py-4 whitespace-nowrap">
+                                            <div className="flex items-center">
+                                                <div className="size-8 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold mr-3 shrink-0 shadow-sm border border-blue-200 dark:border-blue-900/30">
+                                                    {getClientName(order.clientId).substring(0, 2).toUpperCase()}
                                                 </div>
-                                            </td>
-                                            <td className="px-3 py-4">
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-medium text-slate-900 dark:text-white line-clamp-1">
-                                                        {order.serviceType === 'VENDA_DIRETA' ? 'Venda de Produto' : order.deviceModel}
-                                                    </span>
-                                                    <span className="text-xs text-slate-500 dark:text-slate-500 line-clamp-1" title={order.serviceType === 'VENDA_DIRETA' ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ')) : order.issueDescription}>
-                                                        {order.serviceType === 'VENDA_DIRETA'
-                                                            ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ') || 'Produtos Diversos')
-                                                            : order.issueDescription}
-                                                    </span>
+                                                    <span className="text-sm font-bold text-slate-900 dark:text-white">{getClientName(order.clientId)}</span>
+                                                    <span className="text-[9px] font-mono font-bold text-slate-400 bg-slate-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded-md mt-1 w-fit">#{order.displayId || order.id.slice(0, 8)}</span>
                                                 </div>
-                                            </td>
-                                            <td className="px-3 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                                                    {order.status}
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium text-slate-900 dark:text-white line-clamp-1">
+                                                    {order.serviceType === 'VENDA_DIRETA' ? 'Venda de Produto' : order.deviceModel}
                                                 </span>
-                                            </td>
-                                            <td className="px-3 py-4 whitespace-nowrap text-[11px] leading-tight text-slate-500 dark:text-slate-400">
-                                                <div className="flex flex-col">
-                                                    <span>{new Date(order.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
-                                                    <span className="opacity-60 mt-0.5">{new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-3 py-4 whitespace-nowrap text-right">
-                                                <div className="flex flex-col items-end gap-1">
-                                                    <span className="text-sm font-bold text-slate-900 dark:text-white">R$ {order.total.toFixed(2)}</span>
-                                                    {order.status === OrderStatus.COMPLETED && (order.paymentMethod || (order.payments && order.payments.length > 0)) && (
-                                                        <span className="text-[9px] font-black uppercase text-green-600 bg-green-50 px-1.5 py-0.5 rounded flex items-center gap-1 border border-green-100">
-                                                            💰 Pago
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <div className="flex items-center justify-end gap-1.5">
-                                                    <button
-                                                        onClick={(e) => handleWhatsApp(e, order)}
-                                                        className="size-9 flex items-center justify-center rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-all active:scale-95 border border-green-100 dark:border-green-900/30 shadow-sm"
-                                                        title="WhatsApp"
-                                                    >
-                                                        <img src="/whatsapp.png" alt="WhatsApp" className="size-5 object-contain" />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            navigate(`/orders/${order.id}/edit`);
-                                                        }}
-                                                        className="size-9 flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all active:scale-95 border border-blue-100 dark:border-blue-900/30 shadow-sm"
-                                                        title="Editar Ordem"
-                                                    >
-                                                        <Edit2 size={16} />
-                                                    </button>
-                                                    <Link 
-                                                        to={`/orders/${order.id}`} 
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        className="size-9 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-400 dark:text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-neutral-700 transition-all active:scale-95 border border-slate-100 dark:border-neutral-700 shadow-sm"
-                                                        title="Ver Detalhes"
-                                                    >
-                                                        <FileText size={16} />
-                                                    </Link>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
-                                            <div className="flex flex-col items-center justify-center opacity-70">
-                                                <Search size={48} className="mb-4 text-slate-300 dark:text-slate-600" />
-                                                <p className="text-lg font-medium text-slate-600 dark:text-slate-300">Nenhuma ordem encontrada</p>
-                                                <p className="text-sm text-slate-400">Tente ajustar seus filtros de busca.</p>
+                                                <span className="text-xs text-slate-500 dark:text-slate-500 line-clamp-1" title={order.serviceType === 'VENDA_DIRETA' ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ')) : order.issueDescription}>
+                                                    {order.serviceType === 'VENDA_DIRETA'
+                                                        ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ') || 'Produtos Diversos')
+                                                        : order.issueDescription}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-4 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                                                {order.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-3 py-4 whitespace-nowrap text-[11px] leading-tight text-slate-500 dark:text-slate-400">
+                                            <div className="flex flex-col">
+                                                <span>{new Date(order.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
+                                                <span className="opacity-60 mt-0.5">{new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-4 whitespace-nowrap text-right">
+                                            <div className="flex flex-col items-end gap-1">
+                                                <span className="text-sm font-bold text-slate-900 dark:text-white">R$ {order.total.toFixed(2)}</span>
+                                                {order.status === OrderStatus.COMPLETED && (order.paymentMethod || (order.payments && order.payments.length > 0)) && (
+                                                    <span className="text-[9px] font-black uppercase text-green-600 bg-green-50 px-1.5 py-0.5 rounded flex items-center gap-1 border border-green-100">
+                                                        💰 Pago
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                <button
+                                                    onClick={(e) => handleWhatsApp(e, order)}
+                                                    className="size-9 flex items-center justify-center rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-all active:scale-95 border border-green-100 dark:border-green-900/30 shadow-sm"
+                                                    title="WhatsApp"
+                                                >
+                                                    <img src="/whatsapp.png" alt="WhatsApp" className="size-5 object-contain" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/orders/${order.id}/edit`); }}
+                                                    className="size-9 flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all active:scale-95 border border-blue-100 dark:border-blue-900/30 shadow-sm"
+                                                    title="Editar Ordem"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                <Link
+                                                    to={`/orders/${order.id}`}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="size-9 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-400 dark:text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-neutral-700 transition-all active:scale-95 border border-slate-100 dark:border-neutral-700 shadow-sm"
+                                                    title="Ver Detalhes"
+                                                >
+                                                    <FileText size={16} />
+                                                </Link>
                                             </div>
                                         </td>
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                                        <div className="flex flex-col items-center justify-center opacity-70">
+                                            <Search size={48} className="mb-4 text-slate-300 dark:text-slate-600" />
+                                            <p className="text-lg font-medium text-slate-600 dark:text-slate-300">Nenhuma ordem encontrada</p>
+                                            <p className="text-sm text-slate-400">Tente ajustar seus filtros de busca.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                    {/* ✅ Paginação Desktop */}
+                    <div className="px-4 py-3 border-t border-slate-100 dark:border-neutral-800">
+                        <PaginationControls />
                     </div>
                 </div>
 
                 {/* Mobile Card View */}
                 <div className="md:hidden flex flex-col gap-4">
-                    {filteredOrders.length > 0 ? (
-                        filteredOrders.map(order => {
+                    {paginatedOrders.length > 0 ? (
+                        paginatedOrders.map(order => {
                             const MotionLink = motion(Link);
                             return (
                                 <MotionLink
@@ -360,74 +450,63 @@ export const OrdersList: React.FC = () => {
                                     key={order.id}
                                     className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 p-4 shadow-sm transition-all"
                                 >
-                                <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <span className="text-xs font-mono text-slate-500 dark:text-slate-400 mb-1 block">#{order.displayId || order.id.slice(0, 8)}</span>
-                                        <h3 className="font-bold text-slate-900 dark:text-white">
-                                            {order.serviceType === 'VENDA_DIRETA' ? 'Venda de Produto' : order.deviceModel}
-                                        </h3>
-                                    </div>
-                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${getStatusColor(order.status)}`}>
-                                        {order.status}
-                                    </span>
-                                </div>
-
-                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2 bg-slate-50 dark:bg-neutral-900 p-2 rounded-lg border border-slate-100 dark:border-neutral-800 italic">
-                                    "{order.serviceType === 'VENDA_DIRETA'
-                                        ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ') || 'Produtos Diversos')
-                                        : order.issueDescription}"
-                                </p>
-
-                                <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-neutral-800">
-                                    <div className="flex items-center gap-2">
-                                        <div className="size-6 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[10px] font-bold shrink-0">
-                                            {getClientName(order.clientId).substring(0, 2).toUpperCase()}
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div>
+                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400 mb-1 block">#{order.displayId || order.id.slice(0, 8)}</span>
+                                            <h3 className="font-bold text-slate-900 dark:text-white">
+                                                {order.serviceType === 'VENDA_DIRETA' ? 'Venda de Produto' : order.deviceModel}
+                                            </h3>
                                         </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-medium text-slate-900 dark:text-white">{getClientName(order.clientId)}</span>
-                                            <span className="text-[10px] text-slate-400">
-                                                {new Date(order.createdAt).toLocaleDateString('pt-BR')}
-                                            </span>
-                                        </div>
+                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${getStatusColor(order.status)}`}>
+                                            {order.status}
+                                        </span>
                                     </div>
-                                    <span className="text-sm font-bold text-slate-900 dark:text-white bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2 py-1 rounded-lg">
-                                        R$ {order.total.toFixed(2)}
-                                    </span>
-                                </div>
 
-                                {/* Quick Actions Row */}
-                                <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-neutral-800">
-                                    <button
-                                        onClick={(e) => handleWhatsApp(e, order)}
-                                        className="flex-[2] flex items-center justify-center gap-2 py-2.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-green-100 dark:border-green-900/30"
-                                    >
-                                        <img src="/whatsapp.png" alt="WhatsApp" className="size-5 object-contain" />
-                                        WhatsApp
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            navigate(`/orders/${order.id}`);
-                                        }}
-                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-blue-100 dark:border-blue-900/30"
-                                    >
-                                        <FileText size={16} />
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            navigate(`/orders/${order.id}/edit`);
-                                        }}
-                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 dark:bg-neutral-800 text-slate-600 dark:text-slate-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-slate-100 dark:border-neutral-700"
-                                    >
-                                        <Edit2 size={16} />
-                                    </button>
-                                </div>
-                            </MotionLink>
-                        )
-                    })
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2 bg-slate-50 dark:bg-neutral-900 p-2 rounded-lg border border-slate-100 dark:border-neutral-800 italic">
+                                        "{order.serviceType === 'VENDA_DIRETA'
+                                            ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ') || 'Produtos Diversos')
+                                            : order.issueDescription}"
+                                    </p>
+
+                                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-neutral-800">
+                                        <div className="flex items-center gap-2">
+                                            <div className="size-6 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[10px] font-bold shrink-0">
+                                                {getClientName(order.clientId).substring(0, 2).toUpperCase()}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-medium text-slate-900 dark:text-white">{getClientName(order.clientId)}</span>
+                                                <span className="text-[10px] text-slate-400">{new Date(order.createdAt).toLocaleDateString('pt-BR')}</span>
+                                            </div>
+                                        </div>
+                                        <span className="text-sm font-bold bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2 py-1 rounded-lg">
+                                            R$ {order.total.toFixed(2)}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-neutral-800">
+                                        <button
+                                            onClick={(e) => handleWhatsApp(e, order)}
+                                            className="flex-[2] flex items-center justify-center gap-2 py-2.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-green-100 dark:border-green-900/30"
+                                        >
+                                            <img src="/whatsapp.png" alt="WhatsApp" className="size-5 object-contain" />
+                                            WhatsApp
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/orders/${order.id}`); }}
+                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-blue-100 dark:border-blue-900/30"
+                                        >
+                                            <FileText size={16} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/orders/${order.id}/edit`); }}
+                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 dark:bg-neutral-800 text-slate-600 dark:text-slate-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-slate-100 dark:border-neutral-700"
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
+                                    </div>
+                                </MotionLink>
+                            );
+                        })
                     ) : (
                         <div className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 border-dashed p-8 text-center">
                             <div className="flex flex-col items-center justify-center opacity-70">
@@ -437,10 +516,15 @@ export const OrdersList: React.FC = () => {
                             </div>
                         </div>
                     )}
+
+                    {/* ✅ Paginação Mobile */}
+                    {paginatedOrders.length > 0 && (
+                        <div className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-neutral-800 p-4 shadow-sm">
+                            <PaginationControls />
+                        </div>
+                    )}
                 </div>
             </div>
-
-            {/* FAB Mobile removed - integrated into MobileNav */}
         </>
     );
 };
