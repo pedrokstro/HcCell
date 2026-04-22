@@ -11,6 +11,7 @@ import { InventoryList } from './pages/inventory/InventoryList';
 import { ProductForm } from './pages/inventory/ProductForm';
 import { ProductDetails } from './pages/inventory/ProductDetails';
 import { CategoriesList } from './pages/inventory/CategoriesList';
+import { Warranties } from './pages/Warranties';
 import { OrdersList } from './pages/orders/OrdersList';
 import { OrderDetails } from './pages/orders/OrderDetails';
 import { OrderForm } from './pages/orders/OrderForm';
@@ -77,6 +78,7 @@ const AppRoutes: React.FC = () => {
 
       <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
       <Route path="/sales" element={<ProtectedRoute><SalesPoint /></ProtectedRoute>} />
+      <Route path="/warranties" element={<ProtectedRoute><Warranties /></ProtectedRoute>} />
 
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/logo-studio" element={<LogoStudio />} />

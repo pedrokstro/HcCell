@@ -102,3 +102,15 @@ export interface Category {
     productCount?: number;
     createdAt?: string;
 }
+
+export interface WarrantyRecord {
+    id: string;
+    orderId: string;
+    clientId?: string;
+    expiryDate: string;
+    notified: boolean;
+    dismissed: boolean;
+    dismissedAt?: string;
+    notes?: string;
+    createdAt: string;
+}

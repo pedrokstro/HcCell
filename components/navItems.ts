@@ -7,6 +7,7 @@ import {
     BarChart3,
     Settings,
     ShoppingCart,
+    ShieldCheck,
 } from 'lucide-react';
 
 export const navItems = [
@@ -16,6 +17,7 @@ export const navItems = [
     { icon: Wrench, label: 'Ordens de Serviço', path: '/orders' },
     { icon: Package, label: 'Estoque', path: '/inventory' },
     { icon: Tag, label: 'Categorias', path: '/inventory/categories' },
+    { icon: ShieldCheck, label: 'Garantias', path: '/warranties' },
     { icon: BarChart3, label: 'Relatórios', path: '/reports' },
     { icon: Settings, label: 'Configurações', path: '/settings' },
 ];

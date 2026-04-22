@@ -11,15 +11,47 @@ import { DatePicker } from '../components/DatePicker';
 import { Skeleton } from '../components/Skeleton';
 
 export const Dashboard: React.FC = () => {
-  const { orders, products, clients, loading } = useApp();
+  const { orders, products, clients, loading, warrantyRecords, dismissWarranty, dismissMultipleWarranties } = useApp();
   const navigate = useNavigate();
-  const [selectedStat, setSelectedStat] = React.useState<'sales' | 'awaiting' | 'completed' | 'lowStock' | 'costs' | null>(null);
+  const [selectedStat, setSelectedStat] = React.useState<'sales' | 'awaiting' | 'completed' | 'lowStock' | 'costs' | 'expiredWarranties' | 'expiredHistory' | null>(null);
   const [isDateSheetOpen, setIsDateSheetOpen] = React.useState(false);
 
+  const handleDismissWarranty = async (orderId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    await dismissWarranty(orderId);
+  };
+
+  const handleDismissAllWarranties = async (orderIds: string[]) => {
+    await dismissMultipleWarranties(orderIds);
+    setSelectedStat(null);
+  };
   const [dateFilter, setDateFilter] = React.useState<'today' | 'yesterday' | 'week' | 'month' | 'all' | 'custom'>('today');
   const [customDate, setCustomDate] = React.useState<string>(new Date().toISOString().split('T')[0]);
   const [customEndDate, setCustomEndDate] = React.useState<string>(new Date().toISOString().split('T')[0]);
   const [searchQuery, setSearchQuery] = React.useState('');
+
+  // Calculate All Warranties and identify which are expired
+  const allOrdersWithWarranty = React.useMemo(() => {
+    return orders.filter(o => 
+      o.status === OrderStatus.COMPLETED && 
+      !o.noWarranty && 
+      o.warrantyEnd
+    ).sort((a, b) => new Date(b.warrantyEnd!).getTime() - new Date(a.warrantyEnd!).getTime());
+  }, [orders]);
+
+  const allExpiredWarranties = React.useMemo(() => {
+    const now = new Date().getTime();
+    return allOrdersWithWarranty.filter(o => 
+      new Date(o.warrantyEnd!).getTime() < now
+    );
+  }, [allOrdersWithWarranty]);
+
+  const activeExpiredWarranties = React.useMemo(() => {
+    return allExpiredWarranties.filter(o => {
+      const record = warrantyRecords.find(r => r.orderId === o.id);
+      return !record || !record.dismissed;
+    });
+  }, [allExpiredWarranties, warrantyRecords]);
 
   const dateFilterOptions = [
     { value: 'today', label: 'Hoje', icon: <Clock size={18} /> },
@@ -89,16 +121,18 @@ export const Dashboard: React.FC = () => {
     order.issueDescription.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Modal Component
+  // Modal/Bottom Sheet Component
   const StatsModal = () => {
     if (!selectedStat) return null;
 
-    const titles = {
+    const titles: Record<string, string> = {
       sales: 'Vendas Totais',
       awaiting: 'Aguardando Reparo',
       completed: 'Serviços Concluídos',
       lowStock: 'Estoque Baixo',
-      costs: 'Custo Total (Peças)'
+      costs: 'Custo Total (Peças)',
+      expiredWarranties: 'Garantias Vencidas Recentes',
+      expiredHistory: 'Histórico de Garantias'
     };
 
     const getStatData = () => {
@@ -111,7 +145,6 @@ export const Dashboard: React.FC = () => {
             sub: new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' -') 
           }));
         case 'awaiting':
-          // Show ALL active orders regardless of date filter
           return orders.filter(o => o.status === OrderStatus.PENDING || o.status === OrderStatus.IN_PROGRESS || o.status === OrderStatus.WAITING_WITHDRAWAL)
             .map(o => {
               const client = clients.find(c => c.id === o.clientId);
@@ -149,6 +182,31 @@ export const Dashboard: React.FC = () => {
               sub: `OS #${order.id.slice(0, 8)}`
             };
           }).filter(item => item.value !== 'R$ 0.00');
+        case 'expiredWarranties':
+          return activeExpiredWarranties.map(o => {
+            const client = clients.find(c => c.id === o.clientId);
+            return {
+              id: o.id,
+              label: o.deviceModel,
+              value: new Date(o.warrantyEnd!).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+              sub: `${client?.name || 'Cliente'} • OS #${o.displayId || o.id.slice(0, 8)}`,
+              expired: true
+            };
+          });
+        case 'expiredHistory':
+          return allOrdersWithWarranty.map(o => {
+            const client = clients.find(c => c.id === o.clientId);
+            const endDate = new Date(o.warrantyEnd!);
+            endDate.setHours(23, 59, 59, 999);
+            const isExpired = endDate < new Date();
+            return {
+              id: o.id,
+              label: o.deviceModel,
+              value: new Date(o.warrantyEnd!).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+              sub: `${client?.name || 'Cliente'} • OS #${o.displayId || o.id.slice(0, 8)}`,
+              expired: isExpired
+            };
+          });
         case 'lowStock':
           return products.filter(p => p.quantity <= (p.minStockLevel || 5))
             .map(p => ({ label: p.name, value: `${p.quantity} un`, sub: `Mín: ${p.minStockLevel || 5}` }));
@@ -158,11 +216,12 @@ export const Dashboard: React.FC = () => {
     };
 
     const data = getStatData();
+    const isMobile = window.innerWidth < 640;
 
     return (
       <AnimatePresence>
         {selectedStat && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-hidden">
+          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 overflow-hidden">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -171,16 +230,21 @@ export const Dashboard: React.FC = () => {
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="relative bg-white dark:bg-surface-dark rounded-[32px] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 dark:border-neutral-800 flex flex-col max-h-[90vh]"
+              initial={isMobile ? { y: "100%" } : { scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              exit={isMobile ? { y: "100%" } : { scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300, mass: 0.8 }}
+              className="relative bg-white dark:bg-surface-dark rounded-t-[32px] sm:rounded-[32px] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 dark:border-neutral-800 flex flex-col max-h-[85vh] sm:max-h-[90vh]"
             >
-              <div className="px-8 py-6 border-b border-slate-100 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-surface-dark relative z-10">
+              {/* Drag Handle for Mobile */}
+              <div className="sm:hidden flex justify-center pt-4 pb-1">
+                <div className="w-12 h-1.5 bg-slate-200 dark:bg-neutral-800 rounded-full" />
+              </div>
+
+              <div className="px-6 sm:px-8 py-5 sm:py-6 border-b border-slate-100 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-surface-dark relative z-10">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">Estatísticas</span>
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{titles[selectedStat]}</h3>
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{titles[selectedStat]}</h3>
                 </div>
                 <button 
                   onClick={() => setSelectedStat(null)} 
@@ -190,7 +254,7 @@ export const Dashboard: React.FC = () => {
                 </button>
               </div>
               
-              <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
+              <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar flex-1">
                 <div className="flex flex-col gap-4">
                   {data.length > 0 ? data.map((item, idx) => {
                     const MotionLink = motion(Link);
@@ -205,7 +269,14 @@ export const Dashboard: React.FC = () => {
                         onClick={() => setSelectedStat(null)}
                       >
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{item.label}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{item.label}</span>
+                            {item.expired ? (
+                              <span className="text-[10px] px-2 py-0.5 bg-red-500 text-white font-bold uppercase rounded-full shadow-sm">Vencida</span>
+                            ) : (selectedStat === 'expiredHistory' || selectedStat === 'expiredWarranties') ? (
+                              <span className="text-[10px] px-2 py-0.5 bg-emerald-500 text-white font-bold uppercase rounded-full shadow-sm">Ativa</span>
+                            ) : null}
+                          </div>
                           <span className="text-xs text-slate-500 font-medium">{item.sub}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -226,7 +297,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="px-8 py-6 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 relative z-10">
+              <div className="px-6 sm:px-8 py-5 sm:py-6 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 relative z-10">
                 <button
                   onClick={() => setSelectedStat(null)}
                   className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-sm transition-all active:scale-95 shadow-xl shadow-slate-900/20"
@@ -332,13 +403,41 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-
+      {/* Warranty Notification Banner */}
+      <AnimatePresence>
+        {activeExpiredWarranties.length > 0 && !searchQuery && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="hidden sm:flex bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-3xl p-5 sm:p-6 flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
+          >
+             <div className="flex items-center gap-4">
+                <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-2xl text-red-600 dark:text-red-400">
+                  <AlertTriangle size={28} />
+                </div>
+                <div>
+                  <h4 className="text-red-800 dark:text-red-400 font-black text-lg tracking-tight">Garantias Vencidas</h4>
+                  <p className="text-red-600 dark:text-red-300 text-sm font-medium mt-0.5">Você tem {activeExpiredWarranties.length} garantia(s) que expiraram e precisam ser verificadas.</p>
+                </div>
+             </div>
+             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+               <button onClick={() => setSelectedStat('expiredWarranties')} className="px-5 py-2.5 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-sm w-full sm:w-auto flex items-center justify-center gap-2">
+                 <Eye size={16} /> Ver Detalhes
+               </button>
+               <button onClick={() => handleDismissAllWarranties(activeExpiredWarranties.map(o => o.id))} className="px-5 py-2.5 bg-white dark:bg-neutral-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-neutral-700 rounded-xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-neutral-700 transition-all shadow-sm w-full sm:w-auto">
+                 Descartar Todas
+               </button>
+             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-2 md:mb-0"
+        className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-2 md:mb-0"
       >
         {/* Sales */}
         <motion.button
@@ -348,7 +447,7 @@ export const Dashboard: React.FC = () => {
           whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setSelectedStat('sales')}
-          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 transition-all group relative overflow-hidden"
         >
           <div className="absolute right-[0%] top-[5%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
             <DollarSign size={80} className="dark:text-white" />
@@ -379,7 +478,7 @@ export const Dashboard: React.FC = () => {
           whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setSelectedStat('costs')}
-          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 transition-all group relative overflow-hidden"
         >
           <div className="absolute right-[0%] top-[5%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
             <TrendingDown size={80} className="dark:text-white" />
@@ -409,7 +508,7 @@ export const Dashboard: React.FC = () => {
           whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setSelectedStat('awaiting')}
-          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 transition-all group relative overflow-hidden"
         >
           <div className="absolute right-[0%] top-[5%] p-3 opacity-10 animate-spin-slow dark:opacity-20 pointer-events-none">
             <Clock size={80} className="dark:text-white" />
@@ -437,7 +536,7 @@ export const Dashboard: React.FC = () => {
           whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setSelectedStat('completed')}
-          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 transition-all group relative overflow-hidden"
         >
           <div className="absolute right-[0%] top-[5%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
             <CheckCircle size={80} className="dark:text-white" />
@@ -461,12 +560,26 @@ export const Dashboard: React.FC = () => {
       {/* Recent Orders Table */}
       <div className="flex flex-col gap-4 animate-fade-in-up" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>
         <div className="flex items-center justify-between">
-          <h3 className="text-slate-900 dark:text-white text-lg font-bold tracking-tight">
+          <h3 className="text-slate-900 dark:text-white text-[15px] sm:text-lg font-bold tracking-tight whitespace-nowrap">
             {searchQuery ? 'Resultados da Busca' : 'Histórico de Ordens'}
           </h3>
-          <Link to="/orders" className="text-primary text-xs font-black uppercase tracking-widest hover:underline flex items-center gap-1">
-            Ver Lista Completa <ChevronRight size={14} />
-          </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            {allExpiredWarranties.length > 0 && (
+              <button 
+                onClick={() => setSelectedStat('expiredHistory')} 
+                className="flex items-center gap-1.5 px-3 py-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-all active:scale-95 border border-orange-100 dark:border-orange-900/30 shadow-sm"
+              >
+                <AlertTriangle size={14} className="sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Histórico de</span> Garantias
+              </button>
+            )}
+            <Link 
+              to="/orders" 
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all active:scale-95 border border-blue-100 dark:border-blue-900/30 shadow-sm"
+            >
+              <span className="hidden sm:inline">Ver Lista</span> Completa <ChevronRight size={14} className="sm:w-4 sm:h-4" />
+            </Link>
+          </div>
         </div>
         {/* Desktop Table View */}
         <div className="hidden md:block bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-slate-200 dark:border-neutral-800 overflow-hidden">

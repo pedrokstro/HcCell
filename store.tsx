@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from './lib/supabase';
-import { Client, Product, ServiceOrder, OrderStatus, User, Category, ProductMovement, MovementType } from './types';
+import { Client, Product, ServiceOrder, OrderStatus, User, Category, ProductMovement, MovementType, WarrantyRecord } from './types';
 
 interface AppContextType {
     clients: Client[];
@@ -11,6 +11,7 @@ interface AppContextType {
     loading: boolean;
     authChecked: boolean;
     productMovements: ProductMovement[];
+    warrantyRecords: WarrantyRecord[];
     addClient: (client: Partial<Client>) => Promise<void>;
     updateClient: (client: Client) => Promise<void>;
     addProduct: (product: Partial<Product>) => Promise<void>;
@@ -27,6 +28,8 @@ interface AppContextType {
     toggleTheme: () => void;
     isSidebarCollapsed: boolean;
     toggleSidebar: () => void;
+    dismissWarranty: (orderId: string) => Promise<void>;
+    dismissMultipleWarranties: (orderIds: string[]) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -89,6 +92,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [orders, setOrders] = useState<ServiceOrder[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [productMovements, setProductMovements] = useState<ProductMovement[]>([]);
+    const [warrantyRecords, setWarrantyRecords] = useState<WarrantyRecord[]>([]);
     const lastFetchRef = React.useRef<number>(0);
 
     useEffect(() => {
@@ -179,12 +183,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setLoading(true);
         lastFetchRef.current = Date.now();
         try {
-            const [clientsRes, productsRes, ordersRes, categoriesRes, productMovementsRes] = await Promise.all([
+            const [clientsRes, productsRes, ordersRes, categoriesRes, productMovementsRes, warrantyRes] = await Promise.all([
                 supabase.from('clients').select('*').order('created_at', { ascending: false }),
                 supabase.from('products').select('*').order('created_at', { ascending: false }),
                 supabase.from('service_orders').select('*').order('created_at', { ascending: false }),
                 supabase.from('categories').select('*').order('created_at', { ascending: false }),
-                supabase.from('product_movements').select('*').order('created_at', { ascending: false })
+                supabase.from('product_movements').select('*').order('created_at', { ascending: false }),
+                supabase.from('warranty_records').select('*')
             ]);
 
             if (clientsRes.data) {
@@ -249,6 +254,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     note: m.note,
                     createdAt: m.created_at,
                     technicianName: m.technician_name
+                })));
+            }
+
+            if (warrantyRes.data) {
+                setWarrantyRecords(warrantyRes.data.map(w => ({
+                    ...w,
+                    orderId: w.order_id,
+                    clientId: w.client_id,
+                    expiryDate: w.expiry_date,
+                    dismissedAt: w.dismissed_at,
+                    createdAt: w.created_at
                 })));
             }
         } catch (error) {
@@ -484,6 +500,43 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         fetchAllData(true);
     };
 
+    const dismissWarranty = async (orderId: string) => {
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
+
+        const { error } = await supabase.from('warranty_records').upsert({
+            order_id: orderId,
+            client_id: order.clientId,
+            expiry_date: order.warrantyEnd,
+            dismissed: true,
+            dismissed_at: new Date().toISOString()
+        }, { onConflict: 'order_id' });
+
+        if (error) throw error;
+        fetchAllData(true);
+    };
+
+    const dismissMultipleWarranties = async (orderIds: string[]) => {
+        const recordsToUpsert = orderIds.map(id => {
+            const order = orders.find(o => o.id === id);
+            if (!order) return null;
+            return {
+                order_id: id,
+                client_id: order.clientId,
+                expiry_date: order.warrantyEnd,
+                dismissed: true,
+                dismissed_at: new Date().toISOString()
+            };
+        }).filter(r => r !== null);
+
+        if (recordsToUpsert.length === 0) return;
+
+        const { error } = await supabase.from('warranty_records').upsert(recordsToUpsert, { onConflict: 'order_id' });
+        if (error) throw error;
+        
+        fetchAllData(true);
+    };
+
     return (
         <AppContext.Provider value={{
             clients, products, orders, categories, user, loading, productMovements,
@@ -493,7 +546,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             isAuthenticated, login, logout,
             darkMode, toggleTheme,
             isSidebarCollapsed, toggleSidebar,
-            authChecked
+            authChecked,
+            warrantyRecords, dismissWarranty, dismissMultipleWarranties
         }}>
             {children}
         </AppContext.Provider>

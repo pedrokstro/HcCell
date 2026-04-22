@@ -15,7 +15,8 @@ import {
     Users,
     Package,
     Tags,
-    ShoppingBag
+    ShoppingBag,
+    ShieldCheck
 } from 'lucide-react';
 import { useApp } from '../store';
 
@@ -36,6 +37,7 @@ export const MobileNav: React.FC = () => {
         { label: 'Clientes', icon: <Users size={20} />, to: '/clients', color: 'text-indigo-500', bg: 'bg-indigo-500/10', sub: 'Gerenciar Base' },
         { label: 'Estoque', icon: <Package size={20} />, to: '/inventory', color: 'text-amber-500', bg: 'bg-amber-500/10', sub: 'Produtos' },
         { label: 'Categorias', icon: <Tags size={20} />, to: '/inventory/categories', color: 'text-purple-500', bg: 'bg-purple-500/10', sub: 'Organização' },
+        { label: 'Garantias', icon: <ShieldCheck size={20} />, to: '/warranties', color: 'text-primary', bg: 'bg-primary/10', sub: 'Pós-Venda' },
         { label: 'Configurações', icon: <SettingsIcon size={20} />, to: '/settings', color: 'text-slate-500', bg: 'bg-slate-500/10', sub: 'Sistema' },
     ];
 

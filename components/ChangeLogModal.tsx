@@ -5,6 +5,32 @@ import { BottomSheet } from './BottomSheet';
 
 const CHANGELOG = [
     {
+        version: '2.5.0',
+        date: '22 Abr 2026',
+        changes: [
+            {
+                title: "Garantia Pro 🛡️",
+                description: "Novo sistema de descarte em lote! Agora você pode limpar todas as notificações de uma vez sem travamentos ou 'piscadas' na tela.",
+                type: "new"
+            },
+            {
+                title: "Mobile Dashboard 📱",
+                description: "Estatísticas agora abrem em um Bottom Sheet fluido no celular. Otimizamos o espaço ocultando cards secundários e ajustando fontes para evitar quebras.",
+                type: "improvement"
+            },
+            {
+                title: "Supabase Sync ☁️",
+                description: "Sincronização total das garantias com o banco de dados. Suas notificações descartadas agora são lembradas em qualquer dispositivo.",
+                type: "new"
+            },
+            {
+                title: "Visual Premium ✨",
+                description: "Refinamos o hover dos cards de estatísticas e transformamos os botões em 'Chips' táteis, perfeitos para telas touch.",
+                type: "improvement"
+            }
+        ]
+    },
+    {
         version: '2.4.0',
         date: '10 Abr 2026',
         changes: [
