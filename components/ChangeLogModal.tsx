@@ -24,6 +24,11 @@ const CHANGELOG = [
                 type: "new"
             },
             {
+                title: "Página de Garantias 📑",
+                description: "Nova seção dedicada no menu lateral para gerenciar todas as suas garantias ativas e vencidas com filtros inteligentes e busca rápida.",
+                type: "new"
+            },
+            {
                 title: "Visual Premium ✨",
                 description: "Refinamos o hover dos cards de estatísticas e transformamos os botões em 'Chips' táteis, perfeitos para telas touch.",
                 type: "improvement"
