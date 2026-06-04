@@ -8,9 +8,9 @@ interface AnimatedLogoProps {
     layoutId?: string;
 }
 
-export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ 
-    size = 'md', 
-    className = '', 
+export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({
+    size = 'md',
+    className = '',
     forceLight = false,
     layoutId
 }) => {
@@ -26,8 +26,8 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({
     const darkClasses = forceLight ? '' : 'dark:brightness-0 dark:invert';
 
     return (
-        <motion.div 
-            layoutId={layoutId} 
+        <motion.div
+            layoutId={layoutId}
             className={`relative ${sizeClasses[size] || 'w-48'} ${className}`}
         >
             {/* Base: Celular + Texto HC CELL */}
@@ -49,7 +49,7 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({
                     transformOrigin: 'center center'
                 }}
             />
- 
+
             {/* Engrenagem Grande (com Chave) - Agora em Baixo */}
             <img
                 src="/engrenagem-grande.png"
