@@ -151,23 +151,6 @@ export const ClientsList: React.FC = () => {
   return (
     <>
       <div className="flex flex-col gap-8 animate-fade-in">
-        {/* Breadcrumbs */}
-        <nav aria-label="Breadcrumb" className="hidden sm:flex text-sm">
-          <ol className="inline-flex items-center space-x-1 md:space-x-3">
-            <li className="inline-flex items-center">
-              <Link to="/dashboard" className="inline-flex items-center text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary">
-                Início
-              </Link>
-            </li>
-            <li>
-              <div className="flex items-center">
-                <span className="text-slate-400 mx-2">/</span>
-                <span className="text-slate-900 dark:text-white font-medium">Clientes</span>
-              </div>
-            </li>
-          </ol>
-        </nav>
-
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
