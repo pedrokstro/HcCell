@@ -14,6 +14,7 @@ interface AppContextType {
     warrantyRecords: WarrantyRecord[];
     addClient: (client: Partial<Client>) => Promise<void>;
     updateClient: (client: Client) => Promise<void>;
+    deleteClient: (id: string) => Promise<void>;
     addProduct: (product: Partial<Product>) => Promise<void>;
     updateProduct: (product: Product) => Promise<void>;
     deleteProduct: (id: string) => Promise<void>;
@@ -313,6 +314,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setClients(clients.map(c => c.id === client.id ? client : c));
     };
 
+    const deleteClient = async (id: string) => {
+        const { error } = await supabase.from('clients').delete().eq('id', id);
+        if (error) throw error;
+        setClients(clients.filter(c => c.id !== id));
+    };
+
     const addProduct = async (product: Partial<Product>) => {
         const dbProduct = {
             name: product.name,
@@ -540,7 +547,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return (
         <AppContext.Provider value={{
             clients, products, orders, categories, user, loading, productMovements,
-            addClient, updateClient,
+            addClient, updateClient, deleteClient,
             addProduct, updateProduct, deleteProduct, addProductMovement,
             addOrder, updateOrder, deleteOrder,
             isAuthenticated, login, logout,

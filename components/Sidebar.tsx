@@ -36,21 +36,27 @@ export const Sidebar: React.FC = () => {
                 </div>
 
                 {/* Nav */}
-                <nav className="flex-1 space-y-2 overflow-y-auto no-scrollbar">
-                    {navItems.map((item) => (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            title={isSidebarCollapsed ? item.label : ''}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${isActive(item.path)
-                                ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                                } ${isSidebarCollapsed ? 'justify-center px-0' : ''}`}
-                        >
-                            <item.icon size={20} className="shrink-0" />
-                            {!isSidebarCollapsed && <span>{item.label}</span>}
-                        </Link>
-                    ))}
+                <nav className="flex-1 space-y-1.5 overflow-y-auto no-scrollbar">
+                    {navItems.map((item) => {
+                        const active = isActive(item.path);
+                        return (
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                title={isSidebarCollapsed ? item.label : ''}
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold relative overflow-hidden transition-all duration-200 group ${active
+                                    ? 'bg-primary/10 text-primary dark:bg-primary/25'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/30 hover:text-slate-900 dark:hover:text-slate-100 hover:translate-x-1'
+                                    } ${isSidebarCollapsed ? 'justify-center px-0 hover:translate-x-0' : ''}`}
+                            >
+                                {active && (
+                                    <span className="absolute left-0 top-3 bottom-3 w-1 bg-primary rounded-r-full shadow-[0_0_8px_#00ccff]" />
+                                )}
+                                <item.icon size={20} className={`shrink-0 transition-transform duration-200 group-hover:scale-110 ${active ? 'text-primary' : 'text-slate-400 group-hover:text-slate-500 dark:group-hover:text-slate-300'}`} />
+                                {!isSidebarCollapsed && <span>{item.label}</span>}
+                            </Link>
+                        );
+                    })}
                 </nav>
 
                 {/* Bottom Actions */}
@@ -59,10 +65,10 @@ export const Sidebar: React.FC = () => {
                     <button
                         onClick={toggleTheme}
                         title={isSidebarCollapsed ? (darkMode ? 'Modo Claro' : 'Modo Escuro') : ''}
-                        className={`flex items-center rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${isSidebarCollapsed ? 'justify-center p-3' : 'justify-between px-4 py-2'}`}
+                        className={`flex items-center rounded-xl text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/30 hover:text-slate-900 dark:hover:text-slate-100 transition-colors ${isSidebarCollapsed ? 'justify-center p-3' : 'justify-between px-4 py-2.5'}`}
                     >
                         <div className="flex items-center gap-3">
-                            {darkMode ? <Sun size={20} className="shrink-0" /> : <Moon size={20} className="shrink-0" />}
+                            {darkMode ? <Sun size={20} className="shrink-0 text-amber-500" /> : <Moon size={20} className="shrink-0 text-slate-400" />}
                             {!isSidebarCollapsed && <span>{darkMode ? 'Modo Claro' : 'Modo Escuro'}</span>}
                         </div>
                         {!isSidebarCollapsed && (
@@ -73,15 +79,15 @@ export const Sidebar: React.FC = () => {
                     </button>
 
                     {/* User Profile */}
-                    <div className={`flex ${isSidebarCollapsed ? 'flex-col items-center' : 'items-center'} gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors`}>
+                    <div className={`flex ${isSidebarCollapsed ? 'flex-col items-center' : 'items-center'} gap-3 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors`}>
                         <div
-                            className="size-10 rounded-full bg-cover bg-center ring-2 ring-white dark:ring-slate-700 shrink-0"
+                            className="size-10 rounded-full bg-cover bg-center ring-2 ring-white dark:ring-slate-700 shrink-0 shadow-sm"
                             style={{ backgroundImage: `url(${user.avatarUrl})` }}
                             title={isSidebarCollapsed ? user.name : undefined}
                         />
                         {!isSidebarCollapsed && (
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-slate-900 dark:text-slate-200 truncate">{user.name}</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-slate-200 truncate">{user.name}</p>
                                 <p className="text-xs text-slate-500 dark:text-slate-500 truncate capitalize">{user.role}</p>
                             </div>
                         )}

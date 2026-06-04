@@ -1,7 +1,7 @@
 import React from 'react';
 import { useApp } from '../store';
 import { OrderStatus } from '../types';
-import { Search, Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Eye, Printer, ChevronRight, ChevronLeft, TrendingDown, EyeOff, Calendar, Filter, X } from 'lucide-react';
+import { Search, Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Eye, Printer, ChevronRight, ChevronLeft, TrendingDown, EyeOff, Calendar, Filter, X, Smartphone, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { CustomDropdown } from '../components/CustomDropdown';
@@ -15,6 +15,7 @@ export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [selectedStat, setSelectedStat] = React.useState<'sales' | 'awaiting' | 'completed' | 'lowStock' | 'costs' | 'expiredWarranties' | 'expiredHistory' | null>(null);
   const [isDateSheetOpen, setIsDateSheetOpen] = React.useState(false);
+  const [showWarrantyPopup, setShowWarrantyPopup] = React.useState(() => !sessionStorage.getItem('dismissed_warranty_popup'));
 
   const handleDismissWarranty = async (orderId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -24,6 +25,8 @@ export const Dashboard: React.FC = () => {
   const handleDismissAllWarranties = async (orderIds: string[]) => {
     await dismissMultipleWarranties(orderIds);
     setSelectedStat(null);
+    setShowWarrantyPopup(false);
+    sessionStorage.setItem('dismissed_warranty_popup', 'true');
   };
   const [dateFilter, setDateFilter] = React.useState<'today' | 'yesterday' | 'week' | 'month' | 'all' | 'custom'>('today');
   const [customDate, setCustomDate] = React.useState<string>(new Date().toISOString().split('T')[0]);
@@ -73,6 +76,69 @@ export const Dashboard: React.FC = () => {
   React.useEffect(() => {
     localStorage.setItem('dashboard_showValues', JSON.stringify(showValues));
   }, [showValues]);
+
+  // Live Sparkline Data of the last 7 days for completed orders
+  const last7DaysSales = React.useMemo(() => {
+    const days = Array.from({ length: 7 }).map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }).reverse();
+
+    return days.map(day => {
+      const dayOrders = orders.filter(o => {
+        const oDate = new Date(o.createdAt);
+        oDate.setHours(0, 0, 0, 0);
+        return oDate.getFullYear() === day.getFullYear() &&
+               oDate.getMonth() === day.getMonth() &&
+               oDate.getDate() === day.getDate() &&
+               o.status === 'Concluído';
+      });
+      return dayOrders.reduce((sum, o) => sum + o.total, 0);
+    });
+  }, [orders]);
+
+  const last7DaysCosts = React.useMemo(() => {
+    const days = Array.from({ length: 7 }).map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }).reverse();
+
+    return days.map(day => {
+      const dayOrders = orders.filter(o => {
+        const oDate = new Date(o.createdAt);
+        oDate.setHours(0, 0, 0, 0);
+        return oDate.getFullYear() === day.getFullYear() &&
+               oDate.getMonth() === day.getMonth() &&
+               oDate.getDate() === day.getDate() &&
+               o.status === 'Concluído';
+      });
+      return dayOrders.reduce((sum, order) => {
+        const orderCost = (order.selectedProducts || []).reduce((prodAcc, item) => {
+          const product = products.find(p => p.id === item.productId);
+          const cost = item.cost !== undefined ? item.cost : (product?.priceCost || 0);
+          return prodAcc + (cost * item.quantity);
+        }, 0);
+        return sum + orderCost;
+      }, 0);
+    });
+  }, [orders, products]);
+
+  const getSparklinePath = (data: number[], width: number, height: number) => {
+    if (data.length === 0) return '';
+    const max = Math.max(...data, 1);
+    const min = Math.min(...data, 0);
+    const range = max - min || 1;
+    const points = data.map((val, i) => {
+      const x = (i / (data.length - 1)) * width;
+      const y = height - ((val - min) / range) * (height - 6) - 3;
+      return `${x},${y}`;
+    });
+    return `M ${points.join(' L ')}`;
+  };
 
 
 
@@ -258,30 +324,85 @@ export const Dashboard: React.FC = () => {
                 <div className="flex flex-col gap-4">
                   {data.length > 0 ? data.map((item, idx) => {
                     const MotionLink = motion(Link);
+                    
+                    // Definir o ícone dinâmico do item
+                    let ItemIcon = Smartphone;
+                    let iconBg = 'bg-primary/10 text-primary';
+                    
+                    if (selectedStat === 'sales') {
+                      ItemIcon = DollarSign;
+                      iconBg = 'bg-emerald-500/10 text-emerald-500';
+                    } else if (selectedStat === 'costs') {
+                      ItemIcon = DollarSign;
+                      iconBg = 'bg-amber-500/10 text-amber-500';
+                    } else if (selectedStat === 'lowStock') {
+                      ItemIcon = Package;
+                      iconBg = 'bg-red-500/10 text-red-500';
+                    } else if (selectedStat === 'completed') {
+                      ItemIcon = CheckCircle;
+                      iconBg = 'bg-emerald-500/10 text-emerald-500';
+                    } else if (selectedStat === 'expiredWarranties' || selectedStat === 'expiredHistory') {
+                      ItemIcon = Calendar;
+                      iconBg = item.expired ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500';
+                    }
+
+                    const isAwaitingOrCompleted = selectedStat === 'awaiting' || selectedStat === 'completed';
+
                     return (
                       <MotionLink 
                         key={idx}
                         to={item.id ? `/orders/${item.id}` : '#'}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className={`flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-neutral-900/50 border border-slate-100 dark:border-neutral-800 hover:border-primary/30 transition-all hover:shadow-md ${item.id ? 'cursor-pointer' : ''}`}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        whileHover={item.id ? { y: -2, scale: 1.005 } : {}}
+                        transition={{ duration: 0.22, delay: idx * 0.03 }}
+                        className={`flex items-center justify-between p-4 rounded-2xl bg-slate-50/60 dark:bg-neutral-900/30 border border-slate-100 dark:border-neutral-800/80 hover:border-primary/20 transition-all ${item.id ? 'cursor-pointer hover:shadow-lg hover:shadow-primary/5 hover:bg-slate-100/90 dark:hover:bg-neutral-900/60' : ''}`}
                         onClick={() => setSelectedStat(null)}
                       >
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{item.label}</span>
-                            {item.expired ? (
-                              <span className="text-[10px] px-2 py-0.5 bg-red-500 text-white font-bold uppercase rounded-full shadow-sm">Vencida</span>
-                            ) : (selectedStat === 'expiredHistory' || selectedStat === 'expiredWarranties') ? (
-                              <span className="text-[10px] px-2 py-0.5 bg-emerald-500 text-white font-bold uppercase rounded-full shadow-sm">Ativa</span>
-                            ) : null}
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          {/* Ícone Estilizado à Esquerda */}
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
+                            <ItemIcon size={18} />
                           </div>
-                          <span className="text-xs text-slate-500 font-medium">{item.sub}</span>
+                          
+                          <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{item.label}</span>
+                              {item.expired ? (
+                                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-full">Vencida</span>
+                              ) : (selectedStat === 'expiredHistory' || selectedStat === 'expiredWarranties') ? (
+                                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-full">Ativa</span>
+                              ) : null}
+                            </div>
+                            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">{item.sub}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-base font-black ${selectedStat === 'lowStock' ? 'text-red-600' : 'text-primary'}`}>{item.value}</span>
-                          {item.id && <ChevronRight size={14} className="text-slate-300" />}
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          {isAwaitingOrCompleted ? (
+                            (() => {
+                              switch (item.value) {
+                                case 'Pendente':
+                                  return <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 whitespace-nowrap">Pendente</span>;
+                                case 'Em Andamento':
+                                  return <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg bg-sky-500/10 text-sky-500 border border-sky-500/20 whitespace-nowrap">Em Andamento</span>;
+                                case 'Aguardando Retirada':
+                                  return <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 whitespace-nowrap">Retirar</span>;
+                                case 'Concluído':
+                                  return <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 whitespace-nowrap">Concluído</span>;
+                                case 'Cancelado':
+                                  return <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg bg-rose-500/10 text-rose-500 border border-rose-500/20 whitespace-nowrap">Cancelado</span>;
+                                default:
+                                  return <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg bg-slate-500/10 text-slate-500 border border-slate-500/20 whitespace-nowrap">{item.value}</span>;
+                              }
+                            })()
+                          ) : (
+                            <span className={`text-base font-black ${selectedStat === 'lowStock' ? 'text-red-500' : 'text-primary'}`}>
+                              {item.value}
+                            </span>
+                          )}
+                          
+                          {item.id && <ChevronRight size={14} className="text-slate-300 dark:text-neutral-700" />}
                         </div>
                       </MotionLink>
                     )
@@ -300,7 +421,7 @@ export const Dashboard: React.FC = () => {
               <div className="px-6 sm:px-8 py-5 sm:py-6 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 relative z-10">
                 <button
                   onClick={() => setSelectedStat(null)}
-                  className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-sm transition-all active:scale-95 shadow-xl shadow-slate-900/20"
+                  className="w-full py-3.5 bg-slate-950 dark:bg-white text-white dark:text-slate-950 rounded-2xl font-black text-sm transition-all active:scale-[0.98] hover:scale-[1.01] duration-200 shadow-lg hover:brightness-110 shadow-slate-950/10 dark:shadow-none hover:shadow-primary/10"
                 >
                   FECHAR RELATÓRIO
                 </button>
@@ -329,145 +450,182 @@ export const Dashboard: React.FC = () => {
   const displayOrders = searchQuery ? filteredOrders : ordersInDateData; // Show all filtered orders (removed slice)
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
+    <>
       <StatsModal />
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-slate-900 dark:text-white text-2xl sm:text-3xl font-bold tracking-tight">Painel de Controle</h1>
-          <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400">
-            {dateFilter === 'today' ? 'Visão geral das operações de hoje.' :
-              dateFilter === 'yesterday' ? 'Visão geral das operações de ontem.' :
-                dateFilter === 'week' ? 'Visão geral dos últimos 7 dias.' :
-                  dateFilter === 'month' ? 'Visão geral deste mês.' :
-                    dateFilter === 'custom' ? `Visão geral de ${new Date(customDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}.` :
-                      'Visão geral de todo o período.'}
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-3 items-stretch sm:items-center">
-          {/* Date Filters */}
-          {/* Date Filter Dropdown */}
-          <CustomDropdown
-            label="FILTRAR POR PERÍODO"
-            options={dateFilterOptions}
-            selectedValue={dateFilter}
-            onSelect={(val) => setDateFilter(val as any)}
-            icon={<Calendar size={18} />}
-            className="w-full sm:w-64"
-          />
-
-          {dateFilter === 'custom' && (
-            <div className="flex flex-col sm:flex-row items-center gap-2 animate-fade-in w-full sm:w-auto">
-              <div className="w-full sm:w-48">
-                <DatePicker 
-                  value={customDate} 
-                  onChange={setCustomDate} 
-                />
-              </div>
-              <span className="text-slate-400 text-[10px] uppercase font-bold px-1">até</span>
-              <div className="w-full sm:w-48">
-                <DatePicker 
-                  value={customEndDate} 
-                  onChange={setCustomEndDate} 
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center gap-3 w-full lg:w-auto">
-            <button
-              onClick={() => setShowValues(!showValues)}
-              className="p-2.5 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-500 shadow-sm transition-all hover:border-primary/50"
-              title={showValues ? "Ocultar valores" : "Mostrar valores"}
-            >
-              {showValues ? <Eye size={20} /> : <EyeOff size={20} />}
-            </button>
-            <div className="relative w-full sm:w-64">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={16} className="text-slate-400" />
-              </div>
-              <input
-                type="text"
-                className="block w-full pl-9 pr-3 py-2.5 border border-slate-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-surface-dark text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-sm transition-all"
-                placeholder="Buscar serviço..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-          <Link to="/orders/new" className="hidden sm:flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg shadow-sm shadow-primary/30 transition-all font-bold text-sm whitespace-nowrap">
-            <Plus size={18} />
-            <span>Nova OS</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* Warranty Notification Banner */}
+      {/* Discrete Floating Warranty Alert */}
       <AnimatePresence>
-        {activeExpiredWarranties.length > 0 && !searchQuery && (
+        {showWarrantyPopup && activeExpiredWarranties.length > 0 && !searchQuery && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="hidden sm:flex bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-3xl p-5 sm:p-6 flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="fixed bottom-28 right-4 left-4 sm:left-auto sm:right-6 sm:bottom-6 z-40 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl border border-red-100 dark:border-red-950/40 p-4 rounded-2xl shadow-2xl shadow-red-500/5 max-w-sm flex items-center justify-between gap-4"
           >
-             <div className="flex items-center gap-4">
-                <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-2xl text-red-600 dark:text-red-400">
-                  <AlertTriangle size={28} />
-                </div>
-                <div>
-                  <h4 className="text-red-800 dark:text-red-400 font-black text-lg tracking-tight">Garantias Vencidas</h4>
-                  <p className="text-red-600 dark:text-red-300 text-sm font-medium mt-0.5">Você tem {activeExpiredWarranties.length} garantia(s) que expiraram e precisam ser verificadas.</p>
-                </div>
-             </div>
-             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-               <button onClick={() => setSelectedStat('expiredWarranties')} className="px-5 py-2.5 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-sm w-full sm:w-auto flex items-center justify-center gap-2">
-                 <Eye size={16} /> Ver Detalhes
-               </button>
-               <button onClick={() => handleDismissAllWarranties(activeExpiredWarranties.map(o => o.id))} className="px-5 py-2.5 bg-white dark:bg-neutral-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-neutral-700 rounded-xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-neutral-700 transition-all shadow-sm w-full sm:w-auto">
-                 Descartar Todas
-               </button>
-             </div>
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2 bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-xl shrink-0">
+                <AlertTriangle size={18} className="animate-pulse" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest leading-none mb-0.5">Garantias</span>
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                  {activeExpiredWarranties.length} vencida(s) expirada(s)
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setSelectedStat('expiredWarranties')}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-black text-[10px] uppercase tracking-wider transition-all active:scale-95 shadow-sm shadow-red-600/10"
+              >
+                Ver
+              </button>
+              <button
+                onClick={() => {
+                  setShowWarrantyPopup(false);
+                  sessionStorage.setItem('dismissed_warranty_popup', 'true');
+                }}
+                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-md transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-slate-900 dark:text-white text-2xl sm:text-3xl font-bold tracking-tight">Painel de Controle</h1>
+            <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400">
+              {dateFilter === 'today' ? 'Visão geral das operações de hoje.' :
+                dateFilter === 'yesterday' ? 'Visão geral das operações de ontem.' :
+                  dateFilter === 'week' ? 'Visão geral dos últimos 7 dias.' :
+                    dateFilter === 'month' ? 'Visão geral deste mês.' :
+                      dateFilter === 'custom' ? `Visão geral de ${new Date(customDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}.` :
+                        'Visão geral de todo o período.'}
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-3 items-stretch sm:items-center">
+            {/* Date Filters */}
+            {/* Date Filter Dropdown */}
+            <CustomDropdown
+              label="FILTRAR POR PERÍODO"
+              options={dateFilterOptions}
+              selectedValue={dateFilter}
+              onSelect={(val) => setDateFilter(val as any)}
+              icon={<Calendar size={18} />}
+              className="w-full sm:w-64"
+            />
+
+            {dateFilter === 'custom' && (
+              <div className="flex flex-col sm:flex-row items-center gap-2 animate-fade-in w-full sm:w-auto">
+                <div className="w-full sm:w-48">
+                  <DatePicker 
+                    value={customDate} 
+                    onChange={setCustomDate} 
+                  />
+                </div>
+                <span className="text-slate-400 text-[10px] uppercase font-bold px-1">até</span>
+                <div className="w-full sm:w-48">
+                  <DatePicker 
+                    value={customEndDate} 
+                    onChange={setCustomEndDate} 
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 w-full lg:w-auto">
+              <button
+                onClick={() => setShowValues(!showValues)}
+                className="p-2.5 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 rounded-xl text-slate-500 shadow-sm transition-all hover:border-primary/50"
+                title={showValues ? "Ocultar valores" : "Mostrar valores"}
+              >
+                {showValues ? <Eye size={20} /> : <EyeOff size={20} />}
+              </button>
+              <div className="relative w-full sm:w-64">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search size={16} className="text-slate-400" />
+                </div>
+                <input
+                  type="text"
+                  className="block w-full pl-9 pr-3 py-2.5 border border-slate-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-surface-dark text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-sm transition-all"
+                  placeholder="Buscar serviço..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+            <Link to="/orders/new" className="hidden sm:flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg shadow-sm shadow-primary/30 transition-all font-bold text-sm whitespace-nowrap">
+              <Plus size={18} />
+              <span>Nova OS</span>
+            </Link>
+          </div>
+        </div>
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-2 md:mb-0"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-2 md:mb-0"
       >
         {/* Sales */}
         <motion.button
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 20 }}
-          whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ y: -4, scale: 1.015, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => setSelectedStat('sales')}
-          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-2 transition-all group relative overflow-hidden hover:border-green-300 dark:hover:border-green-900/50 hover:shadow-lg"
         >
           <div className="absolute right-[0%] top-[5%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
-            <DollarSign size={80} className="dark:text-white" />
+            <DollarSign className="w-14 h-14 sm:w-20 sm:h-20 dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 sm:p-3 bg-green-50 dark:bg-green-900/20 rounded-2xl text-green-600 dark:text-green-400 border border-green-100 dark:border-green-900/30 group-hover:bg-green-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
-              <DollarSign size={24} className="animate-pulse" />
+            <div className="p-1.5 sm:p-2 bg-green-50 dark:bg-green-900/20 rounded-xl text-green-600 dark:text-green-400 border border-green-100 dark:border-green-900/30 group-hover:bg-green-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
+              <DollarSign size={18} className="animate-pulse" />
             </div>
-            {dateFilter === 'today' && <span className="text-[10px] font-black uppercase tracking-widest text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full border border-green-100 dark:border-green-900/30">Hoje</span>}
+            {dateFilter === 'today' && <span className="text-[9px] font-black uppercase tracking-widest text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full border border-green-100 dark:border-green-900/30">Hoje</span>}
           </div>
-          <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-widest">Faturamento {dateFilter === 'today' ? 'do Dia' : ''}</p>
+          <div className="relative z-10 w-full">
+            <p className="text-slate-500 dark:text-slate-400 text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Faturamento {dateFilter === 'today' ? 'do Dia' : ''}</p>
             {loading ? (
-              <Skeleton className="h-8 w-24 mt-1" />
+              <Skeleton className="h-6 w-24 mt-1" />
             ) : (
-              <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">
+              <p className="text-slate-900 dark:text-white text-lg sm:text-xl font-black mt-1 tracking-tight">
                 {showValues ? `R$ ${totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ ----'}
               </p>
             )}
           </div>
+          {/* Sparkline */}
+          {!loading && showValues && last7DaysSales.some(v => v > 0) && (
+            <div className="h-6 mt-1 w-full opacity-60 group-hover:opacity-100 transition-opacity duration-300">
+              <svg className="w-full h-full" viewBox="0 0 120 32" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#22c55e" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#22c55e" stopOpacity="0.0" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d={getSparklinePath(last7DaysSales, 120, 32)}
+                  fill="none"
+                  stroke="#22c55e"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d={`${getSparklinePath(last7DaysSales, 120, 32)} L 120,32 L 0,32 Z`}
+                  fill="url(#salesGrad)"
+                />
+              </svg>
+            </div>
+          )}
         </motion.button>
 
         {/* Costs */}
@@ -475,29 +633,54 @@ export const Dashboard: React.FC = () => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
-          whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ y: -4, scale: 1.015, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => setSelectedStat('costs')}
-          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-2 transition-all group relative overflow-hidden hover:border-red-300 dark:hover:border-red-900/50 hover:shadow-lg"
         >
           <div className="absolute right-[0%] top-[5%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
-            <TrendingDown size={80} className="dark:text-white" />
+            <TrendingDown className="w-14 h-14 sm:w-20 sm:h-20 dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 sm:p-3 bg-purple-50 dark:bg-purple-900/20 rounded-2xl text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/30 group-hover:bg-purple-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
-              <TrendingDown size={24} className="animate-bounce" style={{ animationDuration: '3s' }} />
+            <div className="p-1.5 sm:p-2 bg-red-50 dark:bg-red-900/20 rounded-xl text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 group-hover:bg-red-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
+              <TrendingDown size={18} className="animate-bounce" style={{ animationDuration: '3s' }} />
             </div>
           </div>
-          <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-widest">Custos (Peças)</p>
+          <div className="relative z-10 w-full">
+            <p className="text-slate-500 dark:text-slate-400 text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Custos (Peças)</p>
             {loading ? (
-              <Skeleton className="h-8 w-24 mt-1" />
+              <Skeleton className="h-6 w-24 mt-1" />
             ) : (
-              <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">
+              <p className="text-slate-900 dark:text-white text-lg sm:text-xl font-black mt-1 tracking-tight">
                 {showValues ? `R$ ${totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ ----'}
               </p>
             )}
           </div>
+          {/* Sparkline */}
+          {!loading && showValues && last7DaysCosts.some(v => v > 0) && (
+            <div className="h-6 mt-1 w-full opacity-60 group-hover:opacity-100 transition-opacity duration-300">
+              <svg className="w-full h-full" viewBox="0 0 120 32" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="costsGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ef4444" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#ef4444" stopOpacity="0.0" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d={getSparklinePath(last7DaysCosts, 120, 32)}
+                  fill="none"
+                  stroke="#ef4444"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d={`${getSparklinePath(last7DaysCosts, 120, 32)} L 120,32 L 0,32 Z`}
+                  fill="url(#costsGrad)"
+                />
+              </svg>
+            </div>
+          )}
         </motion.button>
 
         {/* Awaiting */}
@@ -505,25 +688,25 @@ export const Dashboard: React.FC = () => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, type: "spring", stiffness: 200, damping: 20 }}
-          whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ y: -4, scale: 1.015, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => setSelectedStat('awaiting')}
-          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-2 transition-all group relative overflow-hidden"
         >
           <div className="absolute right-[0%] top-[5%] p-3 opacity-10 animate-spin-slow dark:opacity-20 pointer-events-none">
-            <Clock size={80} className="dark:text-white" />
+            <Clock className="w-14 h-14 sm:w-20 sm:h-20 dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 sm:p-3 bg-orange-50 dark:bg-orange-900/20 rounded-2xl text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/30 group-hover:bg-orange-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
-              <Clock size={24} className="animate-spin-slow" />
+            <div className="p-1.5 sm:p-2 bg-orange-50 dark:bg-orange-900/20 rounded-xl text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/30 group-hover:bg-orange-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
+              <Clock size={18} className="animate-spin-slow" />
             </div>
           </div>
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-widest">Em Aberto</p>
+            <p className="text-slate-500 dark:text-slate-400 text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Em Aberto</p>
             {loading ? (
-              <Skeleton className="h-8 w-12 mt-1" />
+              <Skeleton className="h-6 w-12 mt-1" />
             ) : (
-              <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">{pendingCount}</p>
+              <p className="text-slate-900 dark:text-white text-lg sm:text-xl font-black mt-1 tracking-tight">{pendingCount}</p>
             )}
           </div>
         </motion.button>
@@ -533,25 +716,25 @@ export const Dashboard: React.FC = () => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4, type: "spring", stiffness: 200, damping: 20 }}
-          whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ y: -4, scale: 1.015, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => setSelectedStat('completed')}
-          className="text-left bg-white dark:bg-surface-dark p-3.5 sm:p-5 rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-3 sm:gap-4 transition-all group relative overflow-hidden"
+          className="text-left bg-white dark:bg-surface-dark p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col gap-2 transition-all group relative overflow-hidden"
         >
           <div className="absolute right-[0%] top-[5%] p-3 opacity-10 group-hover:rotate-12 transition-all duration-700 dark:opacity-20 pointer-events-none animate-pulse">
-            <CheckCircle size={80} className="dark:text-white" />
+            <CheckCircle className="w-14 h-14 sm:w-20 sm:h-20 dark:text-white" />
           </div>
           <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/20 rounded-2xl text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30 group-hover:bg-blue-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
-              <CheckCircle size={24} className="animate-pulse" />
+            <div className="p-1.5 sm:p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30 group-hover:bg-blue-600 group-hover:text-white group-hover:scale-110 transition-all duration-300">
+              <CheckCircle size={18} className="animate-pulse" />
             </div>
           </div>
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-widest">Concluídos</p>
+            <p className="text-slate-500 dark:text-slate-400 text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Concluídos</p>
             {loading ? (
-              <Skeleton className="h-8 w-12 mt-1" />
+              <Skeleton className="h-6 w-12 mt-1" />
             ) : (
-              <p className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black mt-1 tracking-tight">{completedCount}</p>
+              <p className="text-slate-900 dark:text-white text-lg sm:text-xl font-black mt-1 tracking-tight">{completedCount}</p>
             )}
           </div>
         </motion.button>
@@ -563,23 +746,6 @@ export const Dashboard: React.FC = () => {
           <h3 className="text-slate-900 dark:text-white text-[15px] sm:text-lg font-bold tracking-tight whitespace-nowrap">
             {searchQuery ? 'Resultados da Busca' : 'Histórico de Ordens'}
           </h3>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {allExpiredWarranties.length > 0 && (
-              <button 
-                onClick={() => setSelectedStat('expiredHistory')} 
-                className="flex items-center gap-1.5 px-3 py-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-all active:scale-95 border border-orange-100 dark:border-orange-900/30 shadow-sm"
-              >
-                <AlertTriangle size={14} className="sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Histórico de</span> Garantias
-              </button>
-            )}
-            <Link 
-              to="/orders" 
-              className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all active:scale-95 border border-blue-100 dark:border-blue-900/30 shadow-sm"
-            >
-              <span className="hidden sm:inline">Ver Lista</span> Completa <ChevronRight size={14} className="sm:w-4 sm:h-4" />
-            </Link>
-          </div>
         </div>
         {/* Desktop Table View */}
         <div className="hidden md:block bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-slate-200 dark:border-neutral-800 overflow-hidden">
@@ -611,7 +777,7 @@ export const Dashboard: React.FC = () => {
                   </tr>
                 ))
               ) : displayOrders.length > 0 ? (
-                  displayOrders.map((order) => {
+                  displayOrders.map((order, idx) => {
                     const client = clients.find(c => c.id === order.clientId);
                     const clientName = client?.name || 'Cliente';
                     
@@ -634,7 +800,14 @@ export const Dashboard: React.FC = () => {
                     };
 
                     return (
-                    <tr key={order.id} onClick={() => navigate(`/orders/${order.id}`)} className="group hover:bg-slate-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer">
+                    <motion.tr
+                      key={order.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: Math.min(idx * 0.04, 0.4), duration: 0.3 }}
+                      onClick={() => navigate(`/orders/${order.id}`)}
+                      className="group hover:bg-slate-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
+                    >
                       <td className="py-4 px-6 text-sm text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap">
                         <div className="flex flex-col">
                           <span className="font-bold text-slate-800 dark:text-slate-200">
@@ -682,7 +855,7 @@ export const Dashboard: React.FC = () => {
                       </td>
                       <td className="py-4 px-6 text-right whitespace-nowrap">
                         <div className="flex flex-col items-end gap-1">
-                          <span className="text-sm font-bold text-slate-900 dark:text-white">R$ {order.total.toFixed(2)}</span>
+                          <span className="text-sm font-bold text-slate-900 dark:text-white font-mono">R$ {order.total.toFixed(2)}</span>
                           {order.status === OrderStatus.COMPLETED && (order.paymentMethod || (order.payments && order.payments.length > 0)) && (
                             <span className="text-[9px] font-black uppercase text-green-600 bg-green-50 px-1.5 py-0.5 rounded flex items-center gap-1 border border-green-100">
                                💰 Pago
@@ -694,7 +867,7 @@ export const Dashboard: React.FC = () => {
                         <div className="flex items-center justify-end gap-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                             <button
                                 onClick={handleWhatsApp}
-                                className="size-8 flex items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-all hover:scale-105 border border-green-100 dark:border-green-900/30 shadow-sm"
+                                className="size-8 flex items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-all hover:scale-105 border border-green-100 dark:border-green-900/30 shadow-sm animate-pulse"
                                 title="WhatsApp"
                             >
                                 <img src="/whatsapp.png" alt="WhatsApp" className="size-4 object-contain" />
@@ -715,7 +888,7 @@ export const Dashboard: React.FC = () => {
                             </Link>
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   )
                   })
                 ) : (
@@ -785,5 +958,6 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
     </div>
+   </>
   );
 };

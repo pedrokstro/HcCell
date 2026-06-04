@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../../store';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -344,8 +344,15 @@ export const OrdersList: React.FC = () => {
                         </thead>
                         <tbody className="bg-white dark:bg-surface-dark divide-y divide-slate-200 dark:divide-neutral-800">
                             {paginatedOrders.length > 0 ? (
-                                paginatedOrders.map(order => (
-                                    <tr key={order.id} onClick={() => navigate(`/orders/${order.id}`)} className="hover:bg-slate-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer group">
+                                paginatedOrders.map((order, idx) => (
+                                    <motion.tr
+                                        key={order.id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: Math.min(idx * 0.03, 0.3), duration: 0.25 }}
+                                        onClick={() => navigate(`/orders/${order.id}`)}
+                                        className="hover:bg-slate-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer group"
+                                    >
                                         <td className="px-3 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 <div className="size-8 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold mr-3 shrink-0 shadow-sm border border-blue-200 dark:border-blue-900/30">
@@ -359,7 +366,7 @@ export const OrdersList: React.FC = () => {
                                         </td>
                                         <td className="px-3 py-4">
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-medium text-slate-900 dark:text-white line-clamp-1">
+                                                <span className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-1">
                                                     {order.serviceType === 'VENDA_DIRETA' ? 'Venda de Produto' : order.deviceModel}
                                                 </span>
                                                 <span className="text-xs text-slate-500 dark:text-slate-500 line-clamp-1" title={order.serviceType === 'VENDA_DIRETA' ? (order.selectedProducts?.map(p => `${p.quantity}x ${p.name}`).join(', ')) : order.issueDescription}>
@@ -370,19 +377,19 @@ export const OrdersList: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="px-3 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                                            <span className={`inline-flex items-center px-2.5 py-1.5 rounded-xl text-xs font-bold border ${getStatusColor(order.status)}`}>
                                                 {order.status}
                                             </span>
                                         </td>
                                         <td className="px-3 py-4 whitespace-nowrap text-[11px] leading-tight text-slate-500 dark:text-slate-400">
-                                            <div className="flex flex-col">
+                                            <div className="flex flex-col font-medium">
                                                 <span>{new Date(order.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
                                                 <span className="opacity-60 mt-0.5">{new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                                             </div>
                                         </td>
                                         <td className="px-3 py-4 whitespace-nowrap text-right">
                                             <div className="flex flex-col items-end gap-1">
-                                                <span className="text-sm font-bold text-slate-900 dark:text-white">R$ {order.total.toFixed(2)}</span>
+                                                <span className="text-sm font-bold text-slate-900 dark:text-white font-mono">R$ {order.total.toFixed(2)}</span>
                                                 {order.status === OrderStatus.COMPLETED && (order.paymentMethod || (order.payments && order.payments.length > 0)) && (
                                                     <span className="text-[9px] font-black uppercase text-green-600 bg-green-50 px-1.5 py-0.5 rounded flex items-center gap-1 border border-green-100">
                                                         💰 Pago
@@ -391,10 +398,10 @@ export const OrdersList: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex items-center justify-end gap-1.5">
+                                            <div className="flex items-center justify-end gap-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                 <button
                                                     onClick={(e) => handleWhatsApp(e, order)}
-                                                    className="size-9 flex items-center justify-center rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-all active:scale-95 border border-green-100 dark:border-green-900/30 shadow-sm"
+                                                    className="size-9 flex items-center justify-center rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-all active:scale-95 border border-green-100 dark:border-green-900/30 shadow-sm animate-pulse"
                                                     title="WhatsApp"
                                                 >
                                                     <img src="/whatsapp.png" alt="WhatsApp" className="size-5 object-contain" />
@@ -416,7 +423,7 @@ export const OrdersList: React.FC = () => {
                                                 </Link>
                                             </div>
                                         </td>
-                                    </tr>
+                                    </motion.tr>
                                 ))
                             ) : (
                                 <tr>
@@ -486,20 +493,20 @@ export const OrdersList: React.FC = () => {
                                     <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-neutral-800">
                                         <button
                                             onClick={(e) => handleWhatsApp(e, order)}
-                                            className="flex-[2] flex items-center justify-center gap-2 py-2.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-green-100 dark:border-green-900/30"
+                                            className="flex-[2] h-11 flex items-center justify-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-green-100 dark:border-green-900/30"
                                         >
                                             <img src="/whatsapp.png" alt="WhatsApp" className="size-5 object-contain" />
                                             WhatsApp
                                         </button>
                                         <button
                                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/orders/${order.id}`); }}
-                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-blue-100 dark:border-blue-900/30"
+                                            className="flex-1 h-11 flex items-center justify-center gap-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-blue-100 dark:border-blue-900/30"
                                         >
                                             <FileText size={16} />
                                         </button>
                                         <button
                                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/orders/${order.id}/edit`); }}
-                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 dark:bg-neutral-800 text-slate-600 dark:text-slate-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-slate-100 dark:border-neutral-700"
+                                            className="flex-1 h-11 flex items-center justify-center gap-2 bg-slate-50 dark:bg-neutral-800 text-slate-600 dark:text-slate-400 rounded-xl font-bold text-xs transition-all active:scale-95 border border-slate-100 dark:border-neutral-700"
                                         >
                                             <Edit2 size={16} />
                                         </button>

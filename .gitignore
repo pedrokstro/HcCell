@@ -41,4 +41,5 @@ Thumbs.db
 dev-dist
 
 # Agents and Skills
-.agent
+.agents/
+.impeccable/

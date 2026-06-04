@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useApp } from '../../store';
+import { useToast } from '../../components/Toast';
 import { User, MapPin, Check, ArrowLeft } from 'lucide-react';
 import { Client } from '../../types';
 
@@ -9,6 +10,7 @@ export const ClientForm: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { clients, addClient, updateClient } = useApp();
+  const { showToast } = useToast();
 
   const [formData, setFormData] = useState<Partial<Client>>({
     name: '',
@@ -25,16 +27,35 @@ export const ClientForm: React.FC = () => {
   }, [id, clients]);
 
   const handleSubmit = () => {
-    if (!formData.name) return;
+    if (!formData.name) {
+      showToast('O nome completo é obrigatório.', 'error');
+      return;
+    }
+
+    const normalizedNewName = formData.name.trim().toLowerCase();
+    const normalizedNewPhone = (formData.phone || '').trim();
+
+    const isDuplicate = clients.some(c =>
+      c.id !== id &&
+      c.name.trim().toLowerCase() === normalizedNewName &&
+      c.phone.trim() === normalizedNewPhone
+    );
+
+    if (isDuplicate) {
+      showToast('Já existe um cliente cadastrado com este mesmo nome e telefone.', 'error');
+      return;
+    }
 
     if (id) {
       updateClient({ ...formData, id } as Client);
+      showToast('Cliente atualizado com sucesso!', 'success');
     } else {
       addClient({
         ...formData,
         id: Math.random().toString(36).substr(2, 9),
         createdAt: new Date().toISOString().split('T')[0]
       } as Client);
+      showToast('Cliente cadastrado com sucesso!', 'success');
     }
     navigate('/clients');
   };
@@ -139,11 +160,18 @@ export const ClientForm: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-4 pt-4 mt-6">
-        <Link to="/clients" className="px-6 py-3 rounded-lg border border-slate-200 dark:border-neutral-800 text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">
+      <div className="sticky bottom-0 -mx-4 sm:mx-0 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-md border-t border-slate-200/60 dark:border-neutral-800/60 p-4 z-30 flex items-center justify-end gap-3 mt-8 shadow-[0_-8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
+        <Link 
+          to="/clients" 
+          className="px-6 py-3 rounded-full border border-slate-200 dark:border-neutral-800 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors text-xs sm:text-sm uppercase tracking-wider whitespace-nowrap"
+        >
           Cancelar
         </Link>
-        <button type="submit" onClick={handleSubmit} className="px-6 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2">
+        <button 
+          type="submit" 
+          onClick={handleSubmit} 
+          className="px-6 py-3 rounded-full bg-primary text-white font-black hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm uppercase tracking-wider whitespace-nowrap"
+        >
           <Check size={18} />
           Salvar Cliente
         </button>

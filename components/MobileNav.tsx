@@ -52,75 +52,67 @@ export const MobileNav: React.FC = () => {
             )}
 
             {/* Menu Popover */}
-            <div className={`
-                fixed left-4 right-4 z-[60] transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]
-                ${isMenuOpen ? 'bottom-28 opacity-100 scale-100' : 'bottom-20 opacity-0 scale-95 pointer-events-none'}
-            `}>
-                <div className="bg-white/95 dark:bg-neutral-800/95 backdrop-blur-xl rounded-[32px] p-2 shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
-                    <div className="flex flex-col gap-1">
-                        <div className="grid grid-cols-1 gap-1">
+            <div 
+                className={`
+                    fixed left-4 right-4 z-[60] transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]
+                    ${isMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}
+                `}
+                style={{ 
+                    bottom: isMenuOpen ? 'calc(72px + env(safe-area-inset-bottom, 0px) + 12px)' : 'calc(72px + env(safe-area-inset-bottom, 0px) - 10px)'
+                }}
+            >
+                <div className="bg-white/95 dark:bg-neutral-800/95 backdrop-blur-xl rounded-[32px] p-4 shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
+                    <div className="flex flex-col gap-3">
+                        <div className="grid grid-cols-3 gap-2.5">
                             {navItems.map((item) => (
                                 <Link
                                     key={item.to}
                                     to={item.to}
                                     onClick={() => setIsMenuOpen(false)}
-                                    className="flex items-center justify-between p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-neutral-900 transition-colors"
+                                    className="flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-50/50 dark:bg-neutral-900/40 hover:bg-primary/5 dark:hover:bg-primary/10 border border-slate-100 dark:border-neutral-800/60 transition-all active:scale-95 text-center"
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.bg} ${item.color}`}>
-                                            {item.icon}
-                                        </div>
-                                        <div className="flex flex-col items-start">
-                                            <span className="font-bold text-slate-900 dark:text-white text-sm">{item.label}</span>
-                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-widest">{item.sub}</span>
-                                        </div>
+                                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${item.bg} ${item.color} mb-1.5 shadow-sm shrink-0`}>
+                                        {item.icon}
                                     </div>
-                                    <PlusCircle size={14} className="text-slate-300 dark:text-neutral-700" />
+                                    <span className="font-bold text-slate-800 dark:text-neutral-200 text-[11px] truncate w-full">
+                                        {item.label === 'Configurações' ? 'Ajustes' : item.label === 'PDV / Vendas' ? 'Vendas' : item.label}
+                                    </span>
                                 </Link>
                             ))}
                         </div>
 
-                        <div className="h-px bg-slate-100 dark:bg-neutral-700/50 my-1 mx-4"></div>
-
-                        <button
-                            onClick={toggleTheme}
-                            className="flex items-center justify-between p-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-neutral-900 transition-colors"
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${darkMode ? 'bg-indigo-500/10 text-indigo-400' : 'bg-amber-500/10 text-amber-500'}`}>
-                                    {darkMode ? <Moon size={20} /> : <Sun size={20} />}
+                        <div className="grid grid-cols-2 gap-2 mt-1 pt-3 border-t border-slate-100 dark:border-neutral-700/40">
+                            <button
+                                onClick={toggleTheme}
+                                className="flex items-center gap-2 p-2.5 rounded-2xl bg-slate-50/50 dark:bg-neutral-900/40 border border-slate-100 dark:border-neutral-800/60 transition-all text-left text-xs font-bold text-slate-800 dark:text-neutral-200 active:scale-95"
+                            >
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${darkMode ? 'bg-indigo-500/10 text-indigo-400' : 'bg-amber-500/10 text-amber-500'}`}>
+                                    {darkMode ? <Moon size={16} /> : <Sun size={16} />}
                                 </div>
-                                <div className="flex flex-col items-start">
-                                    <span className="font-bold text-slate-900 dark:text-white text-sm">Tema {darkMode ? 'Escuro' : 'Claro'}</span>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-widest">Aparência</span>
+                                <div className="flex flex-col min-w-0">
+                                    <span className="truncate">{darkMode ? 'Escuro' : 'Claro'}</span>
                                 </div>
-                            </div>
-                            <div className={`w-10 h-5 rounded-full p-1 transition-colors ${darkMode ? 'bg-primary' : 'bg-slate-200'}`}>
-                                <div className={`w-3 h-3 rounded-full bg-white shadow-sm transition-all ${darkMode ? 'translate-x-5' : 'translate-x-0'}`} />
-                            </div>
-                        </button>
+                            </button>
 
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center gap-4 p-3.5 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/10 text-red-600 dark:text-red-400 transition-colors"
-                        >
-                            <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-                                <LogOut size={20} />
-                            </div>
-                            <div className="flex flex-col items-start">
-                                <span className="font-bold text-sm">Encerrar Sessão</span>
-                                <span className="text-[10px] opacity-70 uppercase font-black tracking-widest">Conta</span>
-                            </div>
-                        </button>
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center gap-2 p-2.5 rounded-2xl bg-red-500/5 dark:bg-red-500/10 border border-red-500/10 hover:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 transition-all text-left text-xs font-bold active:scale-95"
+                            >
+                                <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400">
+                                    <LogOut size={16} />
+                                </div>
+                                <span>Sair</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <nav
-                className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[420px] z-[50] md:hidden animate-in slide-in-from-bottom-8 duration-700 fade-in"
+                className="fixed bottom-0 left-0 right-0 w-full z-[50] md:hidden bg-white/85 dark:bg-[#112224]/85 backdrop-blur-2xl rounded-t-[28px] border-t border-slate-200/50 dark:border-white/5 shadow-[0_-8px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_-8px_32px_rgba(0,0,0,0.4)] animate-in slide-in-from-bottom-8 duration-700 fade-in"
                 style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
-                <div className="relative flex items-center justify-between h-[76px] bg-white/70 dark:bg-[#1a2c2e]/60 backdrop-blur-2xl rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-white/50 dark:border-white/10 px-2 py-2 overflow-visible">
+                <div className="relative flex items-center justify-between h-[72px] px-4 overflow-visible w-full max-w-[420px] mx-auto">
                     
                     {[
                         { id: 'dashboard', to: '/dashboard', icon: LayoutDashboard, label: 'Início' },
@@ -154,9 +146,9 @@ export const MobileNav: React.FC = () => {
                                 <Link
                                     key={item.id}
                                     to={item.to!}
-                                    className="relative z-10 flex flex-col items-center justify-center min-w-[64px]"
+                                    className="relative z-20 flex flex-col items-center justify-center min-w-[64px] -translate-y-5"
                                 >
-                                    <div className="flex items-center justify-center w-[52px] h-[52px] bg-primary text-white rounded-full shadow-[0_0_20px_rgba(4,157,174,0.4)] hover:shadow-[0_0_25px_rgba(4,157,174,0.6)] active:scale-90 transition-all hover:brightness-110">
+                                    <div className="flex items-center justify-center w-[56px] h-[56px] bg-primary text-white rounded-full shadow-[0_8px_20px_rgba(4,157,174,0.4)] dark:shadow-[0_8px_25px_rgba(4,157,174,0.65)] hover:shadow-[0_0_30px_rgba(4,157,174,0.8)] border-[5px] border-white dark:border-[#112224] active:scale-90 transition-all hover:brightness-110">
                                         <Plus size={28} strokeWidth={3} />
                                     </div>
                                 </Link>

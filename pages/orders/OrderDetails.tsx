@@ -1,8 +1,35 @@
 import React, { useState, useRef } from 'react';
 import QRCode from 'react-qr-code';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useApp } from '../../store';
 import { useToast } from '../../components/Toast';
+
+const formatDateStepper = (dateString?: string) => {
+    if (!dateString) return '';
+    try {
+        const date = new Date(dateString);
+        
+        // Format day and month
+        const dayMonth = date.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            timeZone: 'America/Sao_Paulo'
+        });
+        
+        // Format hour and minute
+        const time = date.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'America/Sao_Paulo'
+        });
+        
+        return `${dayMonth} às ${time}`;
+    } catch (e) {
+        console.error(e);
+        return '';
+    }
+};
 import {
     Clock,
     User,
@@ -805,9 +832,11 @@ export const OrderDetails: React.FC = () => {
         <div className="max-w-[1200px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 p-4 sm:p-6 lg:p-8">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center gap-6 mb-10">
-                <Link to="/orders" className="p-3 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-800 text-slate-500 dark:text-slate-400 transition-all shadow-sm flex-shrink-0 w-fit">
-                    <ArrowLeft size={24} />
-                </Link>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex-shrink-0">
+                    <Link to="/orders" className="p-3 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-800 text-slate-500 dark:text-slate-400 transition-all shadow-sm flex items-center justify-center">
+                        <ArrowLeft size={24} />
+                    </Link>
+                </motion.div>
                 <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-3 mb-1">
                         <h1 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight truncate">OS #{order.displayId || order.id.slice(0, 8)}</h1>
@@ -830,93 +859,307 @@ export const OrderDetails: React.FC = () => {
                 </div>
                 {/* Desktop Action Buttons */}
                 <div className="hidden sm:flex flex-wrap gap-2">
-                    <button
+                    <motion.button
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.97 }}
                         onClick={handleCopyTrackingLink}
                         className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-slate-300 rounded-2xl hover:bg-slate-50 dark:hover:bg-neutral-800 font-bold transition-all shadow-sm"
                         title="Copiar Link de Rastreio"
                     >
                         <Share2 size={20} />
                         <span className="hidden lg:inline">Link</span>
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.97 }}
                         onClick={handlePrintLabel}
                         className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-slate-300 rounded-2xl hover:bg-slate-50 dark:hover:bg-neutral-800 font-bold transition-all shadow-sm"
                     >
                         <Tag size={20} />
                         Etiqueta
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.97 }}
                         onClick={() => setShowReceiptModal(true)}
                         className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl hover:bg-primary-dark font-bold transition-all shadow-xl shadow-primary/20"
                     >
                         <FileText size={20} />
                         Gerar Recibo
-                    </button>
+                    </motion.button>
                     {(order.status === OrderStatus.PENDING || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL) && (
-                        <button onClick={handleComplete} className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 font-bold transition-all shadow-xl shadow-green-200">
+                        <motion.button 
+                            whileHover={{ y: -2 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={handleComplete} 
+                            className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 font-bold transition-all shadow-xl shadow-green-200"
+                        >
                             <CheckCircle size={20} />
                             Concluir
-                        </button>
+                        </motion.button>
                     )}
-                    <Link to={`/orders/${order.id}/edit`} className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white rounded-2xl hover:bg-slate-50 dark:hover:bg-neutral-800 font-bold transition-all shadow-sm">
-                        <Edit size={20} />
-                        Editar
-                    </Link>
-                    <button onClick={handleDelete} className="flex items-center gap-2 px-3 py-3 bg-white dark:bg-surface-dark border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 font-bold transition-all">
+                    <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}>
+                        <Link to={`/orders/${order.id}/edit`} className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white rounded-2xl hover:bg-slate-50 dark:hover:bg-neutral-800 font-bold transition-all shadow-sm h-full flex items-center">
+                            <Edit size={20} />
+                            Editar
+                        </Link>
+                    </motion.div>
+                    <motion.button 
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={handleDelete} 
+                        className="flex items-center gap-2 px-3 py-3 bg-white dark:bg-surface-dark border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 font-bold transition-all"
+                    >
                         <Trash2 size={20} />
-                    </button>
+                    </motion.button>
                 </div>
 
                 <div className="flex sm:hidden flex-col gap-3 w-full mt-4">
-                    <button
+                    <motion.button
+                        whileTap={{ scale: 0.97 }}
                         onClick={handleCopyTrackingLink}
                         className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl font-bold text-sm shadow-sm"
                     >
                         <Share2 size={18} />
                         Copiar Link de Rastreio
-                    </button>
+                    </motion.button>
                     <div className="grid grid-cols-2 gap-3">
-                        <button
+                        <motion.button
+                            whileTap={{ scale: 0.97 }}
                             onClick={handlePrintLabel}
-                            className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-sm shadow-sm"
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm shadow-sm"
                         >
                             <Tag size={18} />
                             Etiqueta
-                        </button>
-                        <button
+                        </motion.button>
+                        <motion.button
+                            whileTap={{ scale: 0.97 }}
                             onClick={() => setShowReceiptModal(true)}
-                            className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-sm shadow-sm"
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm shadow-sm"
                         >
                             <FileText size={18} />
                             Recibo
-                        </button>
+                        </motion.button>
                     </div>
 
                     {(order.status === OrderStatus.PENDING || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL) && (
-                        <button onClick={handleComplete} className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-xl font-bold shadow-lg shadow-green-200">
+                        <motion.button 
+                            whileTap={{ scale: 0.97 }}
+                            onClick={handleComplete} 
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-xl font-bold shadow-lg shadow-green-200"
+                        >
                             <CheckCircle size={20} />
                             Concluir Serviço
-                        </button>
+                        </motion.button>
                     )}
 
                     <div className="grid grid-cols-[1fr_auto] gap-3">
-                        <Link to={`/orders/${order.id}/edit`} className="flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20">
-                            <Edit size={20} />
-                            Editar Ordem
-                        </Link>
-                        <button onClick={handleDelete} className="flex items-center justify-center px-4 py-3 bg-red-50 text-red-600 rounded-xl font-bold border border-red-100">
+                        <motion.div whileTap={{ scale: 0.97 }} className="w-full">
+                            <Link to={`/orders/${order.id}/edit`} className="flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 w-full">
+                                <Edit size={20} />
+                                Editar Ordem
+                            </Link>
+                        </motion.div>
+                        <motion.button 
+                            whileTap={{ scale: 0.97 }}
+                            onClick={handleDelete} 
+                            className="flex items-center justify-center px-4 py-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-xl font-bold border border-red-100 dark:border-red-900/30"
+                        >
                             <Trash2 size={20} />
-                        </button>
+                        </motion.button>
                     </div>
                 </div>
             </div>
+
+            {/* Cancelled Alert Banner */}
+            {order.status === OrderStatus.CANCELLED && (
+                <motion.div 
+                    className="mb-8 p-5 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 rounded-3xl flex items-center gap-4 text-red-700 dark:text-red-400 shadow-sm"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ type: "spring", stiffness: 100 }}
+                >
+                    <XCircle className="shrink-0 text-red-500 animate-pulse" size={24} />
+                    <div>
+                        <p className="font-black text-sm uppercase tracking-wide">Ordem de Serviço Cancelada</p>
+                        <p className="text-xs font-semibold opacity-90 mt-0.5">Esta ordem foi cancelada e seu estoque foi retornado.</p>
+                    </div>
+                </motion.div>
+            )}
+
+            {/* Status Timeline Stepper */}
+            {order.status !== OrderStatus.CANCELLED && (
+                <motion.div 
+                    className="bg-white dark:bg-surface-dark rounded-[32px] p-6 sm:p-8 border border-slate-200/50 dark:border-neutral-800/60 shadow-sm mb-8 relative overflow-hidden"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                >
+                    <div className="relative flex flex-col sm:flex-row items-start justify-between max-w-[800px] mx-auto gap-8 sm:gap-0">
+                        {/* Horizontal connecting line (Desktop) */}
+                        <div className="hidden sm:block absolute top-5 sm:top-6 left-[16.67%] right-[16.67%] h-[2px] bg-slate-100 dark:bg-neutral-800 -translate-y-1/2 z-0" />
+                        
+                        {/* Active line fill based on status (Desktop) */}
+                        <div className="hidden sm:block absolute top-5 sm:top-6 left-[16.67%] right-[16.67%] h-[2px] -translate-y-1/2 z-0 w-[66.66%] overflow-hidden">
+                            <motion.div 
+                                className="h-full bg-primary" 
+                                initial={{ width: '0%' }}
+                                animate={{ 
+                                    width: 
+                                        order.status === OrderStatus.PENDING ? '0%' : 
+                                        (order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL) ? '50%' : 
+                                        order.status === OrderStatus.COMPLETED ? '100%' : '0%'
+                                }}
+                                transition={{ duration: 0.8, ease: "easeInOut" }}
+                            />
+                        </div>
+
+                        {/* Vertical connecting line (Mobile) */}
+                        <div className="absolute sm:hidden left-[20px] top-5 bottom-5 w-[2px] bg-slate-100 dark:bg-neutral-800 z-0" />
+                        
+                        {/* Active line fill based on status (Mobile) */}
+                        <div className="absolute sm:hidden left-[20px] top-5 bottom-5 w-[2px] z-0 overflow-hidden">
+                            <motion.div 
+                                className="w-full bg-primary" 
+                                initial={{ height: '0%' }}
+                                animate={{ 
+                                    height: 
+                                        order.status === OrderStatus.PENDING ? '0%' : 
+                                        (order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL) ? '50%' : 
+                                        order.status === OrderStatus.COMPLETED ? '100%' : '0%'
+                                }}
+                                transition={{ duration: 0.8, ease: "easeInOut" }}
+                                style={{ originY: 0 }}
+                            />
+                        </div>
+
+                        {/* Step 1: Aberta */}
+                        {(() => {
+                            const isCurrent = order.status === OrderStatus.PENDING;
+                            return (
+                                <div className="relative z-10 flex flex-row sm:flex-col items-center gap-4 sm:gap-0 flex-1 w-full sm:w-auto">
+                                    <div className="relative">
+                                        {isCurrent && (
+                                            <motion.div 
+                                                className="absolute inset-0 rounded-full bg-primary/40" 
+                                                animate={{ scale: [1, 1.5, 2.0], opacity: [0.7, 0.3, 0] }} 
+                                                transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
+                                            />
+                                        )}
+                                        <motion.div 
+                                            className="relative z-10 size-10 sm:size-12 rounded-full bg-primary text-white flex items-center justify-center border-4 border-primary/20 shadow-lg shadow-primary/20"
+                                            animate={isCurrent ? { scale: [1, 1.05, 1], boxShadow: ["0px 0px 0px rgba(0, 204, 255, 0.2)", "0px 0px 12px rgba(0, 204, 255, 0.6)", "0px 0px 0px rgba(0, 204, 255, 0.2)"] } : {}}
+                                            transition={isCurrent ? { repeat: Infinity, duration: 2 } : {}}
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            <span className="text-xl font-bold font-sans">+</span>
+                                        </motion.div>
+                                    </div>
+                                    <div className="flex flex-col items-start sm:items-center sm:mt-3">
+                                        <span className="text-[11px] sm:text-xs font-black text-primary uppercase tracking-wider">Aberta</span>
+                                        <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 mt-1 font-mono">{formatDateStepper(order.createdAt)}</span>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {/* Step 2: Em Atendimento */}
+                        {(() => {
+                            const isCompleted = order.status === OrderStatus.COMPLETED;
+                            const isCurrent = order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL;
+                            const isActive = isCurrent || isCompleted;
+                            
+                            return (
+                                <div className="relative z-10 flex flex-row sm:flex-col items-center gap-4 sm:gap-0 flex-1 w-full sm:w-auto">
+                                    <div className="relative">
+                                        {isCurrent && (
+                                            <motion.div 
+                                                className="absolute inset-0 rounded-full bg-primary/40" 
+                                                animate={{ scale: [1, 1.5, 2.0], opacity: [0.7, 0.3, 0] }} 
+                                                transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
+                                            />
+                                        )}
+                                        <motion.div 
+                                            className={`relative z-10 size-10 sm:size-12 rounded-full flex items-center justify-center border-4 transition-all duration-300 ${
+                                                isActive 
+                                                    ? 'bg-primary text-white border-primary/20 shadow-lg shadow-primary/20' 
+                                                    : 'bg-white dark:bg-neutral-900 text-slate-400 border-slate-100 dark:border-neutral-800 shadow-sm'
+                                            }`}
+                                            animate={isCurrent ? { scale: [1, 1.05, 1], boxShadow: ["0px 0px 0px rgba(0, 204, 255, 0.2)", "0px 0px 12px rgba(0, 204, 255, 0.6)", "0px 0px 0px rgba(0, 204, 255, 0.2)"] } : {}}
+                                            transition={isCurrent ? { repeat: Infinity, duration: 2 } : {}}
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            <Clock size={16} className={`sm:size-[18px] ${isCurrent ? 'animate-pulse' : ''}`} />
+                                        </motion.div>
+                                    </div>
+                                    <div className="flex flex-col items-start sm:items-center sm:mt-3">
+                                        <span className={`text-[11px] sm:text-xs font-black uppercase tracking-wider ${isActive ? 'text-primary' : 'text-slate-400'}`}>
+                                            {order.status === OrderStatus.WAITING_WITHDRAWAL ? 'Aguard. Retirada' : 'Em Atendimento'}
+                                        </span>
+                                        <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 mt-1 font-mono">
+                                            {isCurrent ? 'Em andamento' : isCompleted ? 'Realizado' : '--'}
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {/* Step 3: Concluída */}
+                        {(() => {
+                            const isCompleted = order.status === OrderStatus.COMPLETED;
+                            return (
+                                <div className="relative z-10 flex flex-row sm:flex-col items-center gap-4 sm:gap-0 flex-1 w-full sm:w-auto">
+                                    <div className="relative">
+                                        {isCompleted && (
+                                            <motion.div 
+                                                className="absolute inset-0 rounded-full bg-emerald-500/40" 
+                                                animate={{ scale: [1, 1.5, 2.0], opacity: [0.7, 0.3, 0] }} 
+                                                transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
+                                            />
+                                        )}
+                                        <motion.div 
+                                            className={`relative z-10 size-10 sm:size-12 rounded-full flex items-center justify-center border-4 transition-all duration-300 ${
+                                                isCompleted 
+                                                    ? 'bg-emerald-500 text-white border-emerald-500/20 shadow-lg shadow-emerald-500/20' 
+                                                    : 'bg-white dark:bg-neutral-900 text-slate-400 border-slate-100 dark:border-neutral-800 shadow-sm'
+                                            }`}
+                                            animate={isCompleted ? { scale: [1, 1.05, 1], boxShadow: ["0px 0px 0px rgba(16, 185, 129, 0.2)", "0px 0px 12px rgba(16, 185, 129, 0.6)", "0px 0px 0px rgba(16, 185, 129, 0.2)"] } : {}}
+                                            transition={isCompleted ? { repeat: Infinity, duration: 2 } : {}}
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            <Check size={16} className="sm:size-[18px]" />
+                                        </motion.div>
+                                    </div>
+                                    <div className="flex flex-col items-start sm:items-center sm:mt-3">
+                                        <span className={`text-[11px] sm:text-xs font-black mt-3 uppercase tracking-wider ${isCompleted ? 'text-emerald-500' : 'text-slate-400'}`}>Concluída</span>
+                                        {isCompleted ? (
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
+                                                {formatDateStepper(order.executionDate || order.createdAt)}
+                                            </span>
+                                        ) : (
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 mt-1 font-mono">--</span>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })()}
+                    </div>
+                </motion.div>
+            )}
 
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                 <div className="space-y-8 lg:col-span-2">
                     {/* Main Info Blocks */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Client Card */}
-                        <div className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 overflow-hidden">
+                        <motion.div 
+                            className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200/50 dark:border-neutral-800/60 overflow-hidden"
+                            whileHover={{ y: -4 }}
+                            transition={{ duration: 0.2 }}
+                        >
                             <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex items-center gap-3">
                                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400">
                                     <User size={18} />
@@ -946,12 +1189,16 @@ export const OrderDetails: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
 
                         {/* Device Card */}
-                        <div className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 overflow-hidden">
+                        <motion.div 
+                            className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200/50 dark:border-neutral-800/60 overflow-hidden"
+                            whileHover={{ y: -4 }}
+                            transition={{ duration: 0.2 }}
+                        >
                             <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex items-center gap-3">
-                                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-purple-600 dark:text-purple-400">
+                                <div className="p-2 bg-primary/10 rounded-xl text-primary">
                                     <Smartphone size={18} />
                                 </div>
                                 <h2 className="font-bold text-slate-900 dark:text-white">Aparelho</h2>
@@ -978,11 +1225,11 @@ export const OrderDetails: React.FC = () => {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
 
                     {/* Problem & Execution */}
-                    <div className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800">
+                    <div className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200/50 dark:border-neutral-800/60">
                         <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex items-center gap-3 rounded-t-3xl">
                             <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400">
                                 <Wrench size={18} />
@@ -1001,14 +1248,16 @@ export const OrderDetails: React.FC = () => {
                             <div>
                                 <div className="flex items-center justify-between mb-3">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Serviço Realizado (Técnico)</p>
-                                    <button
+                                    <motion.button
+                                        whileHover={{ y: -1 }}
+                                        whileTap={{ scale: 0.95 }}
                                         onClick={handleSaveService}
                                         disabled={isSavingService}
                                         className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg transition-all text-xs font-bold disabled:opacity-50"
                                     >
                                         <Save size={14} />
                                         {isSavingService ? 'Salvando...' : 'Salvar'}
-                                    </button>
+                                    </motion.button>
                                 </div>
                                 <textarea
                                     className="w-full rounded-2xl border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-900 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 focus:border-primary focus:ring-primary transition-all min-h-[100px]"
@@ -1054,7 +1303,11 @@ export const OrderDetails: React.FC = () => {
                 {/* Sidebar: Totals & Warranty */}
                 <div className="space-y-8">
                     {/* Financial Summary */}
-                    <div className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 overflow-hidden">
+                    <motion.div 
+                        className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200/50 dark:border-neutral-800/60 overflow-hidden"
+                        whileHover={{ y: -4 }}
+                        transition={{ duration: 0.2 }}
+                    >
                         <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex items-center gap-3">
                             <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl text-emerald-600 dark:text-emerald-400">
                                 <DollarSign size={18} />
@@ -1109,11 +1362,15 @@ export const OrderDetails: React.FC = () => {
                                 <span className="text-3xl font-black text-primary">R$ {order.total.toFixed(2)}</span>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* Warranty Card */}
                     {(order.warrantyEnd || order.noWarranty) && (
-                        <div className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200 dark:border-neutral-800 overflow-hidden">
+                        <motion.div 
+                            className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200/50 dark:border-neutral-800/60 overflow-hidden"
+                            whileHover={{ y: -4 }}
+                            transition={{ duration: 0.2 }}
+                        >
                             <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400">
@@ -1181,7 +1438,7 @@ export const OrderDetails: React.FC = () => {
                                     })()
                                 )}
                             </div>
-                        </div>
+                        </motion.div>
                     )}
                 </div>
             </div>
@@ -1304,10 +1561,10 @@ export const OrderDetails: React.FC = () => {
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Adicionar Pagamento</p>
                                     <div className="grid grid-cols-4 gap-2 mb-4">
                                         {[
-                                            { id: 'Cartão de Crédito', icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50', border: 'hover:border-purple-200' },
-                                            { id: 'Cartão de Débito', icon: CreditCard, color: 'text-blue-600', bg: 'bg-blue-50', border: 'hover:border-blue-200' },
-                                            { id: 'PIX', icon: QrCode, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
-                                            { id: 'Dinheiro', icon: Banknote, color: 'text-green-600', bg: 'bg-green-50', border: 'hover:border-green-200' }
+                                            { id: 'Cartão de Crédito', icon: CreditCard, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-900/20', border: 'hover:border-cyan-200' },
+                                            { id: 'Cartão de Débito', icon: CreditCard, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'hover:border-blue-200' },
+                                            { id: 'PIX', icon: QrCode, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'hover:border-emerald-200' },
+                                            { id: 'Dinheiro', icon: Banknote, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20', border: 'hover:border-green-200' }
                                         ].map((method) => (
                                             <button
                                                 key={method.id}
@@ -1420,10 +1677,10 @@ export const OrderDetails: React.FC = () => {
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 mt-2">Deseja adicionar pagamento?</p>
                                 <div className="grid grid-cols-4 gap-2 mb-3">
                                     {[
-                                        { id: 'Cartão de Crédito', icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50' },
-                                        { id: 'Cartão de Débito', icon: CreditCard, color: 'text-blue-600', bg: 'bg-blue-50' },
-                                        { id: 'PIX', icon: QrCode, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                                        { id: 'Dinheiro', icon: Banknote, color: 'text-green-600', bg: 'bg-green-50' }
+                                        { id: 'Cartão de Crédito', icon: CreditCard, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-900/20' },
+                                        { id: 'Cartão de Débito', icon: CreditCard, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+                                        { id: 'PIX', icon: QrCode, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+                                        { id: 'Dinheiro', icon: Banknote, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' }
                                     ].map((method) => (
                                         <button
                                             key={method.id}

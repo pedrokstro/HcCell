@@ -21,6 +21,7 @@ import { Settings } from './pages/Settings';
 import { LogoStudio } from './pages/LogoStudio';
 import { ToastProvider } from './components/Toast';
 import { UpdateNotification } from './components/UpdateNotification';
+import { LoginTransition } from './components/LoginTransition';
 
 const LoadingScreen: React.FC = () => (
   <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col items-center justify-center relative overflow-hidden transition-colors duration-300">
@@ -87,11 +88,22 @@ const AppRoutes: React.FC = () => {
 }
 
 const App: React.FC = () => {
+  const [showTransition, setShowTransition] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleTrigger = () => {
+      setShowTransition(true);
+    };
+    window.addEventListener('trigger-login-transition', handleTrigger);
+    return () => window.removeEventListener('trigger-login-transition', handleTrigger);
+  }, []);
+
   return (
     <ToastProvider>
       <AppProvider>
         <Router>
           <UpdateNotification />
+          <LoginTransition isVisible={showTransition} onComplete={() => setShowTransition(false)} />
           <AppRoutes />
         </Router>
       </AppProvider>

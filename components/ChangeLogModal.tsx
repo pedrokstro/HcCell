@@ -5,6 +5,42 @@ import { BottomSheet } from './BottomSheet';
 
 const CHANGELOG = [
     {
+        version: '2.6.0',
+        date: '04 Jun 2026',
+        changes: [
+            {
+                title: "Pré-Carregamento Premium 🌀",
+                description: "Nova animação de login! A logo da HC CELL se preenche com efeito líquido neon antes de deslizar suavemente para cima, revelando o painel já carregado em segundo plano.",
+                type: "new"
+            },
+            {
+                title: "Modais de Estatísticas Refinados ✨",
+                description: "Redesenhamos os modais com pílulas coloridas de status, ícones dinâmicos por contexto (celular, dinheiro, caixa, garantias) e animações táteis elásticas de foco.",
+                type: "improvement"
+            },
+            {
+                title: "MobileNav & Encaixe Circular 📱",
+                description: "Barra inferior unida às laterais e base da tela estilo app nativo, com cantos arredondados translúcidos, botão de '+' em encaixe circular e menu 'Mais' em grade compacta de 3 colunas respeitando o Safe Area.",
+                type: "improvement"
+            },
+            {
+                title: "Configurações Mobile Premium ⚙️",
+                description: "Refatoração completa de UX/UI das subpáginas de configuração no celular! Cabeçalho resiliente que impede sobreposição, avatares centralizados com bordas neon, previews de tema Claro/Escuro de alta fidelidade e Toasts de sucesso imediatos nas notificações.",
+                type: "improvement"
+            },
+            {
+                title: "Segurança Otimizada 🔒",
+                description: "Remoção definitiva do modo Cadastro (SignUp) no login para foco total no técnico, com ícones internos nos inputs e design de alertas em glassmorphism.",
+                type: "improvement"
+            },
+            {
+                title: "Paginação de Clientes 📑",
+                description: "Adicionada paginação idêntica à de ordens na listagem de clientes (20 por página) e corrigida a duplicação visual de paginação no desktop.",
+                type: "new"
+            }
+        ]
+    },
+    {
         version: '2.5.0',
         date: '22 Abr 2026',
         changes: [

@@ -636,10 +636,19 @@ export const OrderForm: React.FC = () => {
                     </div>
                 </section>
 
-                <div className="flex items-center justify-end gap-4">
-                    <button type="button" onClick={() => navigate('/orders')} className="px-6 py-2.5 rounded-lg text-sm font-bold text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors">Cancelar</button>
-                    <button type="submit" className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-dark text-white text-sm font-bold shadow-lg shadow-primary/30 flex items-center gap-2">
-                        <Save size={18} /> {id ? 'Salvar Alterações' : 'Gerar Ordem de Serviço'}
+                <div className="sticky bottom-0 -mx-4 sm:mx-0 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-md border-t border-slate-200/60 dark:border-neutral-800/60 p-4 z-30 flex items-center justify-end gap-3 mt-8 shadow-[0_-8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
+                    <button 
+                        type="button" 
+                        onClick={() => navigate('/orders')} 
+                        className="px-6 py-3 rounded-full border border-slate-200 dark:border-neutral-800 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors text-xs sm:text-sm uppercase tracking-wider whitespace-nowrap"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        type="submit" 
+                        className="px-6 py-3 rounded-full bg-primary hover:bg-primary/90 text-white font-black shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm uppercase tracking-wider whitespace-nowrap"
+                    >
+                        <Save size={18} /> {id ? 'Salvar Alterações' : 'Gerar Ordem'}
                     </button>
                 </div>
             </form>
