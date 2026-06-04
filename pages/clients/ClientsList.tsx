@@ -356,9 +356,9 @@ export const ClientsList: React.FC = () => {
         <>
           {/* Desktop Modal */}
           <div className="fixed inset-0 z-[100] hidden md:flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-            <div className="w-full max-w-md transform overflow-hidden rounded-[32px] bg-white dark:bg-surface-dark p-8 text-center shadow-2xl transition-all border border-slate-100 dark:border-neutral-800 animate-in zoom-in-95 duration-300">
-              <div className="mx-auto w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-6">
-                <Trash2 size={32} className="text-red-600 dark:text-red-400" />
+            <div className="w-full max-w-md transform overflow-hidden rounded-[32px] bg-white dark:bg-surface-dark p-8 text-center shadow-2xl shadow-red-500/10 transition-all border border-red-500/20 dark:border-red-900/30 animate-in zoom-in-95 duration-300">
+              <div className="mx-auto w-16 h-16 rounded-full bg-red-500/10 dark:bg-red-500/20 flex items-center justify-center mb-6 animate-pulse">
+                <Trash2 size={32} className="text-red-500" />
               </div>
               <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Excluir Cliente?</h3>
               <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
@@ -375,7 +375,7 @@ export const ClientsList: React.FC = () => {
                 <button
                   onClick={confirmDeleteClient}
                   disabled={isDeleting}
-                  className="flex items-center gap-2 rounded-2xl bg-red-600 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-red-200 dark:shadow-none hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 rounded-2xl bg-red-500 hover:bg-red-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-500/20 hover:shadow-red-500/30 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isDeleting ? (
                     <>

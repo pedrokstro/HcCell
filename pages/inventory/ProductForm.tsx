@@ -88,8 +88,11 @@ export const ProductForm: React.FC = () => {
 
     const handleDelete = () => {
         if (id) {
-            deleteProduct(id);
-            navigate('/inventory');
+            const confirmed = window.confirm("ATENÇÃO: Tem certeza que deseja excluir este produto do estoque permanentemente? Esta ação não pode ser desfeita.");
+            if (confirmed) {
+                deleteProduct(id);
+                navigate('/inventory');
+            }
         }
     };
 
