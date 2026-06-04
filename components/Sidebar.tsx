@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../store';
 import { navItems } from './navItems';
@@ -10,6 +10,20 @@ export const Sidebar: React.FC = () => {
     const { user, logout, darkMode, toggleTheme, isSidebarCollapsed, toggleSidebar } = useApp();
     const location = useLocation();
     const navigate = useNavigate();
+
+    const [shouldAnimateLayout, setShouldAnimateLayout] = useState(() => {
+        return !(window as any).isLoginTransitionActive;
+    });
+
+    useEffect(() => {
+        const handleFinished = () => {
+            setShouldAnimateLayout(true);
+        };
+        window.addEventListener('login-transition-finished', handleFinished);
+        return () => {
+            window.removeEventListener('login-transition-finished', handleFinished);
+        };
+    }, []);
 
     const isActive = (path: string) => location.pathname.startsWith(path);
 
@@ -26,7 +40,12 @@ export const Sidebar: React.FC = () => {
             <div className={`flex flex-col h-full ${isSidebarCollapsed ? 'p-4' : 'p-6'}`}>
                 {/* Logo Animada */}
                 <div className={`flex flex-col items-center gap-2 ${isSidebarCollapsed ? 'mb-6' : 'mb-8'}`}>
-                    <AnimatedLogo size={isSidebarCollapsed ? "xxs" : "xs"} />
+                    {shouldAnimateLayout && (
+                        <AnimatedLogo 
+                            size={isSidebarCollapsed ? "xxs" : "xs"} 
+                            layoutId="app-logo" 
+                        />
+                    )}
                     {!isSidebarCollapsed && (
                         <>
                             <p className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase">Assistência Técnica</p>

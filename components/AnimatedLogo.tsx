@@ -1,14 +1,22 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 interface AnimatedLogoProps {
-    size?: 'xs' | 'sm' | 'md' | 'lg';
+    size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg';
     className?: string;
     forceLight?: boolean;
+    layoutId?: string;
 }
 
-export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ size = 'md', className = '', forceLight = false }) => {
+export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ 
+    size = 'md', 
+    className = '', 
+    forceLight = false,
+    layoutId
+}) => {
     // Tamanhos responsivos
     const sizeClasses = {
+        xxs: 'w-12',
         xs: 'w-24',
         sm: 'w-32',
         md: 'w-48',
@@ -18,7 +26,10 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ size = 'md', classNa
     const darkClasses = forceLight ? '' : 'dark:brightness-0 dark:invert';
 
     return (
-        <div className={`relative ${sizeClasses[size]} ${className}`}>
+        <motion.div 
+            layoutId={layoutId} 
+            className={`relative ${sizeClasses[size] || 'w-48'} ${className}`}
+        >
             {/* Base: Celular + Texto HC CELL */}
             <img
                 src="/base-celular.png"
@@ -51,6 +62,6 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ size = 'md', classNa
                     transformOrigin: 'center center'
                 }}
             />
-        </div>
+        </motion.div>
     );
 };
