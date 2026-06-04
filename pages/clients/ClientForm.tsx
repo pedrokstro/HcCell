@@ -26,38 +26,78 @@ export const ClientForm: React.FC = () => {
     }
   }, [id, clients]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.name) {
       showToast('O nome completo é obrigatório.', 'error');
       return;
     }
 
     const normalizedNewName = formData.name.trim().toLowerCase();
-    const normalizedNewPhone = (formData.phone || '').trim();
+    
+    // 1. Validação de Unicidade de CPF no Frontend
+    if (formData.cpf && formData.cpf.trim() !== '') {
+      const duplicateCpf = clients.find(c => 
+        c.id !== id && 
+        c.cpf && 
+        c.cpf.trim() !== '' && 
+        c.cpf.trim() === formData.cpf.trim()
+      );
+      if (duplicateCpf) {
+        showToast(`Já existe um cliente cadastrado com este CPF: "${duplicateCpf.name}".`, 'error');
+        return;
+      }
+    }
 
-    const isDuplicate = clients.some(c =>
+    // 2. Validação de Unicidade de Telefone no Frontend (com limpeza de caracteres)
+    if (formData.phone && formData.phone.trim() !== '') {
+      const cleanNumber = (val: string) => val.replace(/[^\d]/g, '');
+      const newCleanPhone = cleanNumber(formData.phone);
+      
+      const duplicatePhone = clients.find(c => {
+        if (c.id === id || !c.phone || c.phone.trim() === '') return false;
+        return c.phone.trim() === formData.phone.trim() || cleanNumber(c.phone) === newCleanPhone;
+      });
+      
+      if (duplicatePhone) {
+        showToast(`Já existe um cliente cadastrado com este telefone/WhatsApp: "${duplicatePhone.name}".`, 'error');
+        return;
+      }
+    }
+
+    // 3. Validação de Nome e Telefone combinados (legado/fallback)
+    const normalizedNewPhone = (formData.phone || '').trim();
+    const isDuplicateNamePhone = clients.some(c =>
       c.id !== id &&
       c.name.trim().toLowerCase() === normalizedNewName &&
       c.phone.trim() === normalizedNewPhone
     );
 
-    if (isDuplicate) {
+    if (isDuplicateNamePhone) {
       showToast('Já existe um cliente cadastrado com este mesmo nome e telefone.', 'error');
       return;
     }
 
-    if (id) {
-      updateClient({ ...formData, id } as Client);
-      showToast('Cliente atualizado com sucesso!', 'success');
-    } else {
-      addClient({
-        ...formData,
-        id: Math.random().toString(36).substr(2, 9),
-        createdAt: new Date().toISOString().split('T')[0]
-      } as Client);
-      showToast('Cliente cadastrado com sucesso!', 'success');
+    try {
+      if (id) {
+        await updateClient({ ...formData, id } as Client);
+        showToast('Cliente atualizado com sucesso!', 'success');
+      } else {
+        await addClient({
+          ...formData,
+          id: Math.random().toString(36).substr(2, 9),
+          createdAt: new Date().toISOString().split('T')[0]
+        } as Client);
+        showToast('Cliente cadastrado com sucesso!', 'success');
+      }
+      navigate('/clients');
+    } catch (error: any) {
+      console.error("Erro ao salvar cliente:", error);
+      if (error.code === '23505') {
+        showToast('Erro: O CPF ou telefone informado já pertence a outro cliente.', 'error');
+      } else {
+        showToast(error.message || 'Erro ao salvar cliente. Tente novamente.', 'error');
+      }
     }
-    navigate('/clients');
   };
 
   return (
