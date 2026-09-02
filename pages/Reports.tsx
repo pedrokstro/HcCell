@@ -1,919 +1,1206 @@
 import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../store';
 import {
-    BarChart3,
-    TrendingUp,
-    TrendingDown,
-    DollarSign,
-    Calendar,
-    FileText,
-    Smartphone,
-    Users,
-    Wrench,
-    Download,
-    Filter,
-    ArrowUpRight,
-    ArrowDownRight,
-    Package,
-    ChevronDown
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Calendar,
+  FileText,
+  Smartphone,
+  Wrench,
+  Download,
+  ArrowUpRight,
+  ArrowDownRight,
+  Layers,
+  PieChart as PieIcon,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  CreditCard,
+  Wallet
 } from 'lucide-react';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { DatePicker } from '../components/DatePicker';
+import { DashboardChart } from '../components/DashboardChart';
+import { AnimatedNumber } from '../components/AnimatedNumber';
 import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-    LineChart,
-    Line,
-    Legend,
-    Area,
-    AreaChart
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 import { OrderStatus } from '../types';
 
 type DateFilter = 'today' | 'week' | 'month' | 'year' | 'custom';
+const ITEMS_PER_PAGE = 10;
 
 export const Reports: React.FC = () => {
-    const { orders, clients, products } = useApp();
-    const [dateFilter, setDateFilter] = useState<DateFilter>('month');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
+  const { orders, clients, products } = useApp();
+  const [dateFilter, setDateFilter] = useState<DateFilter>('month');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
-    // Calcula o range de datas baseado no filtro
-    const getDateRange = (): { start: Date; end: Date } => {
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // Date Range calculation
+  const getDateRange = (): { start: Date; end: Date } => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-        switch (dateFilter) {
-            case 'today':
-                return { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
-            case 'week':
-                const weekStart = new Date(today);
-                weekStart.setDate(today.getDate() - 7);
-                return { start: weekStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
-            case 'month':
-                const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-                return { start: monthStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
-            case 'year':
-                const yearStart = new Date(today.getFullYear(), 0, 1);
-                return { start: yearStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
-            case 'custom':
-                return {
-                    start: startDate ? new Date(startDate + 'T00:00:00') : new Date(0),
-                    end: endDate ? new Date(endDate + 'T23:59:59') : new Date()
-                };
-            default:
-                return { start: new Date(0), end: new Date() };
-        }
-    };
-
-    // Filtra ordens pelo período
-    const filteredOrders = useMemo(() => {
-        const { start, end } = getDateRange();
-        return orders.filter(order => {
-            const orderDate = new Date(order.createdAt);
-            return orderDate >= start && orderDate <= end;
-        });
-    }, [orders, dateFilter, startDate, endDate]);
-
-    // Ordens concluídas (faturamento real)
-    const completedOrders = filteredOrders.filter(o => o.status === OrderStatus.COMPLETED);
-
-    // Métricas principais
-    const metrics = useMemo(() => {
-        const totalRevenue = completedOrders.reduce((sum, o) => sum + o.total, 0);
-        const totalServices = completedOrders.reduce((sum, o) => sum + o.priceServices, 0);
-        const totalParts = completedOrders.reduce((sum, o) => sum + o.priceParts, 0);
-        const totalDiscount = completedOrders.reduce((sum, o) => sum + o.discount, 0);
-        const avgTicket = completedOrders.length > 0 ? totalRevenue / completedOrders.length : 0;
-
-        // Calcula período anterior para comparação
-        const { start, end } = getDateRange();
-        const periodLength = end.getTime() - start.getTime();
-        const prevStart = new Date(start.getTime() - periodLength);
-        const prevEnd = new Date(start.getTime());
-
-        const prevOrders = orders.filter(order => {
-            const orderDate = new Date(order.createdAt);
-            return orderDate >= prevStart && orderDate < prevEnd && order.status === OrderStatus.COMPLETED;
-        });
-        const prevRevenue = prevOrders.reduce((sum, o) => sum + o.total, 0);
-
-        const revenueChange = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0;
-
-        const totalCosts = completedOrders.reduce((acc, order) => {
-            const partsCost = (order.selectedProducts || []).reduce((pAcc, item) => {
-                // Tenta usar o custo salvo no item (convertendo para garantias)
-                const savedCost = item.cost !== undefined && item.cost !== null ? Number(item.cost) : undefined;
-
-                if (savedCost !== undefined && !isNaN(savedCost)) {
-                    return pAcc + (savedCost * item.quantity);
-                }
-                // Fallback: busca no cadastro do produto (para ordens antigas)
-                const product = products.find(p => p.id === item.productId);
-                return pAcc + ((product?.priceCost || 0) * item.quantity);
-            }, 0);
-            return acc + Number(partsCost);
-        }, 0);
-
-        const netProfit = totalRevenue - totalCosts;
-        const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
-
+    switch (dateFilter) {
+      case 'today':
+        return { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+      case 'week':
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - 7);
+        return { start: weekStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+      case 'month':
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        return { start: monthStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+      case 'year':
+        const yearStart = new Date(today.getFullYear(), 0, 1);
+        return { start: yearStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+      case 'custom':
         return {
-            totalRevenue,
-            totalCosts,
-            netProfit,
-            profitMargin,
-            totalServices,
-            totalParts,
-            totalDiscount,
-            avgTicket,
-            ordersCount: completedOrders.length,
-            pendingCount: filteredOrders.filter(o => o.status === OrderStatus.PENDING).length,
-            inProgressCount: filteredOrders.filter(o => o.status === OrderStatus.IN_PROGRESS).length,
-            revenueChange
+          start: startDate ? new Date(startDate + 'T00:00:00') : new Date(0),
+          end: endDate ? new Date(endDate + 'T23:59:59') : new Date(),
         };
-    }, [completedOrders, filteredOrders, orders, dateFilter, products]);
+      default:
+        return { start: new Date(0), end: new Date() };
+    }
+  };
 
-    // Dados para gráfico de faturamento diário/mensal
-    const revenueChartData = useMemo(() => {
-        const data: { [key: string]: { name: string; faturamento: number; ordens: number; lucro: number } } = {};
+  // Filter orders by date range
+  const filteredOrders = useMemo(() => {
+    const { start, end } = getDateRange();
+    return orders.filter((order) => {
+      const orderDate = new Date(order.createdAt);
+      return orderDate >= start && orderDate <= end;
+    });
+  }, [orders, dateFilter, startDate, endDate]);
 
-        completedOrders.forEach(order => {
-            const date = new Date(order.createdAt);
-            let key: string;
+  const completedOrders = useMemo(
+    () => filteredOrders.filter((o) => o.status === OrderStatus.COMPLETED),
+    [filteredOrders]
+  );
 
-            if (dateFilter === 'today') {
-                key = date.toLocaleTimeString('pt-BR', { hour: '2-digit' }) + 'h';
-            } else if (dateFilter === 'week' || dateFilter === 'month') {
-                key = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-            } else {
-                key = date.toLocaleDateString('pt-BR', { month: 'short' });
-            }
+  // Core Key Performance Indicators
+  const metrics = useMemo(() => {
+    const totalRevenue = completedOrders.reduce((sum, o) => sum + o.total, 0);
+    const totalServices = completedOrders.reduce((sum, o) => sum + o.priceServices, 0);
+    const totalParts = completedOrders.reduce((sum, o) => sum + o.priceParts, 0);
+    const avgTicket = completedOrders.length > 0 ? totalRevenue / completedOrders.length : 0;
 
-            if (!data[key]) {
-                data[key] = { name: key, faturamento: 0, ordens: 0, lucro: 0 };
-            }
-            data[key].faturamento += order.total;
-            data[key].ordens += 1;
+    // Previous period for comparison
+    const { start, end } = getDateRange();
+    const periodLength = end.getTime() - start.getTime();
+    const prevStart = new Date(start.getTime() - periodLength);
+    const prevEnd = new Date(start.getTime());
 
-            // Calc lucro for chart
-            const orderCost = (order.selectedProducts || []).reduce((acc, item) => {
-                const savedCost = item.cost !== undefined && item.cost !== null ? Number(item.cost) : undefined;
-                if (savedCost !== undefined && !isNaN(savedCost)) {
-                    return acc + (savedCost * item.quantity);
-                }
-                const product = products.find(p => p.id === item.productId);
-                return acc + ((product?.priceCost || 0) * item.quantity);
-            }, 0);
-            data[key].lucro = (data[key].lucro || 0) + (order.total - orderCost);
-        });
+    const prevOrders = orders.filter((order) => {
+      const orderDate = new Date(order.createdAt);
+      return (
+        orderDate >= prevStart && orderDate < prevEnd && order.status === OrderStatus.COMPLETED
+      );
+    });
+    const prevRevenue = prevOrders.reduce((sum, o) => sum + o.total, 0);
+    const revenueChange =
+      prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0;
 
-        return Object.values(data).sort((a, b) => {
-            // Ordena por data
-            const dateA = a.name.split('/').reverse().join('');
-            const dateB = b.name.split('/').reverse().join('');
-            return dateA.localeCompare(dateB);
-        });
-    }, [completedOrders, dateFilter]);
+    const totalCosts = completedOrders.reduce((acc, order) => {
+      const partsCost = (order.selectedProducts || []).reduce((pAcc, item) => {
+        const savedCost =
+          item.cost !== undefined && item.cost !== null ? Number(item.cost) : undefined;
+        if (savedCost !== undefined && !isNaN(savedCost)) {
+          return pAcc + savedCost * item.quantity;
+        }
+        const product = products.find((p) => p.id === item.productId);
+        return pAcc + (product?.priceCost || 0) * item.quantity;
+      }, 0);
+      return acc + Number(partsCost);
+    }, 0);
 
-    // Dados para gráfico de status
-    const statusChartData = useMemo(() => {
-        const statusCount: { [key: string]: number } = {};
+    const netProfit = totalRevenue - totalCosts;
+    const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
 
-        filteredOrders.forEach(order => {
-            statusCount[order.status] = (statusCount[order.status] || 0) + 1;
-        });
+    return {
+      totalRevenue,
+      totalCosts,
+      netProfit,
+      profitMargin,
+      totalServices,
+      totalParts,
+      avgTicket,
+      ordersCount: completedOrders.length,
+      revenueChange,
+    };
+  }, [completedOrders, orders, dateFilter, products]);
 
-        const statusColors: { [key: string]: string } = {
-            [OrderStatus.PENDING]: '#EAB308',
-            [OrderStatus.IN_PROGRESS]: '#3B82F6',
-            [OrderStatus.WAITING_WITHDRAWAL]: '#F97316',
-            [OrderStatus.COMPLETED]: '#22C55E',
-            [OrderStatus.CANCELLED]: '#EF4444'
-        };
+  // Essential Chart 1: Service Types Frequency (Bancada Técnica)
+  const serviceTypeChartData = useMemo(() => {
+    const serviceCount: { [key: string]: { count: number; revenue: number } } = {};
 
-        const statusLabels: { [key: string]: string } = {
-            [OrderStatus.PENDING]: 'Pendente',
-            [OrderStatus.IN_PROGRESS]: 'Em Andamento',
-            [OrderStatus.WAITING_WITHDRAWAL]: 'Retirada',
-            [OrderStatus.COMPLETED]: 'Concluído',
-            [OrderStatus.CANCELLED]: 'Cancelado'
-        };
-
-        return Object.entries(statusCount).map(([status, count]) => ({
-            name: statusLabels[status] || status,
-            value: count,
-            color: statusColors[status] || '#94A3B8'
-        }));
-    }, [filteredOrders]);
-
-    // Dados para gráfico de aparelhos mais atendidos
-    const deviceChartData = useMemo(() => {
-        const deviceCount: { [key: string]: number } = {};
-
-        filteredOrders.forEach(order => {
-            const device = order.deviceModel.split(' ')[0]; // Pega só a marca/modelo principal
-            deviceCount[device] = (deviceCount[device] || 0) + 1;
-        });
-
-        return Object.entries(deviceCount)
-            .map(([device, count]) => ({ name: device, quantidade: count }))
-            .sort((a, b) => b.quantidade - a.quantidade)
-            .slice(0, 8); // Top 8
-    }, [filteredOrders]);
-
-    // Dados para gráfico de formas de pagamento
-    const paymentChartData = useMemo(() => {
-        const paymentCount: { [key: string]: { count: number; total: number } } = {};
-
-        completedOrders.forEach(order => {
-            const method = order.paymentMethod || 'Não informado';
-            if (!paymentCount[method]) {
-                paymentCount[method] = { count: 0, total: 0 };
-            }
-            paymentCount[method].count += 1;
-            paymentCount[method].total += order.total;
-        });
-
-        const colors = ['#00CCFF', '#22C55E', '#8B5CF6', '#F97316', '#94A3B8'];
-
-        return Object.entries(paymentCount).map(([method, data], idx) => ({
-            name: method,
-            quantidade: data.count,
-            valor: data.total,
-            color: colors[idx % colors.length]
-        }));
-    }, [completedOrders]);
-
-    // Dados para gráfico de tipos de serviço
-    const serviceTypeChartData = useMemo(() => {
-        const serviceCount: { [key: string]: { count: number; revenue: number } } = {};
-
-        // Palavras-chave para identificar tipos de serviço
-        const serviceKeywords: { [key: string]: string[] } = {
-            'Troca de Tela': ['tela', 'display', 'lcd', 'touch', 'vidro'],
-            'Bateria': ['bateria', 'battery'],
-            'Conector de Carga': ['conector', 'carga', 'usb', 'carregador', 'charging'],
-            'Alto-falante': ['alto-falante', 'speaker', 'auricular', 'som'],
-            'Câmera': ['camera', 'câmera', 'frontal', 'traseira'],
-            'Placa / Chip': ['placa', 'chip', 'ic', 'baseband', 'ci'],
-            'Software': ['software', 'formatação', 'reset', 'desbloqueio', 'conta'],
-            'Microfone': ['microfone', 'mic'],
-            'Botões': ['botão', 'power', 'volume', 'home', 'flex'],
-            'Outros': []
-        };
-
-        filteredOrders.forEach(order => {
-            let matched = false;
-            const searchText = `${order.issueDescription} ${order.servicePerformed || ''} ${order.serviceType || ''}`.toLowerCase();
-
-            for (const [type, keywords] of Object.entries(serviceKeywords)) {
-                if (type === 'Outros') continue;
-
-                for (const keyword of keywords) {
-                    if (searchText.includes(keyword)) {
-                        if (!serviceCount[type]) {
-                            serviceCount[type] = { count: 0, revenue: 0 };
-                        }
-                        serviceCount[type].count += 1;
-                        serviceCount[type].revenue += order.total;
-                        matched = true;
-                        break;
-                    }
-                }
-                if (matched) break;
-            }
-
-            if (!matched) {
-                if (!serviceCount['Outros']) {
-                    serviceCount['Outros'] = { count: 0, revenue: 0 };
-                }
-                serviceCount['Outros'].count += 1;
-                serviceCount['Outros'].revenue += order.total;
-            }
-        });
-
-        const colors = ['#00CCFF', '#22C55E', '#8B5CF6', '#F97316', '#EAB308', '#EF4444', '#EC4899', '#14B8A6', '#6366F1', '#94A3B8'];
-
-        return Object.entries(serviceCount)
-            .map(([type, data], idx) => ({
-                name: type,
-                quantidade: data.count,
-                faturamento: data.revenue,
-                color: colors[idx % colors.length]
-            }))
-            .sort((a, b) => b.quantidade - a.quantidade)
-            .slice(0, 10);
-    }, [filteredOrders]);
-
-    // Exportar para PDF
-    const handleExportPDF = () => {
-        const frame = document.createElement('iframe');
-        frame.style.position = 'absolute';
-        frame.style.top = '-9999px';
-        document.body.appendChild(frame);
-
-        const frameDoc = frame.contentWindow?.document;
-        if (!frameDoc) return;
-
-        const reportTitle = `Relatório de Vendas - ${dateFilter === 'custom' ? 'Período Personalizado' :
-            dateFilter === 'today' ? 'Hoje' :
-                dateFilter === 'week' ? 'Últimos 7 dias' :
-                    dateFilter === 'month' ? 'Este Mês' : 'Este Ano'}`;
-
-        let rows = '';
-        filteredOrders.forEach(order => {
-            const client = clients.find(c => c.id === order.clientId);
-            rows += `
-                <tr>
-                    <td style="font-family: monospace; font-weight: bold; color: #64748b;">#${order.displayId || order.id.slice(0, 8)}</td>
-                    <td>${new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
-                    <td style="font-weight: 500;">${client?.name || 'Desconhecido'}</td>
-                    <td>${order.deviceModel}</td>
-                    <td>
-                        <span class="status-badge ${order.status === 'Concluído' ? 'status-green' : order.status === 'Cancelado' ? 'status-red' : 'status-gray'}">
-                            ${order.status}
-                        </span>
-                    </td>
-                    <td class="right" style="font-weight: bold;">R$ ${order.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                </tr>
-            `;
-        });
-
-        const formatDate = (dateStr: string) => {
-            if (!dateStr) return '';
-            const [y, m, d] = dateStr.split('-');
-            return `${d}/${m}/${y}`;
-        };
-
-        const periodText = dateFilter === 'custom' && startDate && endDate
-            ? `${formatDate(startDate)} até ${formatDate(endDate)}`
-            : new Date().toLocaleDateString('pt-BR');
-
-        const logoUrl = window.location.origin + '/hccell-logo.png';
-
-        frameDoc.write(`
-            <html>
-                <head>
-                    <title>Relatório HCCELL</title>
-                    <link rel="preconnect" href="https://fonts.googleapis.com">
-                    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-                    <style>
-                        * { margin: 0; padding: 0; box-sizing: border-box; }
-                        body { font-family: 'Inter', sans-serif; padding: 50px; color: #1e293b; background: #fff; line-height: 1.5; }
-                        
-                        header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid #f1f5f9; padding-bottom: 30px; }
-                        .logo-container { display: flex; align-items: center; gap: 15px; }
-                        .logo-img { height: 60px; object-fit: contain; }
-                        .company-info { text-align: right; }
-                        .company-info h2 { font-weight: 900; color: #0f172a; font-size: 20px; text-transform: uppercase; letter-spacing: -0.5px; }
-                        .company-info p { font-size: 12px; color: #64748b; margin-top: 2px; }
-
-                        h1 { font-size: 28px; font-weight: 900; color: #0f172a; margin-bottom: 5px; letter-spacing: -1px; }
-                        .subtitle { font-size: 13px; color: #64748b; margin-bottom: 40px; font-weight: 500; }
-                        .subtitle strong { color: #0f172a; }
-
-                        .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 40px; }
-                        .metric-card { padding: 18px; border-radius: 16px; border: 1px solid #f1f5f9; background: #fff; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
-                        .metric-card.highlight { background: #0f172a; color: #fff; border: none; }
-                        .metric-card.highlight .metric-title { color: #94a3b8; }
-                        .metric-card.highlight .metric-value { color: #fff; }
-                        
-                        .metric-title { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800; margin-bottom: 8px; }
-                        .metric-value { font-size: 20px; font-weight: 900; color: #0f172a; }
-                        .metric-positive { color: #10b981; }
-                        .metric-negative { color: #f43f5e; }
-                        
-                        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; margin-bottom: 30px; }
-                        th { background-color: #f8fafc; font-weight: 800; color: #475569; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; padding: 15px 12px; border-bottom: 2px solid #e2e8f0; text-align: left; }
-                        td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
-                        tr:nth-child(even) { background-color: #fcfdfe; }
-                        .right { text-align: right; }
-                        
-                        .status-badge { padding: 4px 10px; border-radius: 8px; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
-                        .status-green { background: #dcfce7; color: #065f46; border: 1px solid #bbf7d0; }
-                        .status-red { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-                        .status-gray { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
-
-                        tfoot td { padding: 15px 12px; border: none; }
-                        .footer-main { margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end; border-top: 2px solid #f1f5f9; padding-top: 30px; }
-                        .footer-info { font-size: 11px; color: #94a3b8; max-width: 300px; }
-                        .signature { text-align: center; width: 220px; }
-                        .signature-line { border-top: 1px solid #cbd5e1; margin-bottom: 8px; width: 100%; }
-                        .signature p { font-size: 11px; font-weight: 700; color: #475569; }
-
-                        @media print {
-                            body { padding: 20px; }
-                            .metric-card { box-shadow: none; border: 1px solid #e2e8f0; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <header>
-                        <div class="logo-container">
-                            <img src="${logoUrl}" class="logo-img" alt="Logo HCCELL">
-                        </div>
-                        <div class="company-info">
-                            <h2>HCCELL ASSISTÊNCIA TÉCNICA</h2>
-                            <p>Gestão de Serviços e Vendas</p>
-                            <p>${new Date().toLocaleDateString('pt-BR')}</p>
-                        </div>
-                    </header>
-
-                    <h1>${reportTitle}</h1>
-                    <p class="subtitle">Impressão realizada em <strong>${new Date().toLocaleString('pt-BR')}</strong> • Período analisado: <strong>${periodText}</strong></p>
-                    
-                    <div class="metrics">
-                        <div class="metric-card highlight">
-                            <div class="metric-title" style="color: #60a5fa;">Faturamento Bruto</div>
-                            <div class="metric-value">R$ ${metrics.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-title">Custos de Peças</div>
-                            <div class="metric-value metric-negative">- R$ ${metrics.totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-title">Lucro Líquido</div>
-                            <div class="metric-value metric-positive">R$ ${metrics.netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                            <div style="font-size: 10px; font-weight: bold; color: #059669; margin-top: 2px;">Margem: ${metrics.profitMargin.toFixed(1)}%</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-title">Ordens Totais</div>
-                            <div class="metric-value">${metrics.ordersCount}</div>
-                        </div>
-                    </div>
-                    
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>OS</th>
-                                <th>Data</th>
-                                <th>Cliente</th>
-                                <th>Aparelho</th>
-                                <th>Status</th>
-                                <th class="right">Valor</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rows}
-                            <!-- Resumo Final (Não se repete nas páginas) -->
-                            <tr style="break-inside: avoid;">
-                                <td colspan="5" class="right" style="padding-top: 35px; border-bottom: none;"><strong>TOTAL BRUTO DO PERÍODO</strong></td>
-                                <td class="right" style="padding-top: 35px; font-size: 14px; border-bottom: none;"><strong>R$ ${metrics.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
-                            </tr>
-                            <tr style="break-inside: avoid;">
-                                <td colspan="5" class="right" style="color: #64748b; border-bottom: none;">TOTAL CUSTOS (PEÇAS)</td>
-                                <td class="right" style="color: #f43f5e; border-bottom: none;"><strong>- R$ ${metrics.totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
-                            </tr>
-                            <tr style="break-inside: avoid;">
-                                <td colspan="5" class="right" style="padding-top: 15px; font-size: 16px; border-bottom: none;"><strong>LUCRO LÍQUIDO FINAL</strong></td>
-                                <td class="right" style="padding-top: 15px; font-size: 20px; color: #10b981; border-bottom: none;"><strong>R$ ${metrics.netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    
-                    <div class="footer-main">
-                        <div class="footer-info">
-                            <p><strong>HCCELL Assistência Técnica</strong></p>
-                            <p>Este documento é um registro gerencial gerado pelo sistema.</p>
-                            <p>RUA EXEMPLO, 123 - CENTRO</p>
-                        </div>
-                        <div class="signature">
-                            <div class="signature-line"></div>
-                            <p>Responsável / Financeiro</p>
-                        </div>
-                    </div>
-                </body>
-            </html>
-        `);
-        frameDoc.close();
-        setTimeout(() => {
-            frame.contentWindow?.focus();
-            frame.contentWindow?.print();
-            setTimeout(() => document.body.removeChild(frame), 1000);
-        }, 500);
+    const serviceKeywords: { [key: string]: string[] } = {
+      'Troca de Tela': ['tela', 'display', 'lcd', 'touch', 'vidro'],
+      Bateria: ['bateria', 'battery'],
+      'Conector de Carga': ['conector', 'carga', 'usb', 'carregador', 'charging'],
+      'Alto-falante': ['alto-falante', 'speaker', 'auricular', 'som'],
+      Câmera: ['camera', 'câmera', 'frontal', 'traseira'],
+      'Placa / Chip': ['placa', 'chip', 'ic', 'baseband', 'ci'],
+      Software: ['software', 'formatação', 'reset', 'desbloqueio', 'conta'],
+      Microfone: ['microfone', 'mic'],
+      Outros: [],
     };
 
-    // Exportar para CSV
-    const handleExportCSV = () => {
-        const headers = ['ID', 'Data', 'Cliente', 'Aparelho', 'Status', 'Serviços', 'Peças', 'Desconto', 'Total', 'Pagamento'];
-        const rows = filteredOrders.map(order => {
-            const client = clients.find(c => c.id === order.clientId);
-            return [
-                order.displayId || order.id.slice(0, 8),
-                new Date(order.createdAt).toLocaleDateString('pt-BR'),
-                client?.name || 'Desconhecido',
-                order.deviceModel,
-                order.status,
-                order.priceServices.toFixed(2),
-                order.priceParts.toFixed(2),
-                order.discount.toFixed(2),
-                order.total.toFixed(2),
-                order.paymentMethod || '-'
-            ].join(';');
-        });
+    filteredOrders.forEach((order) => {
+      let matched = false;
+      const searchText = `${order.issueDescription} ${order.servicePerformed || ''} ${order.serviceType || ''
+        }`.toLowerCase();
 
-        const csv = [headers.join(';'), ...rows].join('\n');
-        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `relatorio_${dateFilter}_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
+      for (const [type, keywords] of Object.entries(serviceKeywords)) {
+        if (type === 'Outros') continue;
+
+        for (const keyword of keywords) {
+          if (searchText.includes(keyword)) {
+            if (!serviceCount[type]) {
+              serviceCount[type] = { count: 0, revenue: 0 };
+            }
+            serviceCount[type].count += 1;
+            serviceCount[type].revenue += order.total;
+            matched = true;
+            break;
+          }
+        }
+        if (matched) break;
+      }
+
+      if (!matched) {
+        if (!serviceCount['Outros']) {
+          serviceCount['Outros'] = { count: 0, revenue: 0 };
+        }
+        serviceCount['Outros'].count += 1;
+        serviceCount['Outros'].revenue += order.total;
+      }
+    });
+
+    const colors = [
+      '#00CCFF',
+      '#10b981',
+      '#8b5cf6',
+      '#f97316',
+      '#eab308',
+      '#ef4444',
+      '#ec4899',
+      '#14b8a6',
+    ];
+
+    return Object.entries(serviceCount)
+      .map(([type, data], idx) => ({
+        name: type,
+        quantidade: data.count,
+        faturamento: data.revenue,
+        color: colors[idx % colors.length],
+      }))
+      .sort((a, b) => b.quantidade - a.quantidade);
+  }, [filteredOrders]);
+
+  // Essential Chart 2: Status Breakdown (Production Funnel)
+  const statusChartData = useMemo(() => {
+    const statusCount: { [key: string]: number } = {};
+
+    filteredOrders.forEach((order) => {
+      statusCount[order.status] = (statusCount[order.status] || 0) + 1;
+    });
+
+    const statusColors: { [key: string]: string } = {
+      [OrderStatus.PENDING]: '#f59e0b',
+      [OrderStatus.IN_PROGRESS]: '#0284c7',
+      [OrderStatus.WAITING_WITHDRAWAL]: '#06b6d4',
+      [OrderStatus.COMPLETED]: '#10b981',
+      [OrderStatus.CANCELLED]: '#f43f5e',
     };
 
-    const COLORS = ['#00CCFF', '#22C55E', '#EAB308', '#F97316', '#EF4444'];
+    return Object.entries(statusCount).map(([status, count]) => ({
+      name: status,
+      value: count,
+      color: statusColors[status] || '#94a3b8',
+    }));
+  }, [filteredOrders]);
 
-    return (
-        <div className="max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-                        <BarChart3 className="text-primary" size={32} />
-                        Relatórios
-                    </h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">Análise de faturamento e desempenho</p>
-                </div>
+  // Essential Chart 3: Top Devices Repaired
+  const deviceChartData = useMemo(() => {
+    const deviceCount: { [key: string]: number } = {};
 
-                <div className="flex flex-wrap items-center gap-3">
-                    {/* Filtro de período */}
-                    {/* Period Filter Dropdown */}
-                    <CustomDropdown
-                        label="FILTRAR POR PERÍODO"
-                        options={[
-                            { value: 'today', label: 'Hoje' },
-                            { value: 'week', label: 'Últimos 7 dias' },
-                            { value: 'month', label: 'Este Mês' },
-                            { value: 'year', label: 'Este Ano' },
-                            { value: 'custom', label: 'Personalizado' },
-                        ]}
-                        selectedValue={dateFilter}
-                        onSelect={(val) => setDateFilter(val as DateFilter)}
-                        icon={<Calendar size={18} />}
-                        className="w-full sm:w-64"
-                    />
+    filteredOrders.forEach((order) => {
+      const device = order.deviceModel.split(' ')[0] || 'Geral';
+      deviceCount[device] = (deviceCount[device] || 0) + 1;
+    });
 
-                    {/* Exportar */}
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={handleExportPDF}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all"
-                            title="Exportar PDF"
-                        >
-                            <FileText size={16} />
-                            PDF
-                        </button>
-                        <button
-                            onClick={handleExportCSV}
-                            className="flex items-center gap-2 px-4 py-2 bg-slate-800 dark:bg-slate-700 text-white rounded-xl font-bold text-sm hover:bg-slate-900 transition-all"
-                            title="Exportar CSV"
-                        >
-                            <Download size={16} />
-                            CSV
-                        </button>
-                    </div>
-                </div>
+    return Object.entries(deviceCount)
+      .map(([device, count]) => ({ name: device, quantidade: count }))
+      .sort((a, b) => b.quantidade - a.quantidade)
+      .slice(0, 6);
+  }, [filteredOrders]);
+
+  // Essential Chart 4: Formas de Pagamento (Receita R$ & Quantidade de OSs)
+  const paymentChartData = useMemo(() => {
+    const paymentCount: { [key: string]: { count: number; revenue: number } } = {};
+
+    completedOrders.forEach((order) => {
+      if (order.payments && order.payments.length > 0) {
+        order.payments.forEach((p) => {
+          const method = p.method || 'Não informado';
+          if (!paymentCount[method]) {
+            paymentCount[method] = { count: 0, revenue: 0 };
+          }
+          paymentCount[method].count += 1;
+          paymentCount[method].revenue += p.amount || 0;
+        });
+      } else {
+        const method = order.paymentMethod || 'Não informado';
+        if (!paymentCount[method]) {
+          paymentCount[method] = { count: 0, revenue: 0 };
+        }
+        paymentCount[method].count += 1;
+        paymentCount[method].revenue += order.total || 0;
+      }
+    });
+
+    const paymentColors: { [key: string]: string } = {
+      PIX: '#10b981',
+      'Cartão de Crédito': '#00CCFF',
+      'Cartão de Débito': '#8b5cf6',
+      Dinheiro: '#f59e0b',
+      Múltiplo: '#ec4899',
+      'Não informado': '#94a3b8',
+    };
+
+    return Object.entries(paymentCount)
+      .map(([method, data]) => ({
+        name: method,
+        quantidade: data.count,
+        receita: data.revenue,
+        color: paymentColors[method] || '#06b6d4',
+      }))
+      .sort((a, b) => b.receita - a.receita);
+  }, [completedOrders]);
+
+  // Total Revenue for Payment Percentage calculation
+  const totalPaymentRevenue = useMemo(
+    () => paymentChartData.reduce((acc, curr) => acc + curr.receita, 0),
+    [paymentChartData]
+  );
+
+  // Pagination for Detailed Orders Table
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ITEMS_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedOrders = filteredOrders.slice(
+    (safeCurrentPage - 1) * ITEMS_PER_PAGE,
+    safeCurrentPage * ITEMS_PER_PAGE
+  );
+
+  // High-Contrast Glass Tooltip Configuration for Recharts
+  const tooltipStyleProps = {
+    contentStyle: {
+      backgroundColor: '#0f172a',
+      border: '1px solid rgba(255, 255, 255, 0.15)',
+      borderRadius: '12px',
+      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)',
+      padding: '8px 12px',
+    },
+    itemStyle: {
+      color: '#f8fafc',
+      fontSize: '12px',
+      fontWeight: 700,
+    },
+    labelStyle: {
+      color: '#ffffff',
+      fontSize: '12px',
+      fontWeight: 800,
+      marginBottom: '2px',
+    },
+  };
+
+  // Fintech Grade Executive PDF Export Function
+  const handleExportPDF = () => {
+    const frame = document.createElement('iframe');
+    frame.style.position = 'absolute';
+    frame.style.top = '-9999px';
+    document.body.appendChild(frame);
+
+    const frameDoc = frame.contentWindow?.document;
+    if (!frameDoc) return;
+
+    const logoUrl = `${window.location.origin}/logo-full.png`;
+    const reportHash = `HCCELL-FINTECH-${Date.now().toString(36).toUpperCase()}-${Math.floor(
+      1000 + Math.random() * 9000
+    )}`;
+    const nowFormatted = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+
+    const periodText =
+      dateFilter === 'custom'
+        ? `Personalizado (${startDate || 'Início'} até ${endDate || 'Hoje'})`
+        : dateFilter === 'today'
+          ? 'Hoje'
+          : dateFilter === 'week'
+            ? 'Últimos 7 Dias'
+            : dateFilter === 'month'
+              ? 'Este Mês'
+              : 'Este Ano';
+
+    // Payment rows HTML
+    let paymentRowsHtml = '';
+    paymentChartData.forEach((item) => {
+      const share =
+        totalPaymentRevenue > 0 ? ((item.receita / totalPaymentRevenue) * 100).toFixed(1) : '0';
+      paymentRowsHtml += `
+        <tr>
+          <td style="font-weight: 700; color: #1e293b;">${item.name}</td>
+          <td style="text-align: center; font-weight: 600; color: #475569;">${item.quantidade} OS</td>
+          <td style="text-align: right; font-weight: 700; font-family: monospace; color: #0f172a;">R$ ${item.receita.toLocaleString(
+        'pt-BR',
+        { minimumFractionDigits: 2 }
+      )}</td>
+          <td style="text-align: right; font-weight: 800; color: #0284c7;">${share}%</td>
+        </tr>
+      `;
+    });
+
+    // Top Service rows HTML
+    let serviceRowsHtml = '';
+    serviceTypeChartData.forEach((item) => {
+      serviceRowsHtml += `
+        <tr>
+          <td style="font-weight: 700; color: #1e293b;">${item.name}</td>
+          <td style="text-align: center; font-weight: 600; color: #475569;">${item.quantidade} ocorrência(s)</td>
+          <td style="text-align: right; font-weight: 700; font-family: monospace; color: #0f172a;">R$ ${item.faturamento.toLocaleString(
+        'pt-BR',
+        { minimumFractionDigits: 2 }
+      )}</td>
+        </tr>
+      `;
+    });
+
+    // Orders rows HTML
+    let ordersRowsHtml = '';
+    filteredOrders.forEach((order) => {
+      const client = clients.find((c) => c.id === order.clientId);
+      ordersRowsHtml += `
+        <tr>
+          <td style="font-family: monospace; font-weight: 800; color: #0284c7;">#${order.displayId || order.id.slice(0, 8)
+        }</td>
+          <td style="color: #475569;">${new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
+          <td style="font-weight: 700; color: #0f172a;">${client?.name || 'Cliente Geral'}</td>
+          <td style="color: #334155;">${order.deviceModel}</td>
+          <td>
+            <span style="padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; ${order.status === OrderStatus.COMPLETED
+          ? 'background: #dcfce7; color: #15803d;'
+          : order.status === OrderStatus.CANCELLED
+            ? 'background: #ffe4e6; color: #be123c;'
+            : 'background: #f1f5f9; color: #334155;'
+        }">
+              ${order.status}
+            </span>
+          </td>
+          <td style="text-align: right; font-weight: 900; font-family: monospace; color: #0f172a;">R$ ${order.total.toLocaleString(
+          'pt-BR',
+          { minimumFractionDigits: 2 }
+        )}</td>
+        </tr>
+      `;
+    });
+
+    frameDoc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Relatório Financeiro & Operacional - HcCell</title>
+          <style>
+            @page { size: A4; margin: 12mm; }
+            * { box-sizing: border-box; }
+            body { font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; color: #0f172a; margin: 0; padding: 20px; background: #ffffff; font-size: 11px; line-height: 1.4; }
+            .header-bar { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 16px; margin-bottom: 20px; }
+            .logo-container { display: flex; align-items: center; gap: 14px; }
+            .logo-img { height: 44px; object-fit: contain; }
+            .company-info h2 { margin: 0; font-size: 18px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px; }
+            .company-info p { margin: 2px 0 0 0; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+            .doc-meta { text-align: right; }
+            .badge-fintech { display: inline-block; padding: 4px 10px; background: #0284c7; color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; border-radius: 6px; letter-spacing: 0.5px; margin-bottom: 4px; }
+            .doc-meta p { margin: 2px 0 0 0; font-size: 10px; color: #64748b; font-weight: 600; }
+            .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+            .kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; }
+            .kpi-title { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+            .kpi-val { font-size: 16px; font-weight: 900; font-family: 'Courier New', monospace; color: #0f172a; margin-top: 4px; }
+            .kpi-sub { font-size: 9px; font-weight: 700; margin-top: 2px; }
+            .text-emerald { color: #16a34a; }
+            .text-cyan { color: #0284c7; }
+            .text-rose { color: #e11d48; }
+            .section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #0f172a; border-left: 3px solid #0284c7; padding-left: 8px; margin: 20px 0 10px 0; }
+            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 11px; }
+            th { background: #f1f5f9; text-align: left; padding: 8px 10px; font-size: 9px; font-weight: 800; text-transform: uppercase; color: #475569; border-bottom: 1px solid #cbd5e1; }
+            td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; }
+            tr:nth-child(even) td { background: #fafafa; }
+            .footer { border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 30px; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #94a3b8; font-weight: 600; }
+            .hash-box { font-family: monospace; font-weight: 700; color: #475569; }
+          </style>
+        </head>
+        <body>
+          <div class="header-bar">
+            <div class="logo-container">
+              <img src="${logoUrl}" alt="HcCell Logo" class="logo-img" onerror="this.style.display='none'" />
+              <div class="company-info">
+                <h2>HcCell Assistência Técnica</h2>
+                <p>Relatório Consolidado de Desempenho & Finanças</p>
+              </div>
+            </div>
+            <div class="doc-meta">
+              <span class="badge-fintech">Fintech Executive Report</span>
+              <p>Período: <strong>${periodText}</strong></p>
+              <p>Gerado em: <strong>${nowFormatted}</strong></p>
+            </div>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-title">Faturamento Bruto</div>
+              <div class="kpi-val">R$ ${metrics.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div class="kpi-sub text-emerald">Receita Total</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Lucro Líquido Est.</div>
+              <div class="kpi-val text-emerald">R$ ${metrics.netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div class="kpi-sub text-cyan">${metrics.profitMargin.toFixed(1)}% Margem Operacional</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Custos de Insumos</div>
+              <div class="kpi-val">R$ ${metrics.totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div class="kpi-sub text-rose">Peças & Substitutos</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Ticket Médio / OS</div>
+              <div class="kpi-val">R$ ${metrics.avgTicket.toFixed(2)}</div>
+              <div class="kpi-sub text-cyan">${metrics.ordersCount} Ordens Concluídas</div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <div class="section-title">Detalhamento por Meios de Pagamento</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Meio</th>
+                    <th style="text-align: center;">Ordens</th>
+                    <th style="text-align: right;">Total R$</th>
+                    <th style="text-align: right;">Participação</th>
+                  </tr>
+                </thead>
+                <tbody>${paymentRowsHtml || '<tr><td colSpan="4">Sem lançamentos</td></tr>'}</tbody>
+              </table>
             </div>
 
-            {/* Filtro customizado */}
-            {dateFilter === 'custom' && (
-                <div className="flex flex-col sm:flex-row items-center gap-4 mb-6 p-6 bg-white dark:bg-surface-dark rounded-[24px] border border-slate-100 dark:border-white/5 shadow-sm">
-                    <DatePicker 
-                        label="Data Inicial" 
-                        value={startDate} 
-                        onChange={setStartDate} 
-                    />
-                    <div className="hidden sm:block text-slate-300 dark:text-neutral-700 font-bold mt-4">até</div>
-                    <DatePicker 
-                        label="Data Final" 
-                        value={endDate} 
-                        onChange={setEndDate} 
-                    />
-                </div>
-            )}
-
-            {/* Cards de Métricas */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-                {/* Faturamento Total */}
-                <div className="bg-gradient-to-br from-primary to-cyan-600 rounded-2xl p-6 text-white shadow-xl shadow-primary/20">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2 bg-white/20 rounded-xl">
-                            <DollarSign size={20} />
-                        </div>
-                        {metrics.revenueChange !== 0 && (
-                            <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${metrics.revenueChange > 0 ? 'bg-green-500/30' : 'bg-red-500/30'
-                                }`}>
-                                {metrics.revenueChange > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                                {Math.abs(metrics.revenueChange).toFixed(0)}%
-                            </div>
-                        )}
-                    </div>
-                    <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">Faturamento</p>
-                    <p className="text-xl lg:text-2xl font-black">R$ {metrics.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                </div>
-
-                {/* Lucro Líquido */}
-                <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800 shadow-sm relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-green-500/10 rounded-bl-full -mr-4 -mt-4"></div>
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400">
-                            <TrendingUp size={20} />
-                        </div>
-                        <div className="px-2 py-1 bg-green-100 dark:bg-green-900/20 rounded-lg text-[10px] font-bold text-green-700 dark:text-green-400">
-                            {metrics.profitMargin.toFixed(0)}% Margem
-                        </div>
-                    </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Lucro Líquido</p>
-                    <p className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white">R$ {metrics.netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                </div>
-
-                {/* Custos */}
-                <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-xl text-red-600 dark:text-red-400">
-                            <TrendingDown size={20} />
-                        </div>
-                    </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Custos (Peças)</p>
-                    <p className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white">R$ {metrics.totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                </div>
-
-                {/* Ticket Médio */}
-                <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-purple-600 dark:text-purple-400">
-                            <DollarSign size={20} />
-                        </div>
-                    </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Ticket Médio</p>
-                    <p className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white">R$ {metrics.avgTicket.toFixed(0)}</p>
-                </div>
-
-                {/* Ordens Concluídas */}
-                <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400">
-                            <FileText size={20} />
-                        </div>
-                    </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Concluídas</p>
-                    <p className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white">{metrics.ordersCount}</p>
-                </div>
+            <div>
+              <div class="section-title">Principais Serviços de Bancada</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Serviço</th>
+                    <th style="text-align: center;">Volume</th>
+                    <th style="text-align: right;">Faturamento R$</th>
+                  </tr>
+                </thead>
+                <tbody>${serviceRowsHtml || '<tr><td colSpan="3">Sem lançamentos</td></tr>'}</tbody>
+              </table>
             </div>
+          </div>
 
-            {/* Gráficos */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                {/* Gráfico de Faturamento */}
-                <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800">
-                    <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                        <TrendingUp className="text-primary" size={20} />
-                        Faturamento por Período
-                    </h3>
-                    <div className="h-[300px]">
-                        {revenueChartData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={revenueChartData}>
-                                    <defs>
-                                        <linearGradient id="colorFaturamento" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#00CCFF" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#00CCFF" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                    <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="#94a3b8" />
-                                    <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" tickFormatter={(v) => `R$${v}`} />
-                                    <Tooltip
-                                        formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Faturamento']}
-                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
-                                    />
-                                    <Area type="monotone" dataKey="faturamento" stroke="#00CCFF" strokeWidth={3} fill="url(#colorFaturamento)" name="Faturamento" />
-                                    <Area type="monotone" dataKey="lucro" stroke="#22C55E" strokeWidth={3} fillOpacity={0} name="Lucro" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="h-full flex items-center justify-center text-slate-400">
-                                Nenhum dado para o período selecionado
-                            </div>
-                        )}
-                    </div>
-                </div>
+          <div class="section-title">Listagem Consolidada de Ordens de Serviço (${filteredOrders.length} OS)</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Código OS</th>
+                <th>Data</th>
+                <th>Cliente</th>
+                <th>Aparelho / Modelo</th>
+                <th>Status</th>
+                <th style="text-align: right;">Valor Total</th>
+              </tr>
+            </thead>
+            <tbody>${ordersRowsHtml || '<tr><td colSpan="6">Nenhuma ordem encontrada no período</td></tr>'}</tbody>
+          </table>
 
-                {/* Gráfico de Status */}
-                <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800">
-                    <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                        <FileText className="text-primary" size={20} />
-                        Status das Ordens
-                    </h3>
-                    <div className="h-[300px]">
-                        {statusChartData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={statusChartData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={100}
-                                        paddingAngle={2}
-                                        dataKey="value"
-                                    >
-                                        {statusChartData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        formatter={(value: number, name: string) => [value, name]}
-                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
-                                    />
-                                    <Legend />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="h-full flex items-center justify-center text-slate-400">
-                                Nenhum dado para o período selecionado
-                            </div>
-                        )}
-                    </div>
-                </div>
+          <div class="footer">
+            <span>HcCell System v2.3.0 • Todos os direitos reservados.</span>
+            <span class="hash-box">HASH AUDIT: ${reportHash}</span>
+          </div>
+        </body>
+      </html>
+    `);
 
-                {/* Gráfico de Aparelhos */}
-                <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800">
-                    <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                        <Smartphone className="text-primary" size={20} />
-                        Aparelhos Mais Atendidos
-                    </h3>
-                    <div className="h-[300px]">
-                        {deviceChartData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={deviceChartData} layout="vertical">
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                    <XAxis type="number" tick={{ fontSize: 12 }} stroke="#94a3b8" />
-                                    <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} stroke="#94a3b8" width={80} />
-                                    <Tooltip
-                                        formatter={(value: number) => [value, 'Quantidade']}
-                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
-                                    />
-                                    <Bar dataKey="quantidade" fill="#00CCFF" radius={[0, 8, 8, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="h-full flex items-center justify-center text-slate-400">
-                                Nenhum dado para o período selecionado
-                            </div>
-                        )}
-                    </div>
-                </div>
+    frameDoc.close();
+    setTimeout(() => {
+      frame.contentWindow?.focus();
+      frame.contentWindow?.print();
+      setTimeout(() => document.body.removeChild(frame), 1000);
+    }, 600);
+  };
 
-                {/* Gráfico de Formas de Pagamento */}
-                <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800">
-                    <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                        <DollarSign className="text-primary" size={20} />
-                        Formas de Pagamento
-                    </h3>
-                    <div className="h-[300px]">
-                        {paymentChartData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={paymentChartData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                    <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="#94a3b8" />
-                                    <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" />
-                                    <Tooltip
-                                        formatter={(value: number, name: string) => [
-                                            name === 'valor' ? `R$ ${value.toFixed(2)}` : value,
-                                            name === 'valor' ? 'Total' : 'Quantidade'
-                                        ]}
-                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
-                                    />
-                                    <Legend />
-                                    <Bar dataKey="quantidade" fill="#8B5CF6" radius={[8, 8, 0, 0]} name="Quantidade" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="h-full flex items-center justify-center text-slate-400">
-                                Nenhum dado para o período selecionado
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
+  // CSV Export Function
+  const handleExportCSV = () => {
+    const headers = [
+      'OS',
+      'Data',
+      'Cliente',
+      'Aparelho',
+      'Status',
+      'Servicos',
+      'Pecas',
+      'Total',
+    ];
+    const rows = filteredOrders.map((order) => {
+      const client = clients.find((c) => c.id === order.clientId);
+      return [
+        order.displayId || order.id.slice(0, 8),
+        new Date(order.createdAt).toLocaleDateString('pt-BR'),
+        client?.name || 'Cliente Geral',
+        order.deviceModel,
+        order.status,
+        order.priceServices.toFixed(2),
+        order.priceParts.toFixed(2),
+        order.total.toFixed(2),
+      ].join(';');
+    });
 
-            {/* Gráfico de Tipos de Serviço - Full Width */}
-            <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800 mb-8">
-                <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                    <Wrench className="text-primary" size={20} />
-                    Tipos de Serviço Mais Realizados
-                </h3>
-                <div className="h-[350px]">
-                    {serviceTypeChartData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={serviceTypeChartData} layout="vertical">
-                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                <XAxis type="number" tick={{ fontSize: 12 }} stroke="#94a3b8" />
-                                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} stroke="#94a3b8" width={120} />
-                                <Tooltip
-                                    formatter={(value: number, name: string) => [
-                                        name === 'faturamento' ? `R$ ${value.toFixed(2)}` : value,
-                                        name === 'faturamento' ? 'Faturamento' : 'Quantidade'
-                                    ]}
-                                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
-                                />
-                                <Legend />
-                                <Bar dataKey="quantidade" fill="#00CCFF" radius={[0, 4, 4, 0]} name="Quantidade" />
-                                <Bar dataKey="faturamento" fill="#22C55E" radius={[0, 4, 4, 0]} name="Faturamento (R$)" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <div className="h-full flex items-center justify-center text-slate-400">
-                            Nenhum dado para o período selecionado
-                        </div>
-                    )}
-                </div>
-            </div>
+    const csv = [headers.join(';'), ...rows].join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `relatorio_hccell_${dateFilter}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
 
-            {/* Detalhamento */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Serviços */}
-                <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-xl text-orange-600">
-                            <Wrench size={20} />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Mão de Obra</p>
-                            <p className="text-xl font-black text-slate-900 dark:text-white">
-                                R$ {metrics.totalServices.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="h-2 bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-orange-500 rounded-full"
-                            style={{ width: `${metrics.totalRevenue > 0 ? (metrics.totalServices / metrics.totalRevenue) * 100 : 0}%` }}
-                        />
-                    </div>
-                    <p className="text-xs text-slate-400 mt-2">
-                        {metrics.totalRevenue > 0 ? ((metrics.totalServices / metrics.totalRevenue) * 100).toFixed(1) : 0}% do faturamento
-                    </p>
-                </div>
-
-                {/* Peças */}
-                <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-blue-600">
-                            <Package size={20} />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Peças</p>
-                            <p className="text-xl font-black text-slate-900 dark:text-white">
-                                R$ {metrics.totalParts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="h-2 bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-blue-500 rounded-full"
-                            style={{ width: `${metrics.totalRevenue > 0 ? (metrics.totalParts / metrics.totalRevenue) * 100 : 0}%` }}
-                        />
-                    </div>
-                    <p className="text-xs text-slate-400 mt-2">
-                        {metrics.totalRevenue > 0 ? ((metrics.totalParts / metrics.totalRevenue) * 100).toFixed(1) : 0}% do faturamento
-                    </p>
-                </div>
-
-                {/* Descontos */}
-                <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-200 dark:border-neutral-800">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-xl text-red-600">
-                            <TrendingDown size={20} />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Descontos</p>
-                            <p className="text-xl font-black text-slate-900 dark:text-white">
-                                R$ {metrics.totalDiscount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="h-2 bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-red-500 rounded-full"
-                            style={{ width: `${(metrics.totalRevenue + metrics.totalDiscount) > 0 ? (metrics.totalDiscount / (metrics.totalRevenue + metrics.totalDiscount)) * 100 : 0}%` }}
-                        />
-                    </div>
-                    <p className="text-xs text-slate-400 mt-2">
-                        {filteredOrders.length > 0 ? (completedOrders.filter(o => o.discount > 0).length / completedOrders.length * 100).toFixed(0) : 0}% das ordens
-                    </p>
-                </div>
-            </div>
+  return (
+    <div className="max-w-[1400px] mx-auto flex flex-col gap-3.5 sm:gap-6 pb-36 md:pb-12">
+      {/* SaaS Header & Export Bar */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 sm:gap-5 bg-white dark:bg-surface-dark p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-neutral-800 shadow-sm">
+        {/* Título e Banner (Oculto no Mobile - Padrão Bancada Mobile Pro) */}
+        <div className="hidden sm:flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
+              <BarChart3 size={16} />
+            </span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+              Análise de Desempenho
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            Relatórios Operacionais
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            Métricas de faturamento, formas de pagamento, margem e tipos de serviços.
+          </p>
         </div>
-    );
+
+        {/* Period Selector & Export Actions */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
+          <CustomDropdown
+            label="FILTRAR PERÍODO"
+            options={[
+              { value: 'today', label: 'Hoje' },
+              { value: 'week', label: 'Últimos 7 dias' },
+              { value: 'month', label: 'Este Mês' },
+              { value: 'year', label: 'Este Ano' },
+              { value: 'custom', label: 'Personalizado' },
+            ]}
+            selectedValue={dateFilter}
+            onSelect={(val) => setDateFilter(val as DateFilter)}
+            icon={<Calendar size={16} />}
+            className="w-full sm:w-56"
+          />
+
+          {dateFilter === 'custom' && (
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <div className="w-full sm:w-44">
+                <DatePicker label="Início" value={startDate} onChange={setStartDate} />
+              </div>
+              <span className="text-slate-400 text-[10px] uppercase font-bold px-1">até</span>
+              <div className="w-full sm:w-44">
+                <DatePicker label="Fim" value={endDate} onChange={setEndDate} />
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportPDF}
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95"
+              title="Exportar documento PDF em padrão Fintech"
+            >
+              <FileText size={15} />
+              <span>PDF</span>
+            </button>
+
+            <button
+              onClick={handleExportCSV}
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-900 dark:bg-neutral-800 text-white rounded-xl font-bold text-xs transition-all hover:bg-slate-800 dark:hover:bg-neutral-700 active:scale-95 border border-slate-800 dark:border-neutral-700"
+              title="Exportar planilha CSV"
+            >
+              <Download size={15} />
+              <span>CSV</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Top Essential Metric Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        {/* Card 1: Faturamento */}
+        <div className="bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-xl">
+              <DollarSign size={18} />
+            </div>
+            {metrics.revenueChange !== 0 && (
+              <span
+                className={`flex items-center gap-0.5 text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${metrics.revenueChange > 0
+                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                  : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                  }`}
+              >
+                {metrics.revenueChange > 0 ? (
+                  <ArrowUpRight size={12} />
+                ) : (
+                  <ArrowDownRight size={12} />
+                )}
+                {Math.abs(metrics.revenueChange).toFixed(0)}%
+              </span>
+            )}
+          </div>
+          <div>
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+              Faturamento Bruto
+            </span>
+            <p className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white mt-0.5">
+              <AnimatedNumber value={metrics.totalRevenue} prefix="R$ " format="currency" />
+            </p>
+          </div>
+        </div>
+
+        {/* Card 2: Lucro Líquido Est. */}
+        <div className="bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <div className="p-2 bg-cyan-500/10 text-cyan-500 rounded-xl">
+              <TrendingUp size={18} />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-wider text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
+              <AnimatedNumber value={metrics.profitMargin} format="decimal" suffix="% Margem" />
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+              Lucro Líquido Est.
+            </span>
+            <p className="text-xl sm:text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">
+              <AnimatedNumber value={metrics.netProfit} prefix="R$ " format="currency" />
+            </p>
+          </div>
+        </div>
+
+        {/* Card 3: Custos de Peças */}
+        <div className="bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <div className="p-2 bg-rose-500/10 text-rose-500 rounded-xl">
+              <TrendingDown size={18} />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
+              Peças
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+              Custos de Peças
+            </span>
+            <p className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white mt-0.5">
+              <AnimatedNumber value={metrics.totalCosts} prefix="R$ " format="currency" />
+            </p>
+          </div>
+        </div>
+
+        {/* Card 4: Ticket Médio & Ordens */}
+        <div className="bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <div className="p-2 bg-primary/10 text-primary rounded-xl">
+              <CheckCircle2 size={18} />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+              <AnimatedNumber value={metrics.ordersCount} format="integer" suffix=" Concluídas" />
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+              Ticket Médio
+            </span>
+            <p className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white mt-0.5">
+              <AnimatedNumber value={metrics.avgTicket} prefix="R$ " format="currency" />
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Interactive Chart (Receita vs Lucro vs Ordens) */}
+      <DashboardChart orders={orders} products={products} dateFilter={dateFilter} />
+
+      {/* Payment Methods Visualizers */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Payment Method Revenue Distribution (R$ & %) */}
+        <div className="bg-white dark:bg-surface-dark p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
+                <CreditCard size={16} />
+              </span>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
+                Receita por Meios de Pagamento
+              </h3>
+            </div>
+            <span className="text-xs text-slate-400 font-medium">Distribuição R$</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+            <div className="h-48 w-full relative flex items-center justify-center">
+              {paymentChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={paymentChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={65}
+                      paddingAngle={4}
+                      dataKey="receita"
+                    >
+                      {paymentChartData.map((entry, index) => (
+                        <Cell key={`pay-cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(val: number) => [
+                        `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                        'Receita',
+                      ]}
+                      {...tooltipStyleProps}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <span className="text-slate-400 text-xs">Sem lançamentos</span>
+              )}
+            </div>
+
+            {/* List of Payment Revenue Breakdown */}
+            <div className="flex flex-col gap-2.5">
+              {paymentChartData.map((item, idx) => {
+                const percent =
+                  totalPaymentRevenue > 0
+                    ? Math.round((item.receita / totalPaymentRevenue) * 100)
+                    : 0;
+                return (
+                  <div
+                    key={idx}
+                    className="flex flex-col gap-1 p-2 rounded-xl bg-slate-50/70 dark:bg-neutral-900/40 border border-slate-100 dark:border-neutral-800/80"
+                  >
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200">
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        {item.name}
+                      </span>
+                      <span className="font-extrabold font-mono text-slate-900 dark:text-white">
+                        R$ {item.receita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-200/60 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${percent}%`, backgroundColor: item.color }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Method Volume (Quantidade de Ordens por Pagamento) */}
+        <div className="bg-white dark:bg-surface-dark p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                <Wallet size={16} />
+              </span>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
+                Quantidade de Ordens por Meio de Pagamento
+              </h3>
+            </div>
+            <span className="text-xs text-slate-400 font-medium">Volume de OS</span>
+          </div>
+
+          <div className="h-56 w-full">
+            {paymentChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={paymentChartData}
+                  layout="vertical"
+                  margin={{ top: 5, right: 20, left: 30, bottom: 5 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={false}
+                    stroke="rgba(148, 163, 184, 0.15)"
+                  />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    tick={{ fontSize: 10, fill: '#94a3b8' }}
+                    width={100}
+                  />
+                  <Tooltip
+                    formatter={(val: number) => [`${val} ordem(ns)`, 'Quantidade']}
+                    {...tooltipStyleProps}
+                  />
+                  <Bar dataKey="quantidade" radius={[0, 8, 8, 0]}>
+                    {paymentChartData.map((entry, index) => (
+                      <Cell key={`pay-qty-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-400 text-xs font-medium">
+                Nenhum lançamento no período
+              </div>
+            )}
+          </div>
+
+          {/* Quick Summary Pills */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-neutral-800 text-xs">
+            {paymentChartData.map((p, idx) => (
+              <span key={idx} className="flex items-center gap-1 text-slate-600 dark:text-slate-400 text-[11px] font-bold">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+                {p.name}: <strong className="font-mono text-slate-900 dark:text-white">{p.quantidade} OS</strong>
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Technical Analytics Grid (Tipos de Serviço, Status & Top Aparelhos) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Essential Chart 1: Services Breakdown */}
+        <div className="bg-white dark:bg-surface-dark p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                <Wrench size={16} />
+              </span>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
+                Tipos de Serviço Mais Frequentes
+              </h3>
+            </div>
+            <span className="text-xs text-slate-400 font-medium">Bancada Técnica</span>
+          </div>
+
+          <div className="h-64 w-full">
+            {serviceTypeChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={serviceTypeChartData}
+                  layout="vertical"
+                  margin={{ top: 5, right: 20, left: 40, bottom: 5 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={false}
+                    stroke="rgba(148, 163, 184, 0.15)"
+                  />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    tick={{ fontSize: 10, fill: '#94a3b8' }}
+                    width={90}
+                  />
+                  <Tooltip
+                    formatter={(val: number) => [`${val} ocorrência(s)`, 'Volume']}
+                    {...tooltipStyleProps}
+                  />
+                  <Bar dataKey="quantidade" radius={[0, 8, 8, 0]}>
+                    {serviceTypeChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-400 text-xs font-medium">
+                Nenhum dado disponível no período
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Essential Chart 2: Workbench Status Breakdown & Top Devices */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Status Donut Chart */}
+          <div className="bg-white dark:bg-surface-dark p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-500">
+                <PieIcon size={16} />
+              </span>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
+                Funil de Status
+              </h3>
+            </div>
+
+            <div className="h-44 w-full relative flex items-center justify-center">
+              {statusChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={65}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {statusChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip {...tooltipStyleProps} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <span className="text-slate-400 text-xs">Sem dados</span>
+              )}
+            </div>
+
+            {/* Status Legend */}
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-[10px] font-bold">
+              {statusChartData.map((s, idx) => (
+                <span key={idx} className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                  {s.name}: <strong className="font-mono text-slate-900 dark:text-white">{s.value}</strong>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Top Devices Bar */}
+          <div className="bg-white dark:bg-surface-dark p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-neutral-800 shadow-sm flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
+                <Smartphone size={16} />
+              </span>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
+                Top Aparelhos em Bancada
+              </h3>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-2">
+              {deviceChartData.length > 0 ? (
+                deviceChartData.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                      {item.name}
+                    </span>
+                    <span className="font-bold font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-neutral-800 text-slate-900 dark:text-white">
+                      {item.quantidade} OS
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <span className="text-slate-400 text-xs text-center py-6">Sem dados</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Detailed Orders Table */}
+      <div className="bg-white dark:bg-surface-dark rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-neutral-800 shadow-sm overflow-hidden flex flex-col gap-3.5 sm:gap-4 p-4 sm:p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
+              <Layers size={16} />
+            </span>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
+              Registro Detalhado do Período
+            </h3>
+          </div>
+          <span className="text-xs text-slate-400 font-medium">
+            {filteredOrders.length} ordens filtradas
+          </span>
+        </div>
+
+        {/* Mobile View: Cards Responsivos (Padrão Bancada Mobile Pro) */}
+        <div className="md:hidden flex flex-col gap-2.5">
+          {paginatedOrders.length > 0 ? (
+            paginatedOrders.map((order) => {
+              const client = clients.find((c) => c.id === order.clientId);
+              return (
+                <Link
+                  key={order.id}
+                  to={`/orders/${order.id}`}
+                  className="bg-slate-50/70 dark:bg-neutral-900/60 p-3.5 rounded-2xl border border-slate-200/70 dark:border-neutral-800 flex flex-col gap-2 transition-all active:scale-[0.98]"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-mono font-black text-slate-500">
+                        #{order.displayId || order.id.slice(0, 8)}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {new Date(order.createdAt).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+                      {order.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-end justify-between gap-2 pt-1 border-t border-slate-100 dark:border-neutral-800/60">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-slate-900 dark:text-white truncate">
+                        {client?.name || 'Cliente Geral'}
+                      </p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                        {order.deviceModel}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block">Total</span>
+                      <span className="text-xs font-black font-mono text-slate-900 dark:text-white">
+                        R$ {order.total.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })
+          ) : (
+            <div className="py-8 text-center text-slate-400 text-xs">
+              Nenhum registro encontrado no período selecionado.
+            </div>
+          )}
+        </div>
+
+        {/* Desktop View: Tabela SaaS Completa */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50">
+                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  OS
+                </th>
+                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Data
+                </th>
+                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Cliente
+                </th>
+                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Aparelho / Reparo
+                </th>
+                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Status
+                </th>
+                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">
+                  Total
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-neutral-800">
+              {paginatedOrders.length > 0 ? (
+                paginatedOrders.map((order) => {
+                  const client = clients.find((c) => c.id === order.clientId);
+                  return (
+                    <tr key={order.id} className="hover:bg-slate-50/70 dark:hover:bg-neutral-900/50 text-xs">
+                      <td className="py-3 px-4 font-mono font-bold text-slate-500">
+                        #{order.displayId || order.id.slice(0, 8)}
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
+                        {new Date(order.createdAt).toLocaleDateString('pt-BR')}
+                      </td>
+                      <td className="py-3 px-4 font-bold text-slate-800 dark:text-slate-200">
+                        {client?.name || 'Cliente Geral'}
+                      </td>
+                      <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
+                        {order.deviceModel}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-slate-300">
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-white">
+                        R$ {order.total.toFixed(2)}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-slate-400 text-xs">
+                    Nenhum registro encontrado no período selecionado.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-2 text-xs border-t border-slate-100 dark:border-neutral-800">
+            <span className="text-slate-400">
+              Página {safeCurrentPage} de {totalPages}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safeCurrentPage === 1}
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-neutral-700 disabled:opacity-30"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safeCurrentPage === totalPages}
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-neutral-700 disabled:opacity-30"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };

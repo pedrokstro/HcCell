@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 
 
 import { CustomDropdown } from '../../components/CustomDropdown';
+import { AnimatedNumber } from '../../components/AnimatedNumber';
 
 export const InventoryList: React.FC = () => {
     const { products, categories, updateProduct, addProductMovement } = useApp();
@@ -84,8 +85,8 @@ export const InventoryList: React.FC = () => {
     return (
         <>
             <div className="flex flex-col gap-8 animate-fade-in">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                {/* Header (Oculto no Mobile para economizar espaço) */}
+                <div className="hidden sm:flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Estoque</h1>
                         <p className="text-slate-500 dark:text-slate-400 mt-1">Gerencie níveis de estoque, rastreie peças e adicione novos itens.</p>
@@ -102,8 +103,8 @@ export const InventoryList: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Stats */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-in-up">
+                {/* Stats (Oculto no Mobile para economizar espaço) */}
+                <div className="hidden sm:grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-in-up">
 
                     <div className="bg-white dark:bg-surface-dark p-5 rounded-xl border border-slate-200 dark:border-neutral-800 shadow-sm">
                         <div className="flex items-center gap-3 mb-2">
@@ -112,7 +113,9 @@ export const InventoryList: React.FC = () => {
                             </div>
                             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Itens c/ Estoque Baixo</p>
                         </div>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{lowStockCount}</p>
+                        <p className="text-2xl font-bold font-mono text-slate-900 dark:text-white">
+                            <AnimatedNumber value={lowStockCount} format="integer" />
+                        </p>
                     </div>
 
                     <div className="bg-white dark:bg-surface-dark p-5 rounded-xl border border-slate-200 dark:border-neutral-800 shadow-sm">
@@ -122,7 +125,9 @@ export const InventoryList: React.FC = () => {
                             </div>
                             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total de Produtos</p>
                         </div>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{products.length}</p>
+                        <p className="text-2xl font-bold font-mono text-slate-900 dark:text-white">
+                            <AnimatedNumber value={products.length} format="integer" />
+                        </p>
                     </div>
 
                     <div className="bg-white dark:bg-surface-dark p-5 rounded-xl border border-slate-200 dark:border-neutral-800 shadow-sm">
@@ -132,7 +137,9 @@ export const InventoryList: React.FC = () => {
                             </div>
                             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Categorias</p>
                         </div>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{categories.length > 0 ? categories.length : categoryOptions.length - 1}</p>
+                        <p className="text-2xl font-bold font-mono text-slate-900 dark:text-white">
+                            <AnimatedNumber value={categories.length > 0 ? categories.length : categoryOptions.length - 1} format="integer" />
+                        </p>
                     </div>
                 </div>
 
@@ -158,17 +165,27 @@ export const InventoryList: React.FC = () => {
                             className="w-full sm:w-56"
                         />
 
-                        <div className="relative w-full sm:w-72">
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                <Search size={20} className="text-slate-400" />
+                        <div className="flex items-center gap-2 w-full sm:w-72">
+                            <div className="relative flex-1">
+                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                    <Search size={18} className="text-slate-400" />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="block w-full rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-surface-dark py-2.5 pl-10 pr-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-primary focus:ring-1 focus:ring-primary font-medium"
+                                    placeholder="Buscar por nome, SKU..."
+                                />
                             </div>
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="block w-full rounded-lg border border-slate-200 dark:border-neutral-800 bg-white dark:bg-surface-dark py-2 pl-10 pr-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:border-primary focus:ring-1 focus:ring-primary"
-                                placeholder="Buscar por nome, SKU..."
-                            />
+                            <Link
+                                to="/inventory/new"
+                                className="sm:hidden flex items-center justify-center gap-1 bg-primary text-white px-3.5 py-2.5 rounded-xl font-bold text-xs shadow-xs shrink-0 active:scale-95"
+                                title="Novo Produto"
+                            >
+                                <Plus size={16} />
+                                <span className="font-extrabold">Novo</span>
+                            </Link>
                         </div>
                     </div>
                 </div>

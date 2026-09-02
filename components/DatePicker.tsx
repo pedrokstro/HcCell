@@ -53,15 +53,15 @@ export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, label, 
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center justify-between w-full h-12 px-4 bg-white dark:bg-surface-dark border-2 rounded-2xl transition-all active:scale-[0.98] ${
+                className={`flex items-center justify-between w-full h-11 px-3 sm:px-3.5 bg-white dark:bg-surface-dark border-2 rounded-xl sm:rounded-2xl transition-all active:scale-[0.98] ${
                     isOpen 
                         ? 'border-primary shadow-sm shadow-primary/10' 
                         : 'border-slate-100 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-800'
                 }`}
             >
-                <div className="flex items-center gap-3">
-                    <CalendarIcon size={18} className={value ? 'text-primary' : 'text-slate-400'} />
-                    <span className={`text-sm font-bold ${value ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
+                <div className="flex items-center gap-2 min-w-0">
+                    <CalendarIcon size={16} className={`shrink-0 ${value ? 'text-primary' : 'text-slate-400'}`} />
+                    <span className={`text-xs font-extrabold whitespace-nowrap truncate ${value ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
                         {value ? formatDate(value) : placeholder}
                     </span>
                 </div>

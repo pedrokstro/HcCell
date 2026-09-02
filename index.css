@@ -3,6 +3,13 @@
 @tailwind utilities;
 
 /* Base Styles */
+html.dark,
+html.dark body,
+html.dark #root {
+  background-color: #000000 !important;
+  color-scheme: dark;
+}
+
 body {
   font-family: 'Inter', sans-serif;
 }

@@ -1,7 +1,7 @@
 {
   "name": "hccell-system",
   "private": true,
-  "version": "2.3.0",
+  "version": "2.9.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,9 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.2.2",
     "@supabase/supabase-js": "^2.39.0",
     "framer-motion": "^12.36.0",
+    "gsap": "^3.15.0",
     "lucide-react": "^0.562.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

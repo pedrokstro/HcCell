@@ -58,12 +58,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
 
     useEffect(() => {
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
         if (darkMode) {
             document.documentElement.classList.add('dark');
             localStorage.setItem('darkMode', 'true');
+            if (metaThemeColor) metaThemeColor.setAttribute('content', '#0b1315');
         } else {
             document.documentElement.classList.remove('dark');
             localStorage.setItem('darkMode', 'false');
+            if (metaThemeColor) metaThemeColor.setAttribute('content', '#f8fafc');
         }
     }, [darkMode]);
 

@@ -43,3 +43,7 @@ dev-dist
 # Agents and Skills
 .agents/
 .impeccable/
+
+# Local media & backups
+backup/
+*.mp4

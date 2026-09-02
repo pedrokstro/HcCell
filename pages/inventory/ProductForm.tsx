@@ -98,7 +98,7 @@ export const ProductForm: React.FC = () => {
 
     return (
         <div className="max-w-3xl mx-auto">
-            <div className="flex items-center gap-4 mb-8">
+            <div className="hidden sm:flex items-center gap-4 mb-8">
                 <Link to="/inventory" className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-500 transition-colors">
                     <ArrowLeft size={24} />
                 </Link>

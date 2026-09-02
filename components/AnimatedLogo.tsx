@@ -28,7 +28,11 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({
     return (
         <motion.div
             layoutId={layoutId}
-            className={`relative ${sizeClasses[size] || 'w-48'} ${className}`}
+            transition={{
+                duration: 0.75,
+                ease: [0.16, 1, 0.3, 1]
+            }}
+            className={`relative shrink-0 ${sizeClasses[size] || 'w-48'} ${className}`}
         >
             {/* Base: Celular + Texto HC CELL */}
             <img
@@ -37,7 +41,7 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({
                 className={`w-full h-auto relative z-10 ${darkClasses}`}
             />
 
-            {/* Engrenagem Pequena - Agora em Cima */}
+            {/* Engrenagem Pequena - Em Cima */}
             <img
                 src="/engrenagem-pequena.png"
                 alt=""
@@ -50,7 +54,7 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({
                 }}
             />
 
-            {/* Engrenagem Grande (com Chave) - Agora em Baixo */}
+            {/* Engrenagem Grande (com Chave) - Em Baixo */}
             <img
                 src="/engrenagem-grande.png"
                 alt=""

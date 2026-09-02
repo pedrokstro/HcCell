@@ -25,15 +25,22 @@ export default {
                     light: '#E6FAFF',
                 },
                 background: {
-                    light: '#F8FAFC', // Slate 50 - Mais limpo
-                    dark: '#020617',  // Slate 950 - Profundo
+                    light: '#F8FAFC',
+                    dark: '#000000',  // 100% Black OLED Puro
                 },
                 surface: {
                     light: '#FFFFFF',
-                    dark: '#0F172A',  // Slate 900
+                    dark: '#0a0a0a',  // Superfície Neutra Escura Pura (sem tom azul)
                 },
                 slate: {
-                    950: '#020617',
+                    800: '#171717',
+                    900: '#09090b',  // Substituído azul marinho por cinza/preto neutro puro
+                    950: '#000000',  // 100% Black OLED
+                },
+                neutral: {
+                    800: '#171717',
+                    900: '#0a0a0a',  // Cinza escuro neutro puro
+                    950: '#000000',  // 100% Black OLED
                 }
             },
             boxShadow: {

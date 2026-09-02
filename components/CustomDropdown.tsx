@@ -110,7 +110,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: direction === 'down' ? 5 : -5 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute z-50 left-0 right-0 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-2xl p-1 overflow-hidden min-w-[240px]"
+                            className="absolute z-[100] left-0 right-0 sm:right-auto sm:min-w-[240px] bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-2xl p-1 overflow-hidden"
                         >
                             {/* Header exactly like image 3 */}
                             <div className="px-4 py-3 border-b border-slate-50 dark:border-neutral-800/50 mb-1">

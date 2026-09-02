@@ -65,6 +65,8 @@ import {
 import { OrderStatus, ServiceOrder, MovementType, PaymentMethod, PaymentEntry } from '../../types';
 import { CustomDropdown } from '../../components/CustomDropdown';
 import { BottomSheet } from '../../components/BottomSheet';
+import { WhatsAppIcon } from '../../components/WhatsAppIcon';
+import { AnimatedNumber } from '../../components/AnimatedNumber';
 
 const getStatusColor = (status: OrderStatus) => {
     switch (status) {
@@ -829,144 +831,181 @@ export const OrderDetails: React.FC = () => {
     };
 
     return (
-        <div className="max-w-[1200px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 p-4 sm:p-6 lg:p-8">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center gap-6 mb-10">
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex-shrink-0">
-                    <Link to="/orders" className="p-3 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-800 text-slate-500 dark:text-slate-400 transition-all shadow-sm flex items-center justify-center">
-                        <ArrowLeft size={24} />
-                    </Link>
-                </motion.div>
-                <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-3 mb-1">
-                        <h1 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight truncate">OS #{order.displayId || order.id.slice(0, 8)}</h1>
-                        <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ring-1 ring-inset ${getStatusColor(order.status)}`}>
-                            {order.status}
-                        </span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium">
-                        <p className="text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                            <Clock size={14} className="text-primary" />
-                            Criada em {new Date(order.createdAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} às {new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}
-                        </p>
-                        {(order.status === OrderStatus.COMPLETED || order.status.toUpperCase() === 'CONCLUÍDO') && (
-                            <p className="text-emerald-600 dark:text-emerald-500 font-bold flex items-center gap-2">
-                                <CheckCircle2 size={14} />
-                                Concluída em {new Date(order.executionDate || order.createdAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} às {new Date(order.executionDate || order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}
-                            </p>
-                        )}
-                    </div>
-                </div>
-                {/* Desktop Action Buttons */}
-                <div className="hidden sm:flex flex-wrap gap-2">
-                    <motion.button
-                        whileHover={{ y: -2 }}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={handleCopyTrackingLink}
-                        className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-slate-300 rounded-2xl hover:bg-slate-50 dark:hover:bg-neutral-800 font-bold transition-all shadow-sm"
-                        title="Copiar Link de Rastreio"
-                    >
-                        <Share2 size={20} />
-                        <span className="hidden lg:inline">Link</span>
-                    </motion.button>
-                    <motion.button
-                        whileHover={{ y: -2 }}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={handlePrintLabel}
-                        className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-slate-300 rounded-2xl hover:bg-slate-50 dark:hover:bg-neutral-800 font-bold transition-all shadow-sm"
-                    >
-                        <Tag size={20} />
-                        Etiqueta
-                    </motion.button>
-                    <motion.button
-                        whileHover={{ y: -2 }}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => setShowReceiptModal(true)}
-                        className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl hover:bg-primary-dark font-bold transition-all shadow-xl shadow-primary/20"
-                    >
-                        <FileText size={20} />
-                        Gerar Recibo
-                    </motion.button>
-                    {(order.status === OrderStatus.PENDING || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL) && (
-                        <motion.button 
-                            whileHover={{ y: -2 }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={handleComplete} 
-                            className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 font-bold transition-all shadow-xl shadow-green-200"
-                        >
-                            <CheckCircle size={20} />
-                            Concluir
-                        </motion.button>
-                    )}
-                    <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}>
-                        <Link to={`/orders/${order.id}/edit`} className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white rounded-2xl hover:bg-slate-50 dark:hover:bg-neutral-800 font-bold transition-all shadow-sm h-full flex items-center">
-                            <Edit size={20} />
-                            Editar
-                        </Link>
-                    </motion.div>
-                    <motion.button 
-                        whileHover={{ y: -2 }}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={handleDelete} 
-                        className="flex items-center gap-2 px-3 py-3 bg-white dark:bg-surface-dark border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 font-bold transition-all"
-                    >
-                        <Trash2 size={20} />
-                    </motion.button>
-                </div>
-
-                <div className="flex sm:hidden flex-col gap-3 w-full mt-4">
-                    <motion.button
-                        whileTap={{ scale: 0.97 }}
-                        onClick={handleCopyTrackingLink}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl font-bold text-sm shadow-sm"
-                    >
-                        <Share2 size={18} />
-                        Copiar Link de Rastreio
-                    </motion.button>
-                    <div className="grid grid-cols-2 gap-3">
-                        <motion.button
-                            whileTap={{ scale: 0.97 }}
-                            onClick={handlePrintLabel}
-                            className="flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm shadow-sm"
-                        >
-                            <Tag size={18} />
-                            Etiqueta
-                        </motion.button>
-                        <motion.button
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() => setShowReceiptModal(true)}
-                            className="flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm shadow-sm"
-                        >
-                            <FileText size={18} />
-                            Recibo
-                        </motion.button>
-                    </div>
-
-                    {(order.status === OrderStatus.PENDING || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL) && (
-                        <motion.button 
-                            whileTap={{ scale: 0.97 }}
-                            onClick={handleComplete} 
-                            className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-xl font-bold shadow-lg shadow-green-200"
-                        >
-                            <CheckCircle size={20} />
-                            Concluir Serviço
-                        </motion.button>
-                    )}
-
-                    <div className="grid grid-cols-[1fr_auto] gap-3">
-                        <motion.div whileTap={{ scale: 0.97 }} className="w-full">
-                            <Link to={`/orders/${order.id}/edit`} className="flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 w-full">
-                                <Edit size={20} />
-                                Editar Ordem
+        <div className="max-w-[1240px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 p-3.5 sm:p-6 lg:p-7 space-y-5">
+            {/* Header & Actions Bar (Clean White SaaS) */}
+            <div className="bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-neutral-800 shadow-xs">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="shrink-0">
+                            <Link to="/orders" className="p-2 rounded-xl bg-slate-50 dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-600 dark:text-slate-300 transition-all shadow-xs flex items-center justify-center">
+                                <ArrowLeft size={18} />
                             </Link>
                         </motion.div>
-                        <motion.button 
-                            whileTap={{ scale: 0.97 }}
-                            onClick={handleDelete} 
-                            className="flex items-center justify-center px-4 py-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-xl font-bold border border-red-100 dark:border-red-900/30"
+                        <div className="flex flex-col min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight truncate">
+                                    OS #{order.displayId || order.id.slice(0, 8)}
+                                </h1>
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${getStatusColor(order.status)}`}>
+                                    {order.status}
+                                </span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 font-medium mt-1">
+                                <span className="flex items-center gap-1 text-[11px] sm:text-xs">
+                                    <Clock size={12} className="text-primary" />
+                                    Criada em {new Date(order.createdAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} às {new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}
+                                </span>
+                                {(order.status === OrderStatus.COMPLETED || order.status.toUpperCase() === 'CONCLUÍDO') && (
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 text-[11px] sm:text-xs">
+                                        <CheckCircle2 size={12} />
+                                        Concluída em {new Date(order.executionDate || order.createdAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Desktop Toolbar (Com Status Dropdown à Direita) */}
+                    <div className="hidden lg:flex items-center gap-2 shrink-0">
+                        {/* Seletor de Status à Direita */}
+                        <CustomDropdown
+                            label="STATUS DA OS"
+                            options={statusOptions}
+                            selectedValue={order.status}
+                            onSelect={(val) => handleStatusChange(val as OrderStatus)}
+                            className="w-40 sm:w-44"
+                            searchable={false}
+                        />
+
+                        {(order.status === OrderStatus.PENDING || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL) && (
+                            <motion.button 
+                                whileTap={{ scale: 0.95 }}
+                                onClick={handleComplete} 
+                                className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-xs shadow-emerald-500/20 transition-all active:scale-95 whitespace-nowrap"
+                            >
+                                <CheckCircle size={15} />
+                                <span>Concluir OS</span>
+                            </motion.button>
+                        )}
+
+                        <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setShowReceiptModal(true)}
+                            className="flex items-center gap-1.5 px-3.5 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold text-xs shadow-xs shadow-primary/20 transition-all active:scale-95 whitespace-nowrap"
                         >
-                            <Trash2 size={20} />
+                            <FileText size={15} />
+                            <span>Gerar Recibo</span>
                         </motion.button>
+
+                        <div className="flex items-center gap-1 p-1 bg-slate-50 dark:bg-neutral-900/60 rounded-xl border border-slate-200/80 dark:border-neutral-800">
+                            <button
+                                onClick={handleCopyTrackingLink}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-300 hover:text-primary font-bold text-xs shadow-xs border border-slate-200/60 dark:border-neutral-800 transition-all active:scale-95"
+                                title="Copiar Link de Rastreio"
+                            >
+                                <Share2 size={13} />
+                                <span>Link</span>
+                            </button>
+
+                            <button
+                                onClick={handlePrintLabel}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-300 hover:text-primary font-bold text-xs shadow-xs border border-slate-200/60 dark:border-neutral-800 transition-all active:scale-95"
+                                title="Imprimir Etiqueta"
+                            >
+                                <Tag size={13} />
+                                <span>Etiqueta</span>
+                            </button>
+
+                            <Link
+                                to={`/orders/${order.id}/edit`}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-300 hover:text-primary font-bold text-xs shadow-xs border border-slate-200/60 dark:border-neutral-800 transition-all active:scale-95"
+                                title="Editar OS"
+                            >
+                                <Edit size={13} />
+                                <span>Editar</span>
+                            </Link>
+
+                            <button
+                                onClick={handleDelete}
+                                className="p-1.5 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white font-bold text-xs transition-all active:scale-95"
+                                title="Excluir OS"
+                            >
+                                <Trash2 size={13} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Mobile & Tablet Toolbar (Padrão Bancada Mobile Pro) */}
+                <div className="flex lg:hidden flex-col gap-2 pt-3 mt-3 border-t border-slate-100 dark:border-neutral-800">
+                    <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                            <CustomDropdown
+                                label="STATUS DA OS"
+                                options={statusOptions}
+                                selectedValue={order.status}
+                                onSelect={(val) => handleStatusChange(val as OrderStatus)}
+                                className="w-full text-xs"
+                                searchable={false}
+                            />
+                        </div>
+
+                        {(order.status === OrderStatus.PENDING || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL) ? (
+                            <button
+                                onClick={handleComplete}
+                                className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-xs shadow-emerald-500/20 active:scale-95 shrink-0"
+                            >
+                                <CheckCircle size={15} />
+                                <span>Concluir OS</span>
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => setShowReceiptModal(true)}
+                                className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold text-xs shadow-xs shadow-primary/20 active:scale-95 shrink-0"
+                            >
+                                <FileText size={15} />
+                                <span>Gerar Recibo</span>
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Quick Icon Actions (Sem botões duplicados) */}
+                    <div className="grid grid-cols-4 gap-1 p-1 bg-slate-50 dark:bg-neutral-900/60 rounded-xl border border-slate-200/80 dark:border-neutral-800">
+                        <button
+                            onClick={handleCopyTrackingLink}
+                            className="flex flex-col items-center justify-center py-1.5 rounded-lg bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-300 font-extrabold text-[10px] border border-slate-200/60 dark:border-neutral-800 active:scale-95 gap-0.5"
+                            title="Copiar Link de Rastreio"
+                        >
+                            <Share2 size={13} className="text-primary" />
+                            <span>Rastreio</span>
+                        </button>
+
+                        <button
+                            onClick={handlePrintLabel}
+                            className="flex flex-col items-center justify-center py-1.5 rounded-lg bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-300 font-extrabold text-[10px] border border-slate-200/60 dark:border-neutral-800 active:scale-95 gap-0.5"
+                            title="Imprimir Etiqueta"
+                        >
+                            <Tag size={13} className="text-primary" />
+                            <span>Etiqueta</span>
+                        </button>
+
+                        <Link
+                            to={`/orders/${order.id}/edit`}
+                            className="flex flex-col items-center justify-center py-1.5 rounded-lg bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-300 font-extrabold text-[10px] border border-slate-200/60 dark:border-neutral-800 active:scale-95 gap-0.5"
+                            title="Editar Ordem de Serviço"
+                        >
+                            <Edit size={13} className="text-primary" />
+                            <span>Editar</span>
+                        </Link>
+
+                        <button
+                            onClick={handleDelete}
+                            className="flex flex-col items-center justify-center py-1.5 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 font-extrabold text-[10px] border border-rose-500/20 active:scale-95 gap-0.5"
+                            title="Excluir Ordem"
+                        >
+                            <Trash2 size={13} />
+                            <span>Excluir</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -974,135 +1013,64 @@ export const OrderDetails: React.FC = () => {
             {/* Cancelled Alert Banner */}
             {order.status === OrderStatus.CANCELLED && (
                 <motion.div 
-                    className="mb-8 p-5 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 rounded-3xl flex items-center gap-4 text-red-700 dark:text-red-400 shadow-sm"
+                    className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 rounded-2xl flex items-center gap-3 text-red-700 dark:text-red-400 shadow-xs"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ type: "spring", stiffness: 100 }}
                 >
-                    <XCircle className="shrink-0 text-red-500 animate-pulse" size={24} />
+                    <XCircle className="shrink-0 text-red-500" size={20} />
                     <div>
-                        <p className="font-black text-sm uppercase tracking-wide">Ordem de Serviço Cancelada</p>
-                        <p className="text-xs font-semibold opacity-90 mt-0.5">Esta ordem foi cancelada e seu estoque foi retornado.</p>
+                        <p className="font-black text-xs uppercase tracking-wide">Ordem de Serviço Cancelada</p>
+                        <p className="text-xs font-semibold opacity-90">Esta ordem foi cancelada e seu estoque foi retornado.</p>
                     </div>
                 </motion.div>
             )}
 
-            {/* Status Timeline Stepper */}
+            {/* Status Timeline Stepper (Padrão Bancada Mobile Pro: Slim no mobile, Completo no Desktop) */}
             {order.status !== OrderStatus.CANCELLED && (
-                <motion.div 
-                    className="bg-white dark:bg-surface-dark rounded-[32px] p-6 sm:p-8 border border-slate-200/50 dark:border-neutral-800/60 shadow-sm mb-8 relative overflow-hidden"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
-                >
-                    <div className="relative flex flex-col sm:flex-row items-start justify-between max-w-[800px] mx-auto gap-8 sm:gap-0">
-                        {/* Horizontal connecting line (Desktop) */}
-                        <div className="hidden sm:block absolute top-5 sm:top-6 left-[16.67%] right-[16.67%] h-[2px] bg-slate-100 dark:bg-neutral-800 -translate-y-1/2 z-0" />
-                        
-                        {/* Active line fill based on status (Desktop) */}
-                        <div className="hidden sm:block absolute top-5 sm:top-6 left-[16.67%] right-[16.67%] h-[2px] -translate-y-1/2 z-0 w-[66.66%] overflow-hidden">
-                            <motion.div 
-                                className="h-full bg-primary" 
-                                initial={{ width: '0%' }}
-                                animate={{ 
-                                    width: 
-                                        order.status === OrderStatus.PENDING ? '0%' : 
-                                        (order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL) ? '50%' : 
-                                        order.status === OrderStatus.COMPLETED ? '100%' : '0%'
-                                }}
-                                transition={{ duration: 0.8, ease: "easeInOut" }}
-                            />
-                        </div>
-
-                        {/* Vertical connecting line (Mobile) */}
-                        <div className="absolute sm:hidden left-[20px] top-5 bottom-5 w-[2px] bg-slate-100 dark:bg-neutral-800 z-0" />
-                        
-                        {/* Active line fill based on status (Mobile) */}
-                        <div className="absolute sm:hidden left-[20px] top-5 bottom-5 w-[2px] z-0 overflow-hidden">
-                            <motion.div 
-                                className="w-full bg-primary" 
-                                initial={{ height: '0%' }}
-                                animate={{ 
-                                    height: 
-                                        order.status === OrderStatus.PENDING ? '0%' : 
-                                        (order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL) ? '50%' : 
-                                        order.status === OrderStatus.COMPLETED ? '100%' : '0%'
-                                }}
-                                transition={{ duration: 0.8, ease: "easeInOut" }}
-                                style={{ originY: 0 }}
-                            />
-                        </div>
-
+                <>
+                    {/* Versão Mobile: Slim Horizontal Segmented Stepper (Economiza 150px de altura) */}
+                    <div className="sm:hidden bg-white dark:bg-surface-dark rounded-2xl p-1.5 border border-slate-200/80 dark:border-neutral-800 shadow-xs flex items-center gap-1">
                         {/* Step 1: Aberta */}
                         {(() => {
                             const isCurrent = order.status === OrderStatus.PENDING;
+                            const isCompleted = order.status === OrderStatus.COMPLETED || order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL;
                             return (
-                                <div className="relative z-10 flex flex-row sm:flex-col items-center gap-4 sm:gap-0 flex-1 w-full sm:w-auto">
-                                    <div className="relative">
-                                        {isCurrent && (
-                                            <motion.div 
-                                                className="absolute inset-0 rounded-full bg-primary/40" 
-                                                animate={{ scale: [1, 1.5, 2.0], opacity: [0.7, 0.3, 0] }} 
-                                                transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
-                                            />
-                                        )}
-                                        <motion.div 
-                                            className="relative z-10 size-10 sm:size-12 rounded-full bg-primary text-white flex items-center justify-center border-4 border-primary/20 shadow-lg shadow-primary/20"
-                                            animate={isCurrent ? { scale: [1, 1.05, 1], boxShadow: ["0px 0px 0px rgba(0, 204, 255, 0.2)", "0px 0px 12px rgba(0, 204, 255, 0.6)", "0px 0px 0px rgba(0, 204, 255, 0.2)"] } : {}}
-                                            transition={isCurrent ? { repeat: Infinity, duration: 2 } : {}}
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
-                                        >
-                                            <span className="text-xl font-bold font-sans">+</span>
-                                        </motion.div>
-                                    </div>
-                                    <div className="flex flex-col items-start sm:items-center sm:mt-3">
-                                        <span className="text-[11px] sm:text-xs font-black text-primary uppercase tracking-wider">Aberta</span>
-                                        <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 mt-1 font-mono">{formatDateStepper(order.createdAt)}</span>
-                                    </div>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => handleStatusChange(OrderStatus.PENDING)}
+                                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-[11px] font-black transition-all ${
+                                        isCurrent
+                                            ? 'bg-primary text-white shadow-xs'
+                                            : isCompleted
+                                            ? 'bg-primary/10 text-primary'
+                                            : 'bg-slate-50 dark:bg-neutral-900 text-slate-400'
+                                    }`}
+                                >
+                                    <span>+ Aberta</span>
+                                </button>
                             );
                         })()}
 
                         {/* Step 2: Em Atendimento */}
                         {(() => {
-                            const isCompleted = order.status === OrderStatus.COMPLETED;
                             const isCurrent = order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL;
-                            const isActive = isCurrent || isCompleted;
-                            
+                            const isCompleted = order.status === OrderStatus.COMPLETED;
                             return (
-                                <div className="relative z-10 flex flex-row sm:flex-col items-center gap-4 sm:gap-0 flex-1 w-full sm:w-auto">
-                                    <div className="relative">
-                                        {isCurrent && (
-                                            <motion.div 
-                                                className="absolute inset-0 rounded-full bg-primary/40" 
-                                                animate={{ scale: [1, 1.5, 2.0], opacity: [0.7, 0.3, 0] }} 
-                                                transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
-                                            />
-                                        )}
-                                        <motion.div 
-                                            className={`relative z-10 size-10 sm:size-12 rounded-full flex items-center justify-center border-4 transition-all duration-300 ${
-                                                isActive 
-                                                    ? 'bg-primary text-white border-primary/20 shadow-lg shadow-primary/20' 
-                                                    : 'bg-white dark:bg-neutral-900 text-slate-400 border-slate-100 dark:border-neutral-800 shadow-sm'
-                                            }`}
-                                            animate={isCurrent ? { scale: [1, 1.05, 1], boxShadow: ["0px 0px 0px rgba(0, 204, 255, 0.2)", "0px 0px 12px rgba(0, 204, 255, 0.6)", "0px 0px 0px rgba(0, 204, 255, 0.2)"] } : {}}
-                                            transition={isCurrent ? { repeat: Infinity, duration: 2 } : {}}
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
-                                        >
-                                            <Clock size={16} className={`sm:size-[18px] ${isCurrent ? 'animate-pulse' : ''}`} />
-                                        </motion.div>
-                                    </div>
-                                    <div className="flex flex-col items-start sm:items-center sm:mt-3">
-                                        <span className={`text-[11px] sm:text-xs font-black uppercase tracking-wider ${isActive ? 'text-primary' : 'text-slate-400'}`}>
-                                            {order.status === OrderStatus.WAITING_WITHDRAWAL ? 'Aguard. Retirada' : 'Em Atendimento'}
-                                        </span>
-                                        <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 mt-1 font-mono">
-                                            {isCurrent ? 'Em andamento' : isCompleted ? 'Realizado' : '--'}
-                                        </span>
-                                    </div>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => handleStatusChange(OrderStatus.IN_PROGRESS)}
+                                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-[11px] font-black transition-all ${
+                                        isCurrent
+                                            ? 'bg-primary text-white shadow-xs'
+                                            : isCompleted
+                                            ? 'bg-primary/10 text-primary'
+                                            : 'bg-slate-50 dark:bg-neutral-900 text-slate-400'
+                                    }`}
+                                >
+                                    <Clock size={12} />
+                                    <span>Atendimento</span>
+                                </button>
                             );
                         })()}
 
@@ -1110,82 +1078,189 @@ export const OrderDetails: React.FC = () => {
                         {(() => {
                             const isCompleted = order.status === OrderStatus.COMPLETED;
                             return (
-                                <div className="relative z-10 flex flex-row sm:flex-col items-center gap-4 sm:gap-0 flex-1 w-full sm:w-auto">
-                                    <div className="relative">
-                                        {isCompleted && (
-                                            <motion.div 
-                                                className="absolute inset-0 rounded-full bg-emerald-500/40" 
-                                                animate={{ scale: [1, 1.5, 2.0], opacity: [0.7, 0.3, 0] }} 
-                                                transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
-                                            />
-                                        )}
-                                        <motion.div 
-                                            className={`relative z-10 size-10 sm:size-12 rounded-full flex items-center justify-center border-4 transition-all duration-300 ${
-                                                isCompleted 
-                                                    ? 'bg-emerald-500 text-white border-emerald-500/20 shadow-lg shadow-emerald-500/20' 
-                                                    : 'bg-white dark:bg-neutral-900 text-slate-400 border-slate-100 dark:border-neutral-800 shadow-sm'
-                                            }`}
-                                            animate={isCompleted ? { scale: [1, 1.05, 1], boxShadow: ["0px 0px 0px rgba(16, 185, 129, 0.2)", "0px 0px 12px rgba(16, 185, 129, 0.6)", "0px 0px 0px rgba(16, 185, 129, 0.2)"] } : {}}
-                                            transition={isCompleted ? { repeat: Infinity, duration: 2 } : {}}
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
-                                        >
-                                            <Check size={16} className="sm:size-[18px]" />
-                                        </motion.div>
-                                    </div>
-                                    <div className="flex flex-col items-start sm:items-center sm:mt-3">
-                                        <span className={`text-[11px] sm:text-xs font-black mt-3 uppercase tracking-wider ${isCompleted ? 'text-emerald-500' : 'text-slate-400'}`}>Concluída</span>
-                                        {isCompleted ? (
-                                            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
-                                                {formatDateStepper(order.executionDate || order.createdAt)}
-                                            </span>
-                                        ) : (
-                                            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 mt-1 font-mono">--</span>
-                                        )}
-                                    </div>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => isCompleted ? null : handleComplete()}
+                                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-[11px] font-black transition-all ${
+                                        isCompleted
+                                            ? 'bg-emerald-600 text-white shadow-xs'
+                                            : 'bg-slate-50 dark:bg-neutral-900 text-slate-400'
+                                    }`}
+                                >
+                                    <Check size={12} />
+                                    <span>Concluída</span>
+                                </button>
                             );
                         })()}
                     </div>
-                </motion.div>
-            )}
 
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-                <div className="space-y-8 lg:col-span-2">
-                    {/* Main Info Blocks */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Client Card */}
-                        <motion.div 
-                            className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200/50 dark:border-neutral-800/60 overflow-hidden"
-                            whileHover={{ y: -4 }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400">
-                                    <User size={18} />
-                                </div>
-                                <h2 className="font-bold text-slate-900 dark:text-white">Cliente</h2>
+                    {/* Versão Desktop: Full Graphic Stepper */}
+                    <motion.div 
+                        className="hidden sm:block bg-white dark:bg-surface-dark rounded-2xl p-5 border border-slate-200/80 dark:border-neutral-800 shadow-xs relative overflow-hidden"
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                    >
+                        <div className="relative flex flex-row items-start justify-between max-w-[720px] mx-auto">
+                            {/* Horizontal connecting line (Desktop) */}
+                            <div className="absolute top-5 left-[16.67%] right-[16.67%] h-[2px] bg-slate-100 dark:bg-neutral-800 -translate-y-1/2 z-0" />
+                            
+                            {/* Active line fill based on status (Desktop) */}
+                            <div className="absolute top-5 left-[16.67%] right-[16.67%] h-[2px] -translate-y-1/2 z-0 w-[66.66%] overflow-hidden">
+                                <motion.div 
+                                    className="h-full bg-primary" 
+                                    initial={{ width: '0%' }}
+                                    animate={{ 
+                                        width: 
+                                            order.status === OrderStatus.PENDING ? '0%' : 
+                                            (order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL) ? '50%' : 
+                                            order.status === OrderStatus.COMPLETED ? '100%' : '0%'
+                                    }}
+                                    transition={{ duration: 0.8, ease: "easeInOut" }}
+                                />
                             </div>
-                            <div className="p-6 space-y-5">
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nome Completo</p>
-                                    <p className="text-slate-900 dark:text-white font-bold text-lg">{client?.name || 'Cliente Desconhecido'}</p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Telefone</p>
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-slate-700 dark:text-slate-300 font-mono font-bold text-sm bg-slate-100 dark:bg-neutral-800 px-3 py-1.5 rounded-xl w-fit">{client?.phone || '-'}</p>
-                                            {client?.phone && (
-                                                <button onClick={handleWhatsApp} className="p-1.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors" title="Enviar Mensagem">
-                                                    <MessageCircle size={16} />
-                                                </button>
+
+                            {/* Step 1: Aberta */}
+                            {(() => {
+                                const isCurrent = order.status === OrderStatus.PENDING;
+                                return (
+                                    <button 
+                                        type="button"
+                                        onClick={() => handleStatusChange(OrderStatus.PENDING)}
+                                        className="relative z-10 flex flex-col items-center flex-1 cursor-pointer group text-center transition-transform active:scale-95"
+                                        title="Definir status como Aberta / Pendente"
+                                    >
+                                        <div className="relative flex items-center justify-center">
+                                            {isCurrent && (
+                                                <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping pointer-events-none" />
+                                            )}
+                                            <div className="relative z-10 size-10 rounded-full bg-primary text-white flex items-center justify-center border-2 border-primary/20 shadow-xs shadow-primary/20 group-hover:scale-105 transition-transform">
+                                                <span className="text-base font-bold font-sans">+</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-center mt-2.5">
+                                            <span className="text-xs font-black text-primary uppercase tracking-wider group-hover:underline">Aberta</span>
+                                            <span className="text-[10px] font-bold text-slate-400 mt-0.5 font-mono">{formatDateStepper(order.createdAt)}</span>
+                                        </div>
+                                    </button>
+                                );
+                            })()}
+
+                            {/* Step 2: Em Atendimento */}
+                            {(() => {
+                                const isCompleted = order.status === OrderStatus.COMPLETED;
+                                const isCurrent = order.status === OrderStatus.IN_PROGRESS || order.status === OrderStatus.WAITING_WITHDRAWAL;
+                                const isActive = isCurrent || isCompleted;
+                                
+                                return (
+                                    <button 
+                                        type="button"
+                                        onClick={() => handleStatusChange(OrderStatus.IN_PROGRESS)}
+                                        className="relative z-10 flex flex-col items-center flex-1 cursor-pointer group text-center transition-transform active:scale-95"
+                                        title="Definir status como Em Andamento"
+                                    >
+                                        <div className="relative flex items-center justify-center">
+                                            {isCurrent && (
+                                                <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping pointer-events-none" />
+                                            )}
+                                            <div className={`relative z-10 size-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 group-hover:scale-105 ${
+                                                isActive 
+                                                    ? 'bg-primary text-white border-primary/20 shadow-xs shadow-primary/20' 
+                                                    : 'bg-white dark:bg-neutral-900 text-slate-400 border-slate-200 dark:border-neutral-800 shadow-xs'
+                                            }`}>
+                                                <Clock size={15} />
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-center mt-2.5">
+                                            <span className={`text-xs font-black uppercase tracking-wider group-hover:underline ${isActive ? 'text-primary' : 'text-slate-400'}`}>
+                                                {order.status === OrderStatus.WAITING_WITHDRAWAL ? 'Aguard. Retirada' : 'Em Atendimento'}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-slate-400 mt-0.5 font-mono">
+                                                {isCurrent ? 'Em andamento' : isCompleted ? 'Realizado' : '--'}
+                                            </span>
+                                        </div>
+                                    </button>
+                                );
+                            })()}
+
+                            {/* Step 3: Concluída */}
+                            {(() => {
+                                const isCompleted = order.status === OrderStatus.COMPLETED;
+                                return (
+                                    <button 
+                                        type="button"
+                                        onClick={() => isCompleted ? null : handleComplete()}
+                                        className="relative z-10 flex flex-col items-center flex-1 cursor-pointer group text-center transition-transform active:scale-95"
+                                        title="Concluir Ordem de Serviço"
+                                    >
+                                        <div className="relative flex items-center justify-center">
+                                            <div className={`relative z-10 size-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 group-hover:scale-105 ${
+                                                isCompleted 
+                                                    ? 'bg-emerald-500 text-white border-emerald-500/20 shadow-xs shadow-emerald-500/20' 
+                                                    : 'bg-white dark:bg-neutral-900 text-slate-400 border-slate-200 dark:border-neutral-800 shadow-xs'
+                                            }`}>
+                                                <Check size={15} />
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-center mt-2.5">
+                                            <span className={`text-xs font-black uppercase tracking-wider group-hover:underline ${isCompleted ? 'text-emerald-500' : 'text-slate-400'}`}>Concluída</span>
+                                            {isCompleted ? (
+                                                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono">
+                                                    {formatDateStepper(order.executionDate || order.createdAt)}
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-slate-400 mt-0.5 font-mono">--</span>
                                             )}
                                         </div>
+                                    </button>
+                                );
+                            })()}
+                        </div>
+                    </motion.div>
+                </>
+            )}
+
+            <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-3">
+                <div className="space-y-5 lg:col-span-2">
+                    {/* Main Info Blocks (Cliente & Aparelho) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                        {/* Client Card */}
+                        <motion.div 
+                            className="bg-white dark:bg-surface-dark rounded-2xl shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-hidden"
+                            whileHover={{ y: -2 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <div className="px-5 py-3.5 border-b border-slate-100 dark:border-neutral-800 flex items-center justify-between">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
+                                        <User size={16} />
                                     </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">CPF</p>
-                                        <p className="text-slate-700 dark:text-slate-300 font-mono text-sm">{client?.cpf || '-'}</p>
+                                    <h2 className="font-extrabold text-sm text-slate-900 dark:text-white">Cliente</h2>
+                                </div>
+                                {client?.phone && (
+                                    <button 
+                                        onClick={handleWhatsApp} 
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-xs shadow-emerald-500/20 transition-all text-xs font-bold active:scale-95 cursor-pointer" 
+                                        title="Enviar WhatsApp"
+                                    >
+                                        <WhatsAppIcon size={14} color="#ffffff" />
+                                        <span>WhatsApp</span>
+                                    </button>
+                                )}
+                            </div>
+                            <div className="p-4 sm:p-5 space-y-4">
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome Completo</p>
+                                    <p className="text-slate-900 dark:text-white font-bold text-base">{client?.name || 'Cliente Desconhecido'}</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-slate-50/80 dark:bg-neutral-900/60 p-2.5 rounded-xl border border-slate-100 dark:border-neutral-800/80">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Telefone</p>
+                                        <p className="text-slate-800 dark:text-slate-200 font-mono font-bold text-xs truncate">{client?.phone || '-'}</p>
+                                    </div>
+                                    <div className="bg-slate-50/80 dark:bg-neutral-900/60 p-2.5 rounded-xl border border-slate-100 dark:border-neutral-800/80">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">CPF</p>
+                                        <p className="text-slate-800 dark:text-slate-200 font-mono text-xs truncate">{client?.cpf || '-'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -1193,35 +1268,35 @@ export const OrderDetails: React.FC = () => {
 
                         {/* Device Card */}
                         <motion.div 
-                            className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200/50 dark:border-neutral-800/60 overflow-hidden"
-                            whileHover={{ y: -4 }}
+                            className="bg-white dark:bg-surface-dark rounded-2xl shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-hidden"
+                            whileHover={{ y: -2 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex items-center gap-3">
-                                <div className="p-2 bg-primary/10 rounded-xl text-primary">
-                                    <Smartphone size={18} />
+                            <div className="px-5 py-3.5 border-b border-slate-100 dark:border-neutral-800 flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+                                    <Smartphone size={16} />
                                 </div>
-                                <h2 className="font-bold text-slate-900 dark:text-white">Aparelho</h2>
+                                <h2 className="font-extrabold text-sm text-slate-900 dark:text-white">Aparelho</h2>
                             </div>
-                            <div className="p-6 space-y-5">
+                            <div className="p-4 sm:p-5 space-y-4">
                                 <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Modelo</p>
-                                    <p className="text-slate-900 dark:text-white font-black text-xl">{order.deviceModel}</p>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Modelo</p>
+                                    <p className="text-slate-900 dark:text-white font-black text-base truncate">{order.deviceModel}</p>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">IMEI / Serial</p>
-                                        <p className="text-slate-500 dark:text-slate-400 font-mono text-xs truncate">{order.serialNumber || 'N/A'}</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-slate-50/80 dark:bg-neutral-900/60 p-2.5 rounded-xl border border-slate-100 dark:border-neutral-800/80">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">IMEI / Serial</p>
+                                        <p className="text-slate-600 dark:text-slate-300 font-mono text-xs truncate">{order.serialNumber || 'N/A'}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Senha</p>
-                                        <p className="text-amber-700 dark:text-amber-400 font-bold text-xs bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 px-2 py-0.5 rounded-lg inline-block">{order.passcode || 'Nenhuma'}</p>
+                                    <div className="bg-slate-50/80 dark:bg-neutral-900/60 p-2.5 rounded-xl border border-slate-100 dark:border-neutral-800/80">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Senha</p>
+                                        <p className="text-amber-700 dark:text-amber-400 font-bold text-xs bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md inline-block font-mono">{order.passcode || 'Nenhuma'}</p>
                                     </div>
                                 </div>
                                 {order.deviceImage && (
-                                    <div className="pt-4 mt-4 border-t border-slate-100 dark:border-neutral-800">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Foto do Aparelho</p>
-                                        <img src={order.deviceImage} alt="Foto do Aparelho" className="w-full h-auto rounded-xl border border-slate-200 dark:border-neutral-700 object-cover max-h-[300px]" />
+                                    <div className="pt-3 border-t border-slate-100 dark:border-neutral-800">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Foto do Aparelho</p>
+                                        <img src={order.deviceImage} alt="Foto do Aparelho" className="w-full h-auto rounded-xl border border-slate-200 dark:border-neutral-700 object-cover max-h-[220px]" />
                                     </div>
                                 )}
                             </div>
@@ -1229,68 +1304,57 @@ export const OrderDetails: React.FC = () => {
                     </div>
 
                     {/* Problem & Execution */}
-                    <div className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200/50 dark:border-neutral-800/60">
-                        <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex items-center gap-3 rounded-t-3xl">
-                            <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400">
-                                <Wrench size={18} />
+                    <div className="bg-white dark:bg-surface-dark rounded-2xl shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-hidden">
+                        <div className="px-5 py-3.5 border-b border-slate-100 dark:border-neutral-800 flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center border border-orange-500/20">
+                                <Wrench size={16} />
                             </div>
-                            <h2 className="font-bold text-slate-900 dark:text-white">Manutenção</h2>
+                            <h2 className="font-extrabold text-sm text-slate-900 dark:text-white">Manutenção & Diagnóstico</h2>
                         </div>
-                        <div className="p-8 space-y-8">
+                        <div className="p-4 sm:p-6 space-y-5">
                             <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Problema Relatado</p>
-                                <div className="bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 p-5 rounded-2xl">
-                                    <p className="text-slate-900 dark:text-white font-medium leading-relaxed italic">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Problema Relatado</p>
+                                <div className="bg-slate-50/80 dark:bg-neutral-900/60 border border-slate-200/80 dark:border-neutral-800 p-3.5 rounded-xl">
+                                    <p className="text-slate-800 dark:text-slate-200 text-sm font-medium leading-relaxed italic">
                                         "{order.issueDescription}"
                                     </p>
                                 </div>
                             </div>
                             <div>
-                                <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center justify-between mb-2">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Serviço Realizado (Técnico)</p>
                                     <motion.button
                                         whileHover={{ y: -1 }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={handleSaveService}
                                         disabled={isSavingService}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg transition-all text-xs font-bold disabled:opacity-50"
+                                        className="flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg transition-all text-xs font-bold disabled:opacity-50 border border-primary/20"
                                     >
-                                        <Save size={14} />
-                                        {isSavingService ? 'Salvando...' : 'Salvar'}
+                                        <Save size={13} />
+                                        {isSavingService ? 'Salvando...' : 'Salvar Alterações'}
                                     </motion.button>
                                 </div>
                                 <textarea
-                                    className="w-full rounded-2xl border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-900 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 focus:border-primary focus:ring-primary transition-all min-h-[100px]"
+                                    className="w-full rounded-xl border border-slate-200/80 dark:border-neutral-700 bg-slate-50/80 dark:bg-neutral-900/60 p-3.5 text-sm font-medium text-slate-800 dark:text-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all min-h-[90px] outline-none"
                                     placeholder="Descreva o serviço técnico realizado..."
                                     value={serviceNotes}
                                     onChange={(e) => setServiceNotes(e.target.value)}
                                 />
                             </div>
-                            <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Status & Atualização</p>
-                                <CustomDropdown
-                                    label="ATUALIZAR STATUS"
-                                    options={statusOptions}
-                                    selectedValue={order.status}
-                                    onSelect={(val) => handleStatusChange(val as OrderStatus)}
-                                    className="w-full sm:w-64"
-                                    searchable={false}
-                                />
-                            </div>
 
                             {order.selectedProducts && order.selectedProducts.length > 0 && (
-                                <div className="pt-6 border-t border-slate-100 dark:border-neutral-800">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Peças Utilizadas</p>
-                                    <div className="grid grid-cols-1 gap-3">
+                                <div className="pt-4 border-t border-slate-100 dark:border-neutral-800">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Peças Utilizadas</p>
+                                    <div className="grid grid-cols-1 gap-2">
                                         {order.selectedProducts.map((item, idx) => (
-                                            <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-neutral-900 rounded-2xl border border-slate-100 dark:border-neutral-800">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                                            <div key={idx} className="flex items-center justify-between p-3 bg-slate-50/80 dark:bg-neutral-900/60 rounded-xl border border-slate-100 dark:border-neutral-800">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="size-6 rounded-md bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
                                                         {item.quantity}x
                                                     </div>
-                                                    <span className="text-sm font-bold text-slate-900 dark:text-white">{item.name}</span>
+                                                    <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">{item.name}</span>
                                                 </div>
-                                                <span className="text-sm font-black text-slate-600 dark:text-slate-400">R$ {(item.price * item.quantity).toFixed(2)}</span>
+                                                <span className="text-xs sm:text-sm font-black font-mono text-slate-700 dark:text-slate-300">R$ {(item.price * item.quantity).toFixed(2)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -1301,65 +1365,72 @@ export const OrderDetails: React.FC = () => {
                 </div>
 
                 {/* Sidebar: Totals & Warranty */}
-                <div className="space-y-8">
+                <div className="space-y-5">
                     {/* Financial Summary */}
                     <motion.div 
-                        className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200/50 dark:border-neutral-800/60 overflow-hidden"
-                        whileHover={{ y: -4 }}
+                        className="bg-white dark:bg-surface-dark rounded-2xl shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-hidden"
+                        whileHover={{ y: -2 }}
                         transition={{ duration: 0.2 }}
                     >
-                        <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex items-center gap-3">
-                            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl text-emerald-600 dark:text-emerald-400">
-                                <DollarSign size={18} />
+                        <div className="px-5 py-3.5 border-b border-slate-100 dark:border-neutral-800 flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                                <DollarSign size={16} />
                             </div>
-                            <h2 className="font-bold text-slate-900 dark:text-white">Financeiro</h2>
+                            <h2 className="font-extrabold text-sm text-slate-900 dark:text-white">Resumo Financeiro</h2>
                         </div>
-                        <div className="p-6 space-y-4">
-                            <div className="flex justify-between items-center py-2 border-b border-slate-50 dark:border-neutral-800">
-                                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Serviços</span>
-                                <span className="font-bold text-slate-900 dark:text-white">R$ {order.priceServices.toFixed(2)}</span>
+                        <div className="p-4 sm:p-5 space-y-3">
+                            <div className="flex justify-between items-center py-1.5 border-b border-slate-50 dark:border-neutral-800/80">
+                                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Serviços</span>
+                                <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white font-mono">R$ {order.priceServices.toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between items-center py-2 border-b border-slate-50 dark:border-neutral-800">
-                                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Peças</span>
-                                <span className="font-bold text-slate-900 dark:text-white">R$ {order.priceParts.toFixed(2)}</span>
+                            <div className="flex justify-between items-center py-1.5 border-b border-slate-50 dark:border-neutral-800/80">
+                                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Peças</span>
+                                <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white font-mono">R$ {order.priceParts.toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between items-center py-2 border-b border-slate-50 dark:border-neutral-800">
-                                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Desconto</span>
-                                <span className="font-bold text-green-600 dark:text-green-400">- R$ {order.discount.toFixed(2)}</span>
+                            <div className="flex justify-between items-center py-1.5 border-b border-slate-50 dark:border-neutral-800/80">
+                                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Desconto</span>
+                                <span className="font-bold text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 font-mono">- R$ {order.discount.toFixed(2)}</span>
                             </div>
                             {(() => {
                                 const totalPartsCost = (order.selectedProducts || []).reduce((acc, item) => acc + ((item.cost || 0) * item.quantity), 0);
                                 return totalPartsCost > 0 ? (
-                                    <div className="flex justify-between items-center py-2 border-b border-slate-50 dark:border-neutral-800">
-                                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Custo das Peças</span>
-                                        <span className="font-bold text-red-600 dark:text-red-400">R$ {totalPartsCost.toFixed(2)}</span>
+                                    <div className="flex justify-between items-center py-1.5 border-b border-slate-50 dark:border-neutral-800/80">
+                                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Custo das Peças</span>
+                                        <span className="font-bold text-xs sm:text-sm text-red-600 dark:text-red-400 font-mono">R$ {totalPartsCost.toFixed(2)}</span>
                                     </div>
                                 ) : null;
                             })()}
                             {order.payments && order.payments.length > 0 ? (
-                                <div className="pt-2 border-t border-slate-50 dark:border-neutral-800 space-y-2">
-                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Pagamentos</span>
+                                <div className="pt-2 border-t border-slate-50 dark:border-neutral-800 space-y-1.5">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pagamentos</span>
                                     {order.payments.map((p, idx) => (
-                                        <div key={idx} className="flex justify-between items-center bg-slate-50 dark:bg-neutral-900 rounded-lg p-2 px-3">
+                                        <div key={idx} className="flex justify-between items-center bg-slate-50/80 dark:bg-neutral-900/60 rounded-lg p-2 px-3 border border-slate-100 dark:border-neutral-800/60">
                                             <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                                                 {p.method}
                                                 {p.method === 'Cartão de Crédito' && p.installments && p.installments > 1 && (
-                                                    <span className="ml-1 text-[10px] font-medium text-slate-400">({p.installments}x de R$ {(p.amount / p.installments).toFixed(2)})</span>
+                                                    <span className="ml-1 text-[10px] font-medium text-slate-400">({p.installments}x)</span>
                                                 )}
                                             </span>
-                                            <span className="text-xs font-black text-slate-900 dark:text-white">R$ {p.amount.toFixed(2)}</span>
+                                            <span className="text-xs font-black text-slate-900 dark:text-white font-mono">R$ {p.amount.toFixed(2)}</span>
                                         </div>
                                     ))}
                                 </div>
                             ) : order.paymentMethod ? (
-                                <div className="flex justify-between items-center py-2 border-b border-slate-50 dark:border-neutral-800">
-                                    <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Pagamento</span>
+                                <div className="flex justify-between items-center py-1.5 border-b border-slate-50 dark:border-neutral-800">
+                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Pagamento</span>
                                     <span className="font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-xs uppercase tracking-wide">{order.paymentMethod}</span>
                                 </div>
                             ) : null}
-                            <div className="flex justify-between items-center pt-4">
-                                <span className="text-xs font-black text-slate-900 dark:text-white uppercase">Total</span>
-                                <span className="text-3xl font-black text-primary">R$ {order.total.toFixed(2)}</span>
+                            
+                            {/* Highlight Total Box */}
+                            <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-xl p-3.5 flex items-center justify-between mt-3">
+                                <div>
+                                    <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block">Total Líquido</span>
+                                    <span className="text-[10px] font-bold text-primary">Valor final</span>
+                                </div>
+                                <span className="text-2xl font-black text-primary font-mono tracking-tight">
+                                    <AnimatedNumber value={order.total} prefix="R$ " format="currency" />
+                                </span>
                             </div>
                         </div>
                     </motion.div>
@@ -1367,23 +1438,23 @@ export const OrderDetails: React.FC = () => {
                     {/* Warranty Card */}
                     {(order.warrantyEnd || order.noWarranty) && (
                         <motion.div 
-                            className="bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-slate-200/50 dark:border-neutral-800/60 overflow-hidden"
-                            whileHover={{ y: -4 }}
+                            className="bg-white dark:bg-surface-dark rounded-2xl shadow-xs border border-slate-200/80 dark:border-neutral-800 overflow-hidden"
+                            whileHover={{ y: -2 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400">
-                                        <ShieldCheck size={18} />
+                            <div className="px-5 py-3.5 border-b border-slate-100 dark:border-neutral-800 flex items-center justify-between">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
+                                        <ShieldCheck size={16} />
                                     </div>
-                                    <h2 className="font-bold text-slate-900 dark:text-white">Garantia</h2>
+                                    <h2 className="font-extrabold text-sm text-slate-900 dark:text-white">Garantia</h2>
                                 </div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{order.noWarranty ? 'SEM GARANTIA' : '90 Dias'}</span>
+                                <span className="text-[9px] font-black text-slate-400 bg-slate-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full uppercase tracking-wider">{order.noWarranty ? 'SEM GARANTIA' : '90 Dias'}</span>
                             </div>
-                            <div className="p-6 space-y-6">
+                            <div className="p-4 sm:p-5 space-y-4">
                                 {order.noWarranty ? (
-                                    <div className="text-center py-4">
-                                        <p className="text-sm font-medium text-slate-500">Este serviço foi registrado sem garantia.</p>
+                                    <div className="text-center py-3">
+                                        <p className="text-xs font-medium text-slate-500">Este serviço foi registrado sem garantia.</p>
                                     </div>
                                 ) : (
                                     (() => {
@@ -1398,16 +1469,16 @@ export const OrderDetails: React.FC = () => {
 
                                         return (
                                             <>
-                                                <div className="space-y-3">
+                                                <div className="space-y-2.5">
                                                     <div className="flex justify-between items-center">
-                                                        <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${isExpired ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${isExpired ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'}`}>
                                                             {isExpired ? 'Expirada' : 'Ativa'}
                                                         </span>
-                                                        <span className="text-xs font-bold text-slate-600">
+                                                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300 font-mono">
                                                             {isExpired ? 'Vencida' : `${remainingDays} dias restantes`}
                                                         </span>
                                                     </div>
-                                                    <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                                    <div className="h-2 w-full bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden">
                                                         <div
                                                             className={`h-full transition-all duration-1000 ${isExpired ? 'bg-red-500' : 'bg-primary'}`}
                                                             style={{ width: `${progress}%` }}
@@ -1415,22 +1486,22 @@ export const OrderDetails: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <div className="bg-slate-50 dark:bg-neutral-900 p-4 rounded-2xl border border-slate-100 dark:border-neutral-800 text-center">
-                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Início</p>
-                                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{start.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
+                                                <div className="grid grid-cols-2 gap-2.5">
+                                                    <div className="bg-slate-50/80 dark:bg-neutral-900/60 p-2.5 rounded-xl border border-slate-100 dark:border-neutral-800/80 text-center">
+                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Início</p>
+                                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300 font-mono">{start.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
                                                     </div>
-                                                    <div className="bg-slate-50 dark:bg-neutral-900 p-4 rounded-2xl border border-slate-100 dark:border-neutral-800 text-center">
-                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Término</p>
-                                                        <p className="text-xs font-bold text-primary">{end.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
+                                                    <div className="bg-slate-50/80 dark:bg-neutral-900/60 p-2.5 rounded-xl border border-slate-100 dark:border-neutral-800/80 text-center">
+                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Término</p>
+                                                        <p className="text-xs font-bold text-primary font-mono">{end.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
                                                     </div>
                                                 </div>
 
                                                 <button
                                                     onClick={() => setShowWarrantyModal(true)}
-                                                    className="w-full py-3 rounded-2xl border border-slate-200 dark:border-neutral-800 text-slate-600 dark:text-slate-400 text-xs font-bold hover:bg-slate-50 dark:hover:bg-neutral-900 hover:text-slate-900 dark:hover:text-white transition-all flex items-center justify-center gap-2"
+                                                    className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-neutral-900 transition-all flex items-center justify-center gap-1.5 shadow-xs"
                                                 >
-                                                    <Clock size={16} />
+                                                    <Clock size={14} />
                                                     Renovar Garantia
                                                 </button>
                                             </>
@@ -1445,40 +1516,42 @@ export const OrderDetails: React.FC = () => {
 
             {/* Warranty Modal */}
             {showWarrantyModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                    <div className="w-full max-w-lg transform overflow-hidden rounded-[32px] bg-white dark:bg-surface-dark p-10 text-left shadow-2xl transition-all border border-slate-100 dark:border-neutral-800 animate-in zoom-in-95 duration-300">
-                        <div className="flex items-center justify-between mb-8">
-                            <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Renovar Garantia</h3>
-                            <button onClick={() => setShowWarrantyModal(false)} className="rounded-2xl p-2.5 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors text-slate-400">
-                                <X size={24} />
-                            </button>
-                        </div>
-                        <div className="space-y-8">
-                            <div className="rounded-2xl bg-blue-50 border border-blue-100 p-6 text-sm text-blue-700 flex items-start gap-4">
-                                <ShieldCheck className="shrink-0 mt-0.5" size={24} />
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-surface-dark p-6 text-left shadow-2xl transition-all border border-slate-200/80 dark:border-neutral-800 animate-in zoom-in-95 duration-200 flex flex-col gap-5">
+                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="size-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
+                                    <ShieldCheck size={18} />
+                                </div>
                                 <div>
-                                    <p className="font-bold text-lg mb-1">Extensão de Garantia</p>
-                                    <p className="opacity-80">Escolha o período adicional para a garantia deste serviço.</p>
+                                    <h3 className="text-base font-black text-slate-900 dark:text-white tracking-tight">Renovar Garantia</h3>
+                                    <span className="text-[10px] font-bold text-slate-400">Extensão do período de garantia</span>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-3 gap-4">
+                            <button onClick={() => setShowWarrantyModal(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-lg transition-colors text-slate-400">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-3 gap-3">
                                 {[30, 90, 180].map((days) => (
                                     <button
                                         key={days}
                                         onClick={() => setSelectedWarrantyDays(days)}
-                                        className={`flex flex-col items-center justify-center rounded-2xl border-2 py-6 px-4 transition-all group ${selectedWarrantyDays === days
-                                            ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary/20 ring-offset-2'
-                                            : 'border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-900 hover:border-primary hover:text-primary hover:bg-primary/5'
+                                        className={`flex flex-col items-center justify-center rounded-xl border py-3 px-3 transition-all active:scale-95 ${selectedWarrantyDays === days
+                                            ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary'
+                                            : 'border-slate-200 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-900 text-slate-700 dark:text-slate-300 hover:border-primary/50'
                                             }`}
                                     >
-                                        <span className="font-black text-2xl">{days}</span>
-                                        <span className={`text-[10px] font-black uppercase tracking-widest group-hover:text-primary/70 ${selectedWarrantyDays === days ? 'text-primary/70' : 'text-slate-400'
-                                            }`}>Dias</span>
+                                        <span className="font-black text-lg">{days}</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider">Dias</span>
                                     </button>
                                 ))}
                             </div>
-                            <div className="pt-6 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-end gap-4">
-                                <button onClick={() => setShowWarrantyModal(false)} className="rounded-2xl px-8 py-3.5 text-sm font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-neutral-800">Cancelar</button>
+
+                            <div className="pt-4 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-end gap-2.5">
+                                <button onClick={() => setShowWarrantyModal(false)} className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 rounded-xl transition-colors">Cancelar</button>
                                 <button
                                     onClick={async () => {
                                         try {
@@ -1491,15 +1564,15 @@ export const OrderDetails: React.FC = () => {
                                                 warrantyEnd: endDate.toISOString()
                                             });
                                             setShowWarrantyModal(false);
-                                            // Optional: Toast success
+                                            showToast('Garantia renovada com sucesso!', 'success');
                                         } catch (error) {
                                             console.error(error);
-                                            alert("Erro ao renovar garantia");
+                                            showToast('Erro ao renovar garantia.', 'error');
                                         }
                                     }}
-                                    className="flex items-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-sm font-bold text-white shadow-2xl shadow-primary/30 hover:bg-primary-dark transition-all"
+                                    className="flex items-center gap-1.5 px-5 py-2 bg-primary text-white rounded-xl font-bold text-xs shadow-sm hover:bg-primary-dark transition-all active:scale-95"
                                 >
-                                    <Check size={20} /> Confirmar
+                                    <Check size={16} /> Confirmar
                                 </button>
                             </div>
                         </div>
@@ -1510,46 +1583,51 @@ export const OrderDetails: React.FC = () => {
             {/* Complete Order / Payment Modal */}
             {showCompleteModal && (
                 <>
-                    {/* Desktop Modal */}
-                    <div className="fixed inset-0 z-[100] hidden md:flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                        <div className="w-full max-w-2xl transform rounded-[32px] bg-white dark:bg-surface-dark p-10 text-left shadow-2xl transition-all border border-slate-100 dark:border-neutral-800 animate-in zoom-in-95 duration-300">
-                            <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Concluir Ordem</h3>
-                                <button onClick={() => setShowCompleteModal(false)} className="rounded-2xl p-2.5 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors text-slate-400">
-                                    <X size={24} />
+                    {/* Desktop Modal (SaaS Profissional) */}
+                    <div className="fixed inset-0 z-[100] hidden md:flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                        <div className="w-full max-w-2xl transform rounded-2xl bg-white dark:bg-surface-dark p-6 text-left shadow-2xl transition-all border border-slate-200/80 dark:border-neutral-800 animate-in zoom-in-95 duration-200 flex flex-col gap-4">
+                            <div className="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3.5">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                                        <CheckCircle2 size={18} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-base font-black text-slate-900 dark:text-white tracking-tight">Concluir Ordem de Serviço</h3>
+                                        <span className="text-[10px] font-bold text-slate-400">Registro financeiro e entrega ao cliente</span>
+                                    </div>
+                                </div>
+                                <button onClick={() => setShowCompleteModal(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-lg transition-colors text-slate-400">
+                                    <X size={18} />
                                 </button>
                             </div>
 
-                            <div className="space-y-6">
-                                <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30 p-6 text-sm text-green-800 dark:text-green-300 flex items-start gap-4">
-                                    <CheckCircle2 className="shrink-0 mt-0.5" size={24} />
-                                    <div className="flex-1 flex justify-between items-center">
-                                        <div>
-                                            <p className="font-bold text-lg mb-1">Finalizar Serviço</p>
-                                            <p className="opacity-90">Total da ordem: <span className="font-bold">R$ {order.total.toFixed(2)}</span></p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-xs uppercase tracking-widest opacity-80">Falta pagar</p>
-                                            <p className="text-xl font-black">R$ {Math.max(0, order.total - payments.reduce((acc, p) => acc + p.amount, 0)).toFixed(2)}</p>
-                                        </div>
+                            <div className="space-y-4">
+                                <div className="rounded-xl bg-emerald-50/80 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 p-4 text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+                                    <div>
+                                        <p className="font-bold text-sm">Valor Total da OS</p>
+                                        <p className="opacity-90 font-mono font-bold text-base mt-0.5">R$ {order.total.toFixed(2)}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] uppercase font-bold tracking-wider opacity-80">Saldo Restante</p>
+                                        <p className="text-base font-black text-emerald-700 dark:text-emerald-400 font-mono">R$ {Math.max(0, order.total - payments.reduce((acc, p) => acc + p.amount, 0)).toFixed(2)}</p>
                                     </div>
                                 </div>
 
                                 {payments.length > 0 && (
-                                    <div className="space-y-2 mb-4">
+                                    <div className="space-y-2">
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pagamentos Adicionados</p>
                                         {payments.map((p, idx) => (
-                                            <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-neutral-900 rounded-xl border border-slate-100 dark:border-neutral-800">
+                                            <div key={idx} className="flex items-center justify-between p-2.5 bg-slate-50/80 dark:bg-neutral-900/60 rounded-xl border border-slate-100 dark:border-neutral-800 text-xs">
                                                 <div>
                                                     <span className="font-bold text-slate-800 dark:text-slate-200">{p.method}</span>
                                                     {p.method === 'Cartão de Crédito' && p.installments && p.installments > 1 && (
-                                                        <span className="ml-2 text-xs text-slate-500">({p.installments}x de R$ {(p.amount / p.installments).toFixed(2)})</span>
+                                                        <span className="ml-2 text-[10px] text-slate-500 font-medium">({p.installments}x de R$ {(p.amount / p.installments).toFixed(2)})</span>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-3">
-                                                    <span className="font-bold text-primary">R$ {p.amount.toFixed(2)}</span>
-                                                    <button onClick={() => handleRemovePayment(idx)} className="text-red-500 hover:text-red-700 p-1">
-                                                        <X size={16} />
+                                                <div className="flex items-center gap-2.5">
+                                                    <span className="font-black text-primary font-mono">R$ {p.amount.toFixed(2)}</span>
+                                                    <button onClick={() => handleRemovePayment(idx)} className="text-rose-500 hover:text-rose-700 p-1">
+                                                        <X size={14} />
                                                     </button>
                                                 </div>
                                             </div>
@@ -1558,13 +1636,13 @@ export const OrderDetails: React.FC = () => {
                                 )}
 
                                 <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Adicionar Pagamento</p>
-                                    <div className="grid grid-cols-4 gap-2 mb-4">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Forma de Pagamento</p>
+                                    <div className="grid grid-cols-4 gap-2 mb-3">
                                         {[
-                                            { id: 'Cartão de Crédito', icon: CreditCard, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-900/20', border: 'hover:border-cyan-200' },
-                                            { id: 'Cartão de Débito', icon: CreditCard, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'hover:border-blue-200' },
-                                            { id: 'PIX', icon: QrCode, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'hover:border-emerald-200' },
-                                            { id: 'Dinheiro', icon: Banknote, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20', border: 'hover:border-green-200' }
+                                            { id: 'Cartão de Crédito', icon: CreditCard, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-900/20' },
+                                            { id: 'Cartão de Débito', icon: CreditCard, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+                                            { id: 'PIX', icon: QrCode, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+                                            { id: 'Dinheiro', icon: Banknote, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' }
                                         ].map((method) => (
                                             <button
                                                 key={method.id}
@@ -1572,33 +1650,33 @@ export const OrderDetails: React.FC = () => {
                                                     setCurrentPaymentMethod(method.id as PaymentMethod);
                                                     setSelectedPaymentMethod(method.id as PaymentMethod);
                                                 }}
-                                                className={`flex flex-col items-center justify-center gap-2 rounded-xl border py-4 px-2 transition-all group relative overflow-hidden ${currentPaymentMethod === method.id
+                                                className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border py-2.5 px-2 transition-all group ${currentPaymentMethod === method.id
                                                     ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                                                    : `border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 hover:bg-slate-50 dark:hover:bg-neutral-800 ${method.border}`
+                                                    : 'border-slate-200/80 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/40 hover:bg-slate-100 dark:hover:bg-neutral-800'
                                                     }`}
                                             >
-                                                <div className={`p-2 rounded-xl ${currentPaymentMethod === method.id ? 'bg-primary text-white' : `${method.bg} ${method.color}`} transition-colors`}>
-                                                    <method.icon size={20} />
+                                                <div className={`p-1.5 rounded-lg ${currentPaymentMethod === method.id ? 'bg-primary text-white' : `${method.bg} ${method.color}`} transition-colors`}>
+                                                    <method.icon size={16} />
                                                 </div>
-                                                <span className={`font-bold text-xs text-center leading-tight ${currentPaymentMethod === method.id ? 'text-primary' : 'text-slate-600 dark:text-slate-400'}`}>{method.id}</span>
+                                                <span className={`font-bold text-[11px] text-center leading-tight ${currentPaymentMethod === method.id ? 'text-primary' : 'text-slate-600 dark:text-slate-400'}`}>{method.id}</span>
                                             </button>
                                         ))}
                                     </div>
 
-                                    <div className="flex items-end gap-3">
+                                    <div className="flex items-end gap-2.5">
                                         <div className="flex-1">
-                                            <label className="text-xs font-bold text-slate-500 mb-1 block">Valor (R$)</label>
+                                            <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1 block">Valor a Inserir (R$)</label>
                                             <input
                                                 type="number"
                                                 value={currentPaymentAmount}
                                                 onChange={(e) => setCurrentPaymentAmount(e.target.value)}
-                                                className="w-full rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-3 text-sm font-bold text-slate-900 dark:text-white"
+                                                className="w-full h-10 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-primary font-mono"
                                                 placeholder="0.00"
                                             />
                                         </div>
                                         {currentPaymentMethod === 'Cartão de Crédito' && (
-                                            <div className="w-1/3">
-                                                <label className="text-xs font-bold text-slate-500 mb-1 block">Parcelas</label>
+                                            <div className="w-28">
+                                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1 block">Parcelas</label>
                                                 <CustomDropdown
                                                     label="Parcelas"
                                                     options={[...Array(12)].map((_, i) => ({ value: String(i + 1), label: `${i + 1}x` }))}
@@ -1612,23 +1690,191 @@ export const OrderDetails: React.FC = () => {
                                         <button
                                             onClick={handleAddPayment}
                                             disabled={!currentPaymentMethod || !currentPaymentAmount || parseFloat(currentPaymentAmount) <= 0}
-                                            className="h-[46px] px-6 rounded-xl bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-slate-300 font-bold text-sm hover:bg-slate-200 transition-colors disabled:opacity-50"
+                                            className="h-10 px-4 rounded-xl bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors disabled:opacity-50"
                                         >
                                             Adicionar
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="pt-6 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-end gap-4">
-                                    <button onClick={() => setShowCompleteModal(false)} className="rounded-2xl px-8 py-3.5 text-sm font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-neutral-800">Cancelar</button>
+                                <div className="pt-4 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-end gap-2.5">
+                                    <button onClick={() => setShowCompleteModal(false)} className="px-4 py-2 bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs transition-colors">Cancelar</button>
                                     <button
                                         onClick={confirmCompletion}
                                         disabled={(payments.length === 0 && (!currentPaymentMethod || !currentPaymentAmount))}
-                                        className="flex items-center gap-2 rounded-2xl bg-green-600 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-green-200 dark:shadow-none hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="flex items-center gap-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                                     >
-                                        <Check size={20} /> Finalizar Ordem
+                                        <Check size={16} /> Finalizar Ordem
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mobile BottomSheet */}
+                    <BottomSheet
+                        isOpen={showCompleteModal}
+                        onClose={() => setShowCompleteModal(false)}
+                        title="CONCLUIR ORDEM"
+                    >
+                        <div className="space-y-4 pt-2 pb-4">
+                            <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30 p-4 text-sm text-green-800 dark:text-green-300 flex items-start justify-between gap-3">
+                                <div>
+                                    <p className="font-bold text-base mb-0.5 flex items-center gap-2">
+                                        <CheckCircle2 className="text-green-600" size={18} />
+                                        Finalizar Serviço
+                                    </p>
+                                    <p className="opacity-90 leading-snug text-xs mt-1">Total: R$ {order.total.toFixed(2)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] uppercase tracking-widest opacity-80">Falta pagar</p>
+                                    <p className="text-lg font-black text-green-700 dark:text-green-400">R$ {Math.max(0, order.total - payments.reduce((acc, p) => acc + p.amount, 0)).toFixed(2)}</p>
+                                </div>
+                            </div>
+
+                            {payments.length > 0 && (
+                                <div className="space-y-2">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pagamentos</p>
+                                    {payments.map((p, idx) => (
+                                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-neutral-900 rounded-xl border border-slate-100 dark:border-neutral-800">
+                                            <div>
+                                                <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{p.method} {p.installments && p.installments > 1 ? `(${p.installments}x de R$ ${(p.amount / p.installments).toFixed(2)})` : ''}</span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-black text-primary text-sm">R$ {p.amount.toFixed(2)}</span>
+                                                <button onClick={() => handleRemovePayment(idx)} className="text-red-500 hover:text-red-700 p-1">
+                                                    <X size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 mt-2">Deseja adicionar pagamento?</p>
+                                <div className="grid grid-cols-4 gap-2 mb-3">
+                                    {[
+                                        { id: 'Cartão de Crédito', icon: CreditCard, color: 'text-cyan-600', bg: 'bg-cyan-50' },
+                                        { id: 'Cartão de Débito', icon: CreditCard, color: 'text-blue-600', bg: 'bg-blue-50' },
+                                        { id: 'PIX', icon: QrCode, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                                        { id: 'Dinheiro', icon: Banknote, color: 'text-green-600', bg: 'bg-green-50' }
+                                    ].map((method) => (
+                                        <button
+                                            key={method.id}
+                                            onClick={() => {
+                                                setCurrentPaymentMethod(method.id as PaymentMethod);
+                                                setSelectedPaymentMethod(method.id as PaymentMethod);
+                                            }}
+                                            className={`flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 py-3 px-1 transition-all group ${currentPaymentMethod === method.id
+                                                ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary/20 ring-offset-2'
+                                                : 'border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-slate-600 dark:text-slate-400'
+                                                }`}
+                                        >
+                                            <div className={`p-2 rounded-xl ${currentPaymentMethod === method.id ? 'bg-primary text-white' : `${method.bg} ${method.color}`} transition-colors`}>
+                                                <method.icon size={18} />
+                                            </div>
+                                            <span className="font-bold text-[10px] text-center leading-tight">{method.id}</span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="text-[11px] font-bold text-slate-500 mb-1 block">Valor (R$)</label>
+                                        <input
+                                            type="number"
+                                            value={currentPaymentAmount}
+                                            onChange={(e) => setCurrentPaymentAmount(e.target.value)}
+                                            className="w-full h-12 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 text-sm font-bold text-slate-900 dark:text-white font-mono"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                    {currentPaymentMethod === 'Cartão de Crédito' && (
+                                        <div>
+                                            <label className="text-[11px] font-bold text-slate-500 mb-1 block">Parcelas</label>
+                                            <CustomDropdown
+                                                label="Parcelas"
+                                                options={[...Array(12)].map((_, i) => ({ value: String(i + 1), label: `${i + 1}x` }))}
+                                                selectedValue={String(currentInstallments)}
+                                                onSelect={(val) => setCurrentInstallments(Number(val))}
+                                                searchable={false}
+                                                fullWidth
+                                            />
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={handleAddPayment}
+                                        disabled={!currentPaymentMethod || !currentPaymentAmount || parseFloat(currentPaymentAmount) <= 0}
+                                        className="w-full h-11 rounded-xl bg-primary/10 text-primary font-bold text-xs hover:bg-primary/20 transition-colors disabled:opacity-50"
+                                    >
+                                        Adicionar Pagamento
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="pt-4 flex flex-col gap-2.5">
+                                <button
+                                    onClick={confirmCompletion}
+                                    disabled={(payments.length === 0 && (!currentPaymentMethod || !currentPaymentAmount))}
+                                    className="w-full h-12 rounded-xl bg-emerald-600 text-xs font-black text-white shadow-sm hover:bg-emerald-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2 uppercase tracking-wider"
+                                >
+                                    <Check size={18} /> Finalizar Ordem
+                                </button>
+                                <button
+                                    onClick={() => setShowCompleteModal(false)}
+                                    className="w-full h-11 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-neutral-800"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </BottomSheet>
+                </>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <>
+                    {/* Desktop Modal (SaaS Profissional) */}
+                    <div className="fixed inset-0 z-[100] hidden md:flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                        <div className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-surface-dark p-6 text-left shadow-2xl transition-all border border-slate-200/80 dark:border-neutral-800 animate-in zoom-in-95 duration-200 flex flex-col gap-4">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/20">
+                                        <Trash2 size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-base font-black text-slate-900 dark:text-white tracking-tight">Excluir Ordem de Serviço</h3>
+                                        <span className="text-[10px] font-bold text-slate-400">OS #{order.id.slice(0, 8)}</span>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                Tem certeza que deseja excluir esta ordem de serviço permanentemente? <span className="text-rose-500 font-bold">Esta ação não pode ser desfeita e o estoque não retornado será mantido.</span>
+                            </p>
+
+                            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-neutral-800">
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 rounded-xl transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    disabled={isDeleting}
+                                    className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white shadow-sm active:scale-95 transition-all disabled:opacity-50"
+                                >
+                                    {isDeleting ? 'Excluindo...' : 'Sim, Excluir OS'}
+                                </button>
                             </div>
                         </div>
                     </div>
