@@ -64,7 +64,7 @@ export interface ServiceOrder {
     serialNumber?: string;
     passcode?: string;
     deviceImage?: string; // Foto do aparelho
-    issueDescription: string;
+    issueDescription?: string;
     serviceType?: string;
     status: OrderStatus;
     executionDate?: string;

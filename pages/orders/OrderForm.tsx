@@ -438,14 +438,13 @@ export const OrderForm: React.FC = () => {
 
             <div className="flex flex-col gap-1 md:col-span-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                Defeito Relatado / Problema Constatado *
+                Defeito Relatado / Problema Constatado (Opcional)
               </label>
               <textarea
                 className="w-full p-3 rounded-xl bg-slate-50/70 dark:bg-neutral-900/60 border border-slate-200/80 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-xs font-medium text-slate-900 dark:text-white min-h-[75px] sm:min-h-[90px] transition-all"
-                placeholder="Descreva detalhadamente a queixa do cliente ou o defeito observado..."
+                placeholder="Descreva a queixa do cliente ou o defeito observado (Opcional)..."
                 value={issueDescription}
                 onChange={(e) => setIssueDescription(e.target.value)}
-                required
               />
             </div>
 
