@@ -42,19 +42,29 @@ export const SelectionSheet: React.FC<SelectionSheetProps> = ({
         <BottomSheet isOpen={isOpen} onClose={onClose} title={title}>
             <div className="flex flex-col gap-2 mt-2">
                 {searchable && (
-                    <div className="relative mb-2 px-1">
+                    <div
+                        className="relative mb-2 px-1"
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                    >
                         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
                             placeholder="Buscar na lista..."
-                            className="w-full pl-11 pr-4 py-3 bg-slate-100 dark:bg-neutral-800 border-none rounded-2xl text-sm focus:ring-2 focus:ring-primary outline-none font-medium"
+                            className="w-full pl-11 pr-4 py-3 bg-slate-100 dark:bg-neutral-800 border-none rounded-2xl text-sm focus:ring-2 focus:ring-primary outline-none font-medium text-slate-900 dark:text-white"
                         />
                         {searchTerm && (
                             <button 
-                                onClick={() => setSearchTerm('')}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSearchTerm('');
+                                }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
                             >
                                 <X size={16} />
                             </button>

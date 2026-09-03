@@ -32,6 +32,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
                 <>
                     {/* Backdrop */}
                     <motion.div
+                        data-bottom-sheet="true"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -45,6 +46,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
 
                     {/* Sheet */}
                     <motion.div
+                        data-bottom-sheet="true"
                         initial={{ y: '100%' }}
                         animate={{ y: 0 }}
                         exit={{ y: '100%' }}
@@ -58,6 +60,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
                             }
                         }}
                         onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
                         className="fixed bottom-0 left-0 right-0 bg-white dark:bg-neutral-900 z-[99999] rounded-t-[32px] shadow-2xl overflow-hidden md:hidden outline-none"
                         style={{ maxHeight: '92vh' }}
                     >

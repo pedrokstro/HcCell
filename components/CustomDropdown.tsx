@@ -64,6 +64,11 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
     // Close on click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            // Never close if clicking inside BottomSheet or modal portal
+            if (target && target.closest('[data-bottom-sheet]')) {
+                return;
+            }
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
             }
