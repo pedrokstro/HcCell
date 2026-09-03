@@ -277,8 +277,8 @@ export const ChangeLogModal: React.FC<ChangeLogModalProps> = ({
               >
                 <div
                   className={`mt-0.5 shrink-0 size-8 rounded-xl flex items-center justify-center font-bold text-xs ${update.type === 'new'
-                      ? 'bg-primary/15 text-primary'
-                      : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                    ? 'bg-primary/15 text-primary'
+                    : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                     }`}
                 >
                   {update.type === 'new' ? <Zap size={16} /> : <CheckCircle2 size={16} />}

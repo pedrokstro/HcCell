@@ -583,38 +583,73 @@ export const OrderForm: React.FC = () => {
                 Ou Inserir Item Manualmente (Sem Estoque)
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
-                <input
-                  type="text"
-                  placeholder="Nome do item / peça..."
-                  value={manualName}
-                  onChange={(e) => setManualName(e.target.value)}
-                  className="sm:col-span-6 h-10 px-3 rounded-xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 text-xs font-bold text-slate-900 dark:text-white"
-                />
-                <input
-                  type="number"
-                  placeholder="Preço (R$)"
-                  step="0.01"
-                  min="0"
-                  value={manualPrice}
-                  onChange={(e) => setManualPrice(e.target.value)}
-                  className="sm:col-span-2 h-10 px-3 rounded-xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 text-xs font-mono font-bold text-slate-900 dark:text-white"
-                />
-                <input
-                  type="number"
-                  placeholder="Qtd"
-                  min="1"
-                  value={manualQty}
-                  onChange={(e) => setManualQty(parseInt(e.target.value) || 1)}
-                  className="sm:col-span-2 h-10 px-3 rounded-xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 text-xs font-mono font-bold text-slate-900 dark:text-white"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddManualItem}
-                  className="sm:col-span-2 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase flex items-center justify-center gap-1 transition-all active:scale-95 shadow-xs"
-                >
-                  <Plus size={14} />
-                  <span>Adicionar</span>
-                </button>
+                <div className="sm:col-span-4 flex flex-col gap-1">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider ml-1">
+                    Nome da Peça / Item *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Tela Frontal, Bateria..."
+                    value={manualName}
+                    onChange={(e) => setManualName(e.target.value)}
+                    className="h-10 px-3 rounded-xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  />
+                </div>
+
+                <div className="sm:col-span-2 flex flex-col gap-1">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider ml-1">
+                    Custo (R$)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    value={manualCost}
+                    onChange={(e) => setManualCost(e.target.value)}
+                    className="h-10 px-3 rounded-xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  />
+                </div>
+
+                <div className="sm:col-span-2 flex flex-col gap-1">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider ml-1">
+                    Venda (R$) *
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    value={manualPrice}
+                    onChange={(e) => setManualPrice(e.target.value)}
+                    className="h-10 px-3 rounded-xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  />
+                </div>
+
+                <div className="sm:col-span-2 flex flex-col gap-1">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider ml-1">
+                    Qtd
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="1"
+                    min="1"
+                    value={manualQty}
+                    onChange={(e) => setManualQty(parseInt(e.target.value) || 1)}
+                    className="h-10 px-3 rounded-xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  />
+                </div>
+
+                <div className="sm:col-span-2 flex flex-col justify-end">
+                  <button
+                    type="button"
+                    onClick={handleAddManualItem}
+                    className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase flex items-center justify-center gap-1 transition-all active:scale-95 shadow-xs"
+                  >
+                    <Plus size={14} />
+                    <span>Adicionar</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -637,9 +672,14 @@ export const OrderForm: React.FC = () => {
                         <span className="font-bold text-slate-900 dark:text-white">
                           {item.name}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          Unitário: R$ {item.price.toFixed(2)}
-                        </span>
+                        <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
+                          <span>Venda: R$ {item.price.toFixed(2)}</span>
+                          {item.cost !== undefined && item.cost > 0 && (
+                            <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                              • Custo: R$ {item.cost.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
